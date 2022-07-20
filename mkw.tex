@@ -262,13 +262,10 @@ reasonably expect some syntax sugar to provide them. Witness the
 Scheme's \rackinline|and| and \rackinline|or| macros as examples.
 \Cref{mnt:conde-implementation,mnt:conj-and-disj-implementation}
 contain a typical implementation of miniKanren's \rackinline|conde|
-operator, this one taken from \citetitle{friedman2018reasoned}.
-
-Here \rackinline|S| (\rackinline|F|) represents a primitive goal that
-unconditionally succeeds (fails). We omit the underlying
-implementations of \rackinline|append-map| and
-\rackinline|append-map|, as these are standard and they are constant
-through the course of this discussion.
+operator, this one taken from \citetitle{friedman2018reasoned}. As
+advertised, the \rackinline|conde| macro is a shallow syntactic
+wrapper for an $n$-way disjunction (\rackinline|disj|) of $n$-way
+conjunctions (\rackinline|conj|).
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
@@ -281,12 +278,6 @@ through the course of this discussion.
   \label{mnt:conde-implementation}
 \end{listing}
 
-As advertised, the \rackinline|conde| macro is a shallow syntactic
-wrapper for an $n$-way disjunction (\rackinline|disj|) of $n$-way
-conjunctions (\rackinline|conj|). Though this note mainly concerns the
-choice to implement surface language functionality as macros, it may
-also point to these as more natural primitives than
-\rackinline|conde|.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
@@ -313,8 +304,14 @@ also point to these as more natural primitives than
 \end{listing}
 
 \Cref{mnt:conj-and-disj-implementation} contains implementations of
-the underlying conjunction and disjunction operations. In these
-implementations, the behavior of \rackinline|conj| and
+the underlying conjunction and disjunction operations. Here
+\rackinline|S| (\rackinline|F|) represents a primitive goal that
+unconditionally succeeds (fails). We omit the underlying
+implementations of \rackinline|append-map| and
+\rackinline|append-map|, as these are standard and they are constant
+through the course of this discussion.
+
+In these implementations, the behavior of \rackinline|conj| and
 \rackinline|disj| are not quite defined as simple recursions over
 their binary functional primitives. The definition of 0-way
 conjunction (disjunction) is independent of the unfolding of
@@ -323,12 +320,16 @@ themselves could take or leave the 0-element base case. In a sense the
 \rackinline|conj| and \rackinline|disj| macros conflate primitive
 success and failure with desugaring conjunctions.
 
-Although outside of the usual Kanren tradition, an implementation
-could chose to forego \rackinline|conde| and provide the underlying
-binary logical primitives to the user. This is closer to the design of
-Prolog, where the user represents conjuction of goals in the body of a
-clause with a comma and disjunction, either implicitly in listing
-various clauses or explicitly with a semicolon.
+Though this note mainly concerns the choice to implement surface
+language functionality as macros, it may also point to these as more
+natural primitives than \rackinline|conde|. Although outside of the
+usual Kanren tradition, an implementation could chose to forego
+\rackinline|conde| and provide the underlying binary logical
+primitives to the user. This is closer to the design of Prolog, where
+the user represents conjuction of goals in the body of a clause with a
+comma and disjunction, either implicitly in listing various clauses or
+explicitly with a semicolon.
+
 
 In any case, the programmer who wants to write an elegant, efficient
 solution to a pure relational programming task will not notice these
