@@ -210,9 +210,9 @@ further explanation, or to~\href{minikanren.org}{minikanren.org} for a
 slew of implementations across many host languages.
 
 The shortest subway system in the world is Haifa's Carmelit, with only
-four cars and six stations. The system is acylic, so trains travel
-back and forth. If we wanted to describe the order in which we rode
-the train from the beginning to the end, we could use the
+six stations. The system is acylic, so its trains travel back and
+forth. If we wanted to describe the order in which we rode the train
+from the beginning to the end, we could use the
 \rackinline|carmelit-subway| relation in ~\cref{mnt:carmelit}. We
 express this relation using the more compact miniKanren syntax because
 unfolding this relation into binary conjunctions and disjunctions
@@ -253,13 +253,14 @@ relatively obscure errors and reading those error messages forces the
 programmer out of the microKanren-DSL thinking, and back into the host
 programming language's debug model.
 
-\section{\rackinline|conde| and binary primitives}\label{sec:conde}
+\section{\rackinline|conde| and logical goal constructors}\label{sec:conde}
 
 Programmers deserve better than having to chain their logic together
-like building circuitry from logic gates. These operations may or may
-not be present in the core language, but if not the programmer will
-reasonably expect some syntax sugar to provide them. Witness the
-Scheme's \rackinline|and| and \rackinline|or| macros as examples.
+like building circuitry from logic gates. Such higher-level operations
+may or may not be present in the core language, but if not the
+programmer will reasonably expect some syntax sugar to provide them.
+Witness the Scheme's \rackinline|and| and \rackinline|or| macros as
+examples.
 \Cref{mnt:conde-implementation,mnt:conj-and-disj-implementation}
 contain a typical implementation of miniKanren's \rackinline|conde|
 operator, this one taken from \citetitle{friedman2018reasoned}. As
@@ -274,7 +275,7 @@ conjunctions (\rackinline|conj|).
     ((conde (g ...) ...)
      (disj (conj g ...) ...))))
   \end{minted}
-  \caption{A typical implementation of \rackinline|conde|.}
+\caption{A typical implementation of \rackinline|conde|.}
   \label{mnt:conde-implementation}
 \end{listing}
 
@@ -317,25 +318,24 @@ primitives. The definition of 0-way conjunction (disjunction) is
 independent of the unfolding of \rackinline|conj₂|
 (\rackinline|disj₂|). In a sense the \rackinline|conj| and
 \rackinline|disj| macros amalgamate primitive success and failure
-goals with the recursive unfoldings of more-than-binary logical
-connectives with.
+goals with those recursive unfoldings of more-than-binary logical
+connectives that terminate in a one-element base case.
 
 These zero-way logical operation base cases don't add much. The
 programmer who wants to write an elegant, efficient solution to a pure
-relational programming task will not notice these additional base
-cases, as he will not use them in his \rackinline|conde| expressions.
-The programmer knows statically how these goals will behave, so there
-is no benefit to executing them. A conjunction of no goals would
-simply succeed, and a disjunction of no goals would simply fail.
-Truthfully, only the impure \rackinline|conda| operator seemed to
-require these additional base cases (we discuss this further
-in~\cref{sec:impure}).
+relational programming task would not encounter these additional base
+cases in his \rackinline|conde| expressions. The programmer knows
+statically how these goals will behave, so there is no benefit to
+executing them. A conjunction of no goals would simply succeed, and a
+disjunction of no goals would simply fail. Truthfully, only the impure
+\rackinline|conda| operator seemed to require these additional base
+cases (we discuss this further in~\cref{sec:impure}).
 
 If we mandate that disjunction be a function of one-or-more arguments
 (or, in another parlance, \enquote{polyvariadic}), we can implement
 our disjunction as a shallow wrapper over a left-fold. For clarity,
-and to avoid namespace collisions, we use \rackinline|D| for our
-re-implementation of disjunction and we call its internal help
+and to avoid \enquote{namespace collisions}, we use \rackinline|D| for
+our re-implementation of disjunction and we call its internal help
 function \rackinline|D-rec|.
 
 \begin{listing}
@@ -353,15 +353,15 @@ function \rackinline|D-rec|.
   \label{mnt:disj-re-implementation}
 \end{listing}
 
-From the first goal (that the host language syntactically guarantees
-\emph{must} exist) and a state, \rackinline|D| can produce an answer
-stream \rackinline|(g₁ s)|, which it passes along as the first
-argument to \rackinline|D-rec|. The function \rackinline|D-rec| is
-merely a fold over the list of the remaining goals. Whereas the
-implementation in \cref{mnt:conj-and-disj-implementation} produces
-implements general disjunction as a right fold, the function
-\rackinline|D-rec| is instead a tail-recursive left fold, accumulating
-the resulting answer stream in \rackinline|s∞|.
+From the first goal (the host language syntactically guarantees one
+must exist) and a state, \rackinline|D| can produce an answer stream
+\rackinline|(g₁ s)|, which it passes along as the first argument to
+\rackinline|D-rec|. The function \rackinline|D-rec| is merely a fold
+over the list of the remaining goals. Whereas the implementation in
+\cref{mnt:conj-and-disj-implementation} implements general disjunction
+as a right fold, the function \rackinline|D-rec| is instead a
+tail-recursive left fold, accumulating the resulting answer stream in
+\rackinline|s∞|.
 
 
 Under the declarative reading of the logic program, this new
@@ -400,11 +400,10 @@ comma and disjunction, either implicitly in listing various clauses or
 explicitly with a semicolon.
 
 
-
 Our desugaring macros would have worked whether we left or right
 associated. Removing a degree of freedom in the implementation, and
 forcing ourselves to program the solution functionally, led us to what
-seems like the right solution.
+seems like the right solution. IS IT ACTUALLY SO? HOW WOULD I IMPLEMENT FOLD THE OTHER WAY.
 
 From a theoretical \enquote{understanding by implementing} point of
 view we do not see this as a problem; instead we consider it an
