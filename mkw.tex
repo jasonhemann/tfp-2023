@@ -363,22 +363,20 @@ as a right fold, the function \rackinline|D-rec| is instead a
 tail-recursive left fold, accumulating the resulting answer stream in
 \rackinline|s∞|.
 
-miniKanren's biased search heuristic~\footnote{Much of the discussion
-  on this topic is due to Michael Ballantyne and Greg Rosenblatt}
-causes some operational differences between this reimplementation and
-the older one. With this implementation, instead of the \emph{first}
-goal being the most heavily weighted in the search, here the
-\emph{last} goal is most heavily weighted. Because $n$-ary disjunction
-is now built in to the functional definition, this behavior is now
-transparently visible in the implementation of \rackinline|D-rec|.
-Imagine for a moment that in the given state \rackinline|s| each goal
-in~\rackinline|(g₁ . gs)| produces infinitely many answers. The
-\rackinline|append| is doing a fair interleaving between its two
-stream arguments: giving one a little time to work and then handing
-off to the other. At each recursion, approximately half the answers in
-that stream come from the most recently evaluated goal, and so the
-resources dedicated to all the preceding goals is halved, in order to
-accommodate this new one.
+miniKanren's biased search heuristic causes some operational
+differences between this reimplementation and the older one. With this
+implementation, instead of the \emph{first} goal being the most
+heavily weighted in the search, here the \emph{last} goal is most
+heavily weighted. Because $n$-ary disjunction is now built in to the
+functional definition, this behavior is now transparently visible in
+the implementation of \rackinline|D-rec|. Imagine for a moment that in
+the given state \rackinline|s| each goal in~\rackinline|(g₁ . gs)|
+produces infinitely many answers. The \rackinline|append| is doing a
+fair interleaving between its two stream arguments: giving one a
+little time to work and then handing off to the other. At each
+recursion, approximately half the answers in that stream come from the
+most recently evaluated goal, and so the resources dedicated to all
+the preceding goals is halved, in order to accommodate this new one.
 
 A declarative programmer oughtn't need to concern himself with the
 operational search behavior, and since miniKanren provides a complete
