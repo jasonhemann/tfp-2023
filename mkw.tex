@@ -128,7 +128,7 @@ We describe here how, at the cost of an additional language
 feature---namely variadic and \enquote{rest argument} functions---we
 can implement a slightly higher-level kernel language. This insight
 leads to a shorter overall implementation that is also more performant
-and, we believe, a bit more elegant.
+and, perhaps, a bit more elegant.
 \end{abstract}
 
 %%
@@ -363,54 +363,31 @@ as a right fold, the function \rackinline|D-rec| is instead a
 tail-recursive left fold, accumulating the resulting answer stream in
 \rackinline|s∞|.
 
+miniKanren's biased search heuristic~\footnote{Much of the discussion
+  on this topic is due to Michael Ballantyne and Greg Rosenblatt}
+causes some operational differences between this reimplementation and
+the older one. With this implementation, instead of the \emph{first}
+goal being the most heavily weighted in the search, here the
+\emph{last} goal is most heavily weighted. Because $n$-ary disjunction
+is now built in to the functional definition, this behavior is now
+transparently visible in the implementation of \rackinline|D-rec|.
+Imagine for a moment that in the given state \rackinline|s| each goal
+in~\rackinline|(g₁ . gs)| produces infinitely many answers. The
+\rackinline|append| is doing a fair interleaving between its two
+stream arguments: giving one a little time to work and then handing
+off to the other. At each recursion, approximately half the answers in
+that stream come from the most recently evaluated goal, and so the
+resources dedicated to all the preceding goals is halved, in order to
+accommodate this new one.
 
-Under the declarative reading of the logic program, this new
-implementation of disjunction is equivalent to the old implementation.
-Operationally, however, miniKanren's biased search
-heuristic~\footnote{Much of the discussion on this topic is due to
-  Michael Ballantyne and Greg Rosenblatt} behaves differently in the
-two implementations. With this implementation, instead of the
-\emph{first} goal being more heavily weighted in the search, it is
-instead the \emph{last} goal that is most heavily weighted. This is
-now transparently visible in the implementation of \rackinline|D-rec|.
-Imagine for a moment that each goal in~\rackinline|(g₁ . gs)| will, in
-the given state \rackinline|s|, produce infinitely many answers, and
-assume further that \rackinline|append| is doing a trivially fair
-interleaving between its two stream arguments: giving one a little
-time to work and then handing off to the other. At each recursion,
-approximately half the answers in that stream come from the most
-recently evaluated goal, and so the resources dedicated to all the
-preceding goals is halved, in order to accommodate this new one.
-
-
-elicit
-encourage
-necessitate
-
-it was the definition of
-
-Though this note mainly concerns the choice to implement surface
-language functionality as macros, it may also point to these as more
-natural primitives than \rackinline|conde|. Although outside of the
-usual Kanren tradition, an implementation could chose to forego
-\rackinline|conde| and provide the underlying binary logical
-primitives to the user. This is closer to the design of Prolog, where
-the user represents conjuction of goals in the body of a clause with a
-comma and disjunction, either implicitly in listing various clauses or
-explicitly with a semicolon.
-
-
-Our desugaring macros would have worked whether we left or right
-associated. Removing a degree of freedom in the implementation, and
-forcing ourselves to program the solution functionally, led us to what
-seems like the right solution. IS IT ACTUALLY SO? HOW WOULD I IMPLEMENT FOLD THE OTHER WAY.
-
-From a theoretical \enquote{understanding by implementing} point of
-view we do not see this as a problem; instead we consider it an
-interesting distinction. If however for a particular use case this is
-unacceptable, some language front end could rearrange the programmer's
-arguments. For example, reversing a list of arguments is an exemplary
-use of an APS macro.
+A declarative programmer oughtn't need to concern himself with the
+operational search behavior, and since miniKanren provides a complete
+search, a query should still return the same bag of answers, so we do
+not see this as a problem; we just consider it an interesting
+distinction. If however operationally-aware programmers found the
+\enquote{reversed weighting} unintuitive, some language front end
+could rearrange the programmer's arguments. For example, reversing a
+list of arguments is an exemplary use of an APS macro.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
@@ -427,8 +404,8 @@ use of an APS macro.
   \label{mnt:conj-re-implementation}
 \end{listing}
 
-The re-implementation of conjunction
-in~\cref{mnt:conj-re-implementation} follows a similar story. The
+Our re-implementation of conjunction
+in~\cref{mnt:conj-re-implementation} tells a similar story. The
 function \rackinline|C-rec| does not take in the state \rackinline|s|;
 the help procedure does not need the state for conjunction. In each
 recursive call, the state is accumulated by mapping (using the special
