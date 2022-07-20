@@ -246,33 +246,27 @@ We defer that discussion to~\cref{sec:conde}; for now, take the point
 that those in languages without macros who intended to use this
 language for even fairly trivial tasks could become overwhelmed by the
 low-level details of programming in a microKanren such as binary
-conjunction and disjunction. A small programming mistake, such as
-incorrectly nesting a conjunct somewhere in a long conjunction chain,
-can cause relatively obscure errors and reading those error messages
-forces the programmer out of the microKanren-DSL thinking, and back
-into the debug model of his host language.
+conjunction and disjunction, with all the difficulties of a shallow
+embedding. A small programming mistake, such as incorrectly nesting a
+conjunct somewhere in a long conjunction chain, can cause relatively
+obscure errors and reading those error messages forces the programmer
+out of the microKanren-DSL thinking, and back into the host
+programming language's debug model.
 
 \section{\rackinline|conde| and binary primitives}\label{sec:conde}
 
-
-Programmers expect to program with variable arity conjunction and
-disjunction. These operations may or may not be present in the core
-language, but if not the programmer will reasonably expect some syntax
-sugar to provide them. Witness the \rackinline|and| and
-\rackinline|or| Scheme macros as examples. Earlier microKanren
-implementations offered only binary conjunction and disjunction while
-the miniKanren language supports arbitrary arity conjunction and
-disjunction in \rackinline|conde|.
+Programmers deserve better than having to chain their logic together
+like building circuitry from logic gates. These operations may or may
+not be present in the core language, but if not the programmer will
+reasonably expect some syntax sugar to provide them. Witness the
+Scheme's \rackinline|and| and \rackinline|or| macros as examples.
 \Cref{mnt:conde-implementation,mnt:conj-and-disj-implementation}
-contain a typical implementation taken from TRS2.0. Although outside
-of the usual Kanren tradition, an implementation could chose to forego
-\rackinline|conde| and provide the underlying binary logical
-primitives to the user. This is closer to the design of Prolog, where
-the user represents conjuction of goals in the body of a clause with a
-comma and disjunction, either implicitly in listing various clauses or
-explicitly with a semicolon. Here \rackinline|S| (\rackinline|F|)
-represents a primitive goal that unconditionally succeeds (fails). We
-omit the underlying implementations of \rackinline|append-map| and
+contain a typical implementation of miniKanren's \rackinline|conde|
+operator, this one taken from \citetitle{friedman2018reasoned}.
+
+Here \rackinline|S| (\rackinline|F|) represents a primitive goal that
+unconditionally succeeds (fails). We omit the underlying
+implementations of \rackinline|append-map| and
 \rackinline|append-map|, as these are standard and they are constant
 through the course of this discussion.
 
@@ -328,6 +322,13 @@ conjunction (disjunction) is independent of the unfolding of
 themselves could take or leave the 0-element base case. In a sense the
 \rackinline|conj| and \rackinline|disj| macros conflate primitive
 success and failure with desugaring conjunctions.
+
+Although outside of the usual Kanren tradition, an implementation
+could chose to forego \rackinline|conde| and provide the underlying
+binary logical primitives to the user. This is closer to the design of
+Prolog, where the user represents conjuction of goals in the body of a
+clause with a comma and disjunction, either implicitly in listing
+various clauses or explicitly with a semicolon.
 
 In any case, the programmer who wants to write an elegant, efficient
 solution to a pure relational programming task will not notice these
