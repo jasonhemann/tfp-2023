@@ -247,10 +247,10 @@ that those in languages without macros who intended to use this
 language for even fairly trivial tasks could become overwhelmed by the
 low-level details of programming in a microKanren such as binary
 conjunction and disjunction, with all the difficulties of a shallow
-embedding. A small programming mistake, such as incorrectly nesting a
-conjunct somewhere in a long conjunction chain, can cause relatively
-obscure errors and reading those error messages forces the programmer
-out of the microKanren-DSL thinking, and back into the host
+embedding. E.g., a small programming mistake, such as incorrectly
+nesting a conjunct somewhere in a long conjunction chain, can cause
+relatively obscure errors and reading those error messages forces the
+programmer out of the microKanren-DSL thinking, and back into the host
 programming language's debug model.
 
 \section{\rackinline|conde| and binary primitives}\label{sec:conde}
@@ -307,9 +307,9 @@ conjunctions (\rackinline|conj|).
 the underlying conjunction and disjunction operations. Here
 \rackinline|S| (\rackinline|F|) represents a primitive goal that
 unconditionally succeeds (fails). We omit the underlying
-implementations of \rackinline|append-map| and
-\rackinline|append-map|, as these are standard and they are constant
-through the course of this discussion.
+implementations of \rackinline|append| and \rackinline|append-map|, as
+these are standard and remain constant over the course of this
+discussion.
 
 In these implementations, the behavior of \rackinline|conj| and
 \rackinline|disj| are not quite defined as simple recursions over
