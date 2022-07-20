@@ -411,13 +411,12 @@ the help procedure does not need the state for conjunction. In each
 recursive call, the state is accumulated by mapping (using the special
 delaying implementation of append-map for miniKanren streams) the next
 goal in the list. This tail-recursive left-fold implementation happens
-to also left-associate the conjuncts. Ballantyne and Rosenblatt both
-point out how important left associative conjunction in efficiently
-implementing miniKanren search. A full through explanation of the
-behavior is outside the scope of our work here, but see discussions by
-Rosenblatt and Ballantyne~\href{here}{nowhere}.
-
-
+to also left-associate the conjuncts. Left associating conjuncts is so
+important dramatically improves miniKanren's search. A full through
+explanation of the behavior is outside the scope of our work here, but
+see discussions by Rosenblatt and Ballantyne~\cite{here,nowhere}. The
+matter is so significant that the community might consider
+reclassifying it as a matter of correctness.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
@@ -440,7 +439,7 @@ Rosenblatt and Ballantyne~\href{here}{nowhere}.
   \label{mnt:new-carmelit}
 \end{listing}
 
-%% Topic, Properly Implemented Left Associative Conjunction
+
 
 \section{Cleaning up the Impure Operators}\label{sec:impure}
 
