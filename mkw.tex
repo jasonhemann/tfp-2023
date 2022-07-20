@@ -311,39 +311,25 @@ implementations of \rackinline|append| and \rackinline|append-map|, as
 these are standard and remain constant over the course of this
 discussion.
 
-In these implementations, the behavior of \rackinline|conj| and
-\rackinline|disj| are not quite defined as simple recursions over
-their binary functional primitives. The definition of 0-way
-conjunction (disjunction) is independent of the unfolding of
-\rackinline|conj₂| (\rackinline|disj₂|). These two definitions
-themselves could take or leave the 0-element base case. In a sense the
-\rackinline|conj| and \rackinline|disj| macros conflate primitive
-success and failure with desugaring conjunctions.
+As implemented, \rackinline|conj| and \rackinline|disj| are not
+\emph{quite} defined as simple recursions over their binary functional
+primitives. The definition of 0-way conjunction (disjunction) is
+independent of the unfolding of \rackinline|conj₂|
+(\rackinline|disj₂|). In a sense the \rackinline|conj| and
+\rackinline|disj| macros amalgamate primitive success and failure
+goals with the recursive unfoldings of more-than-binary logical
+connectives with.
 
-Though this note mainly concerns the choice to implement surface
-language functionality as macros, it may also point to these as more
-natural primitives than \rackinline|conde|. Although outside of the
-usual Kanren tradition, an implementation could chose to forego
-\rackinline|conde| and provide the underlying binary logical
-primitives to the user. This is closer to the design of Prolog, where
-the user represents conjuction of goals in the body of a clause with a
-comma and disjunction, either implicitly in listing various clauses or
-explicitly with a semicolon.
-
-
-In any case, the programmer who wants to write an elegant, efficient
-solution to a pure relational programming task will not notice these
-additional base cases, as he will not use them in his
-\rackinline|conde| expressions. We believe the 0-or-more and 1-or-more
-variants are equally comprehensible from a user's point of view, so
-the programmer is no worse off for this change to the language. The
-programmer knows statically how these goals will behave, so there is
-no benefit to executing them. A conjunction of no goals would simply
-succeed, and a disjunction of no goals would simply fail. In some
-cases, a sufficiently intelligent whole-program compiler could
-optimize these away. In fact, it was the definition of the impure
-operator \rackinline|conda| seemingly demanded these additional base
-cases (we discuss this further in~\cref{sec:impure}).
+These zero-way logical operation base cases don't add much. The
+programmer who wants to write an elegant, efficient solution to a pure
+relational programming task will not notice these additional base
+cases, as he will not use them in his \rackinline|conde| expressions.
+The programmer knows statically how these goals will behave, so there
+is no benefit to executing them. A conjunction of no goals would
+simply succeed, and a disjunction of no goals would simply fail.
+Truthfully, only the impure \rackinline|conda| operator seemed to
+require these additional base cases (we discuss this further
+in~\cref{sec:impure}).
 
 If we mandate that disjunction be a function of one-or-more arguments
 (or, in another parlance, \enquote{polyvariadic}), we can implement
@@ -351,16 +337,6 @@ our disjunction as a shallow wrapper over a left-fold. For clarity,
 and to avoid namespace collisions, we use \rackinline|D| for our
 re-implementation of disjunction and we call its internal help
 function \rackinline|D-rec|.
-
-From the first goal (that the host language syntactically guarantees
-\emph{must} exist) and a state, \rackinline|D| can produce an answer
-stream \rackinline|(g₁ s)|, which it passes along as the first
-argument to \rackinline|D-rec|. The function \rackinline|D-rec| is
-merely a fold over the list of the remaining goals. Whereas the
-implementation in \cref{mnt:conj-and-disj-implementation} produces
-implements general disjunction as a right fold, the function
-\rackinline|D-rec| is instead a tail-recursive left fold, accumulating
-the resulting answer stream in \rackinline|s∞|.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
@@ -376,6 +352,17 @@ the resulting answer stream in \rackinline|s∞|.
   \caption{A functional re-implementation of disjunction.}
   \label{mnt:disj-re-implementation}
 \end{listing}
+
+From the first goal (that the host language syntactically guarantees
+\emph{must} exist) and a state, \rackinline|D| can produce an answer
+stream \rackinline|(g₁ s)|, which it passes along as the first
+argument to \rackinline|D-rec|. The function \rackinline|D-rec| is
+merely a fold over the list of the remaining goals. Whereas the
+implementation in \cref{mnt:conj-and-disj-implementation} produces
+implements general disjunction as a right fold, the function
+\rackinline|D-rec| is instead a tail-recursive left fold, accumulating
+the resulting answer stream in \rackinline|s∞|.
+
 
 Under the declarative reading of the logic program, this new
 implementation of disjunction is equivalent to the old implementation.
@@ -394,6 +381,25 @@ time to work and then handing off to the other. At each recursion,
 approximately half the answers in that stream come from the most
 recently evaluated goal, and so the resources dedicated to all the
 preceding goals is halved, in order to accommodate this new one.
+
+
+elicit
+encourage
+necessitate
+
+it was the definition of
+
+Though this note mainly concerns the choice to implement surface
+language functionality as macros, it may also point to these as more
+natural primitives than \rackinline|conde|. Although outside of the
+usual Kanren tradition, an implementation could chose to forego
+\rackinline|conde| and provide the underlying binary logical
+primitives to the user. This is closer to the design of Prolog, where
+the user represents conjuction of goals in the body of a clause with a
+comma and disjunction, either implicitly in listing various clauses or
+explicitly with a semicolon.
+
+
 
 Our desugaring macros would have worked whether we left or right
 associated. Removing a degree of freedom in the implementation, and
@@ -434,6 +440,29 @@ point out how important left associative conjunction in efficiently
 implementing miniKanren search. A full through explanation of the
 behavior is outside the scope of our work here, but see discussions by
 Rosenblatt and Ballantyne~\href{here}{nowhere}.
+
+
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall,linenos]{racket}
+(defrel (carmelit-subway a b c d e f)
+  (D
+   (C (== a 'carmel-center)
+      (== b 'golomb)
+      (== c 'masada)
+      (== d 'haneviim)
+      (== e 'hadar-city-hall)
+      (== f 'downtown))
+   (C (== a 'downtown)
+      (== b 'hadar-city-hall)
+      (== c 'haneviim)
+      (== d 'masada)
+      (== e 'golomb)
+      (== f 'carmel-center))))
+  \end{minted}
+  \caption{A reimplemented Carmelit subway without \rackinline|conde|.}
+  \label{mnt:new-carmelit}
+\end{listing}
 
 %% Topic, Properly Implemented Left Associative Conjunction
 
