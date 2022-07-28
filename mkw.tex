@@ -184,12 +184,13 @@ obviates several macros in the desugaring layer.
 
 Beyond being a conceptually simpler foundation for a full Kanren
 language, this implementation is more \emph{efficient}. The source of
-the original inefficiency---the right-association of conjunctions---
-is already known miniKanren implementation folklore. We were
-pleasantly surprised that code improvement \enquote{horse sense} and
-thinking about the expressivity of primitives also gave us improved
+the original inefficiency---the right-association of conjunctions---is
+already known miniKanren implementation folklore. We were pleasantly
+surprised that code improvement \enquote{horse sense} and thinking
+about the expressivity of primitives also gave us improved
 performance. This same horse sense might lead one to suggest these
-improved variants should have been the
+improved variants should actually be the programmer's exposed
+constructs.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren implementations
 status quo ante and illustrate why surface syntax macros seemed
@@ -210,7 +211,7 @@ further explanation, or to~\href{minikanren.org}{minikanren.org} for a
 slew of implementations across many host languages.
 
 The shortest subway system in the world is Haifa's Carmelit, with only
-six stations. The system is acylic, so its trains travel back and
+six stations. The system is a line so its trains travel back and
 forth. If we wanted to describe the order in which we rode the train
 from the beginning to the end, we could use the
 \rackinline|carmelit-subway| relation in ~\cref{mnt:carmelit}. We
@@ -255,12 +256,13 @@ programming language's debug model.
 
 \section{\rackinline|conde| and logical goal constructors}\label{sec:conde}
 
-Programmers deserve better than having to chain their logic together
-like building circuitry from logic gates. Such higher-level operations
-may or may not be present in the core language, but if not the
-programmer will reasonably expect some syntax sugar to provide them.
-Witness the Scheme's \rackinline|and| and \rackinline|or| macros as
-examples.
+% Programmers expect better than having to chain their logic together
+% like building circuitry from logic gates. Such
+
+Higher-level logical operations may or may not be present in the core
+language, but if not the programmer will reasonably expect some syntax
+sugar to provide them. Witness the Scheme's \rackinline|and| and
+\rackinline|or| macros as examples.
 \Cref{mnt:conde-implementation,mnt:conj-and-disj-implementation}
 contain a typical implementation of miniKanren's \rackinline|conde|
 operator, this one taken from \citetitle{friedman2018reasoned}. As
@@ -416,6 +418,22 @@ see discussions by Rosenblatt and Ballantyne~\cite{here,nowhere}. The
 matter is so significant that the community might consider
 reclassifying it as a matter of correctness.
 
+
+it was the definition of
+
+Our desugaring macros would have worked whether we left or right
+associated. Removing a degree of freedom in the implementation, and
+forcing ourselves to program the solution functionally, led us to what
+seems like the right solution. IS IT ACTUALLY SO? HOW WOULD I IMPLEMENT FOLD THE OTHER WAY.
+
+And then you could wrap conde as a gentle surface syntax.
+
+But if we’re willing to change the underlying syntax, then we could
+get even farther.
+
+We might say we didn’t even need the other version.
+
+
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
 (defrel (carmelit-subway a b c d e f)
@@ -437,7 +455,12 @@ reclassifying it as a matter of correctness.
   \label{mnt:new-carmelit}
 \end{listing}
 
-
+Though this note mainly concerns the choice to implement surface
+language functionality as macros, it may also point to these as more
+natural user-level primitives than \rackinline|conde|. An
+implementation could chose to forego \rackinline|conde| and just
+provide those underlying logical primitives \rackinline|C| and
+\rackinline|D| to the user.
 
 \section{Cleaning up the Impure Operators}\label{sec:impure}
 
@@ -592,6 +615,15 @@ efficient Kanrens in their chosen host languages.
 
 Languages with variadic but without polyvariadic (wits \enquote{at
   least $k$ arguments}) functions---how do they fare here.
+
+This is closer to the design of Prolog,
+where the user represents conjuction of goals in the body of a clause
+with a comma and disjunction, either implicitly in listing various
+clauses or explicitly with a semicolon.
+
+Macro systemless languages would still have to resort to exposing
+implementations of streams and \emph{some} lower level operations like
+introducing variables one at a time. However....
 
 We take it as granted that conjunction and disjunction themselves are
 sufficiently high-level operators for a surface language and that the
