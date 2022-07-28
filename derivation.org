@@ -1,0 +1,578 @@
+* Point of the derivation in this paper is:
+
+** Show how using var-args for functions points the way to the correct definitions
+
+We should be able to _see_ from the derivation how a clean definition brings us to right behavior.
+
+** Just switching to var-args functions isn’t enough!
+
+Just working with var-args functions isn’t enough; we could define the
+logic operators associating the “right way” just as easily as defining
+them the “wrong way”.
+
+So we need some more subtle categorization.
+
+** The axes of variation are:
+
+conj v. disj is not an axis of variation; any approach must work for both
+
+- variadic-based or macro based
+- left or right association and left or right fold are the same, because the operator is binary conj/disj---association is fold.
+- take first from the leftmost argument or take first from the rightmost argument
+
+We can implement the 2+-ary versions, using conj2/disj2 as primitives,
+in either the tail recursive or the natl. recursive versions, with
+either macros or varargs, either forwards or backwards. So that’s a
+nice place to start.
+
+- # of supported operations: 0+, 1+, 2+
+- Simple 2-case recursive implementation down to (0 or whatever the minimal number of elems is), or short circuit on some number > 0
+- include additional base cases or exclude those superfluous base cases
+- are these operations based on conj/disj, or do they go beneath that level---are the conj disj the primitives
+
+* Work *backward* and figure out where our “clean implementation” came from.
+
+** So, starting from here, we recover one of the recursive conj/2 based variants.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g₁ . gs) s)
+	(C-rec (g₁ s) gs))
+
+  (define (C-rec s∞ gs)
+	(cond
+	  ((null? gs) s∞)
+	  (else
+	   (C-rec (append-map (car gs) s∞) (cdr gs)))))
+#+end_src
+
+* Yes, certainly in the second call.
+
+Because ~conj2~ is
+
+#+begin_src racket
+  #lang racket
+  (define ((conj2 g1 g2) s/c)
+	($append-map g2 (g1 s/c)))
+#+end_src
+
+We could “un-combine” ~g1~ and ~s~, and build C-rec to take 3 arguments.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g₁ . gs) s)
+	(C-rec g₁ s gs))
+
+  (define (C-rec g1 s gs)
+	(cond
+	  ((null? gs) (g1 s))
+	  (else
+	   (C-rec (append-map (car gs) (g1 s)) (cdr gs)))))
+#+end_src
+
+Everything works here except for that last line, because the first
+argument here is a stream, which we did not yet want. We can now unfold that call to conj/2.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g₁ . gs) s)
+	(C-rec g₁ s gs))
+
+  (define (C-rec g1 s gs)
+	(cond
+	  ((null? gs) (g1 s))
+	  (else
+	   (C-rec ((conj2 g1 (car gs)) s) (cdr gs)))))
+#+end_src
+
+And now it’s easy to unwind the stream back into the right calls.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g₁ . gs) s)
+	(C-rec g₁ s gs))
+
+  (define (C-rec g1 s gs)
+	(cond
+	  ((null? gs) (g1 s))
+	  (else
+	   (C-rec (conj2 g1 (car gs)) s (cdr gs)))))
+#+end_src
+
+Really quickly, let’s go put the order of arguments back correctly:
+
+#+begin_src racket
+  #lang racket
+  (define ((C g₁ . gs) s)
+	(C-rec g₁ gs s))
+
+  (define (C-rec g1 gs s)
+	(cond
+	  ((null? gs) (g1 s))
+	  (else
+	   (C-rec (conj2 g1 (car gs)) (cdr gs) s))))
+#+end_src
+
+It’s further unfortunate to have to explicitly take apart car and cdr,
+which can lead to run-time failures partway through, when we can use
+var-args pattern matching up top to ensure that the inner function
+will run correctly.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g1 g2 . gs) s)
+	(C-rec g1 g2 gs s))
+
+  (define (C-rec g1 g2 gs s)
+	(cond
+	  ((null? gs) (g1 s)) ;; except
+	  (else
+	   (C-rec (conj2 g1 g2) gs s))))
+#+end_src
+
+This isn’t quite right just yet because we are dropping the
+penultimate goal. So--what would we normally want to do with that
+goal? Normally we would combine the first two and then recur.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g1 g2 . gs) s)
+	(C-rec g1 g2 gs s))
+
+  (define (C-rec g1 g2 gs s)
+	(cond
+	  ((null? gs) ((conj2 g1 g2) s))
+	  (else
+	   (C-rec (conj2 g1 g2) gs s))))
+#+end_src
+
+And we could either leave this definition as it is, or we could fold
+it back up into the original ~C~ definition.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g1 g2 . gs) s)
+	(cond
+	  ((null? gs) ((conj2 g1 g2) s))
+	  (else ((apply C (cons (conj2 g1 g2) gs)) s))))
+#+end_src
+
+So, which one is this?---varargs-2+-left-assoc
+
+** Rewrite/redo the derivation now in reverse.
+
+So, which one is this?---~varargs-2+-left-assoc~
+
+#+begin_src racket
+  #lang racket
+  (define ((C g1 g2 . gs) s)
+	(cond
+	  ((null? gs) ((conj2 g1 g2) s))
+	  (else ((apply C (cons (conj2 g1 g2) gs)) s))))
+#+end_src
+
+We can start by breaking the function up into a recursive variant and
+an external-facing help function:
+
+#+begin_src racket
+  #lang racket
+  (define ((C g1 g2 . gs) s)
+	(C-rec g1 g2 gs s))
+
+  (define (C-rec g1 g2 gs s)
+	(cond
+	  ((null? gs) ((conj2 g1 g2) s))
+	  (else
+	   (C-rec (conj2 g1 g2) gs s))))
+#+end_src
+
+If we substitute through in the definition of ~conj2~, we get:
+
+#+begin_src racket
+  #lang racket
+  (define ((C g1 g2 . gs) s)
+	(C-rec g1 g2 gs s))
+
+  (define (C-rec g1 g2 gs s)
+	(cond
+	  ((null? gs) ((lambda (s) ($append-map g2 (g1 s))) s))
+	  (else
+	   (C-rec (lambda (s) ($append-map g2 (g1 s))) gs s))))
+#+end_src
+
+
+* ~conda~
+
+So, it seemed like ~conda~ had forced our hand into including the
+zero-ary base case, if we wanted to build out of earlier primitives.
+We had needed the zero-ary version for conda. Suppose for a second we
+don’t care about ~conda~.
+
+* Suppose we _want_ to implement the 1+ary versions.
+
+Why would you want to do that? Macros, for instance. Maybe it would
+suck if the user had to think about whether their ~fresh~ body had 1
+or 2+ goals in it.
+
+#+begin_src racket
+	#lang racket
+
+	(define-syntax fresh
+	  (syntax-rules ()
+		[(fresh () g) <do something on this one>]
+		[(fresh () g g1 g* ...) <do something on this one>]
+		[(fresh (x ...) g ...) <recur here down to base case>]))
+#+end_src
+
+To recapitulate, our initial motivation was to remove some macros.
+This led to using variadic functions to combine arbitrary-length goal
+sequences. Many of the decisions fell out as a consequence of this
+choice.
+
+* So why were we so keen to support the 1+-ary versions? Is that what all that big hullabaloo was about?
+
+|   |   |
+|   |   |
+
+* Reimplementation and redefinition.
+
+#+begin_src racket
+  #lang racket
+
+  ((C (lambda (s)
+		(list (string-append "t" s) (string-append "v" s) (string-append "z" s)))
+	  (lambda (s)
+		(list (string-append "y" s) (string-append "x" s))))
+   "horse")
+#+end_src
+
+Let’s derive a definition of C by natural recursion.
+
+#+begin_src racket
+  #lang racket
+
+  (define ((C . gs) s)
+	...)
+
+#+end_src
+
+So we start with the usual natural recursion definition.
+
+*** What if we start with 2 or more?>
+
+#+begin_src racket
+  #lang racket
+  (require rackunit)
+
+  (define ((C . gs) s)
+	(cond
+	  ((null? gs) (list s))
+	  (else (append-map (car gs) ((apply C (cdr gs)) s)))))
+#+end_src
+
+We could not, here, simply associate this the other way if we’d wanted to.
+
+#+begin_src racket
+#lang racket
+
+(define ((C . gs) s)
+  (cond
+    ((null? gs) (list s))
+    (else (append-map (car gs) ((apply C (cdr gs)) s)))))
+#+end_src
+
+A Racket expression.
+
+src_racket[:exports both]{(+ 1 5)}
+
+Immediately bothersome is that this implementation forces an
+unnecessary recursive call into the 0 base case. We can short-circuit
+to fix that.
+
+#+begin_src racket
+  #lang racket
+  (define ((C . gs) s)
+  (cond
+    ((null? gs) (list s))
+    ((null? (cdr gs)) ((car gs) s))
+    (else (append-map (car gs) ((apply C (cdr gs)) s)))))
+
+#+end_src
+
+Well come to think of it, if we just exclude the vestigial runt base
+case, we could let var args do the pattern matching for us.
+
+#+begin_src racket
+  #lang racket
+  ;; 1+ gs -> s -> $tr
+(define ((C g . gs) s)
+  (cond
+    ((null? gs) (g s))
+    (else (append-map g ((apply C gs) s)))))
+
+
+#+end_src
+We could, by the way, have associated this the other direction, too.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g . gs) s)
+  (cond
+    ((null? gs) (g s))
+    (else (append-map (apply C gs) (g s)))))
+#+end_src
+
+The ~(C g)~ case matters b/c, say, some ~conde~ macro, or ~fresh~ if
+you wanted. But suppose you didn’t care about that, either, and that
+you didn’t need the singleton conjunction case either.
+
+#+begin_src racket
+  #lang racket
+  (define ((C g g1 . gs) s)
+  (cond
+    ((null? gs) (append-map g (g1 s)))
+    (else (append-map g ((apply C (cons g1 gs)) s)))))
+
+#+end_src
+
+Which is to say
+
+#+begin_src racket
+#lang racket
+  (define ((conj2 g g1) s)
+	(append-map g (g1 s)))
+
+  (define ((C g g1 . gs) s)
+	(cond
+	  ((null? gs) ((conj2 g g1) s))
+	  (else ((conj2 g (apply C (cons g1 gs))) s))))
+#+end_src
+
+And that works. We could have in the recursion associated it the other way
+
+#+begin_src racket
+  #lang racket
+
+  (define ((C g g1 . gs) s)
+  (cond
+	((null? gs) ((conj2 g g1) s))
+	(else ((apply C (cons (conj2 g g1) gs)) s))))
+
+#+end_src
+What about in the version before that?
+
+#+begin_src racket
+  #lang racket
+  ;; ne-listof goals -> s -> $tr
+(define ((C g . gs) s)
+  (cond
+    ((null? gs) (g s))
+    (else (append-map g ((apply C gs) s)))))
+
+
+(define ((C g₁ . gs) s)
+  (C-rec (g₁ s) gs))
+
+(define (C-rec s∞ gs)
+  (cond
+    ((null? gs) s∞)
+    (else
+      (C-rec (append-map (car gs) s∞) (cdr gs)))))
+
+
+#+end_src
+
+It would be unfortunate to mandate
+
+This list of goals then needed to be processed one at a
+time and build a resulting stream of answers.
+
+
+#+begin_src racket
+  #lang racket
+  (define ((D . gs) s)
+  (cond
+    ((null? gs) (list s))
+    (else (g s))))
+
+
+#+end_src
+
+
+To avoid the macro
+: need variadic functions and recursively process arg list.
+: oughnt't introduce artificial extra goals in base case.
+: oughtn't need artificial base cases
+: need to come in with an initial value for the accumulator
+: so need to demand at least one goal to start with
+
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj) S)
+    ((conj g) g)
+    ((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
+
+
+;; wasted disj attempt
+
+
+(define ((D . gs) s)
+  ...)
+
+Since \rackinline|gs| could be empty, as with the macro based
+implementation we introduce a base-case for the zero-length list.
+
+(define ((D . gs) s)
+  (cond
+    ((null? gs) (list))
+    ...))
+
+But nit's also unfortunate to force an extra failing recursion onto every call,
+so we add the length-one arguments list to short-circuit that.
+
+(define ((D . gs) s)
+  (cond
+    ((null? gs) '())
+    ((null? (cdr gs)) (g s))
+    ...))
+
+It's obnoxious enough that with rest args we can rule it out.
+
+(define ((D g . gs) s)
+  (cond
+    ((null? gs) (g s))
+    (else (append (g s) (D gs)))))
+
+(define ((C g . gs) s)
+  (cond
+    ((null? gs) (g s))
+    (else (append-map (C gs) (g s)))))
+
+
+;; These assume 2+ goals; and we don’t write or work w/ “silly conjunctions.”
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g0 g1) (conj₂ g0 g1))
+    ((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj g0 g1) (disj₂ g0 g1))
+    ((disj g0 g1 g ...) (disj (disj₂ g0 g1) g ...))))
+
+;; These next two are from the paper, as written.
+;; As they’re written, they are 0-or-more-ary.
+;; But they likewise shouldn’t require silly arities.
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj) S)
+    ((conj g) g)
+    ((conj g0 g ...) (conj₂ g0 (conj g ...)))))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj) F)
+    ((disj g) g)
+    ((disj g0 g ...) (disj₂ g0 (disj g ...)))))
+
+;; So we first remove the zero arity, conda be damned.
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g) g)
+    ((conj g0 g ...) (conj₂ g0 (conj g ...)))))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj g) g)
+    ((disj g0 g ...) (disj₂ g0 (disj g ...)))))
+
+;; Then, we try again and unfold the recursion once more
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g) g)
+    ((conj g0 g1) (conj₂ g0 (conj g1)))
+    ((conj g0 g1 g ...) (conj₂ g0 (conj g1 g ...)))))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj g) g)
+    ((disj g0 g1) (disj₂ g0 (disj g1)))
+    ((disj g0 g1 g ...) (disj₂ g0 (disj g1 g ...)))))
+
+;; Then, substitute through, and specialize away
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g0 g1) (conj₂ g0 g1))
+    ((conj g0 g1 g ...) (conj₂ g0 (conj g1 g ...)))))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj g0 g1) (disj₂ g0 g1))
+    ((disj g0 g1 g ...) (disj₂ g0 (disj g1 g ...)))))
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g0 g1) (conj₂ g0 g1))
+    ((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj g0 g1) (disj₂ g0 g1))
+    ((disj g0 g1 g ...) (disj (disj₂ g0 g1) g ...))))
+
+*
+** Then we substitute through the definition of disj2/conj2, and see what happens there.
+
+* With the macro based variants, we end up building heavily nested lambdas.
+
+(define ((disj₂ g₁ g₂) s)
+  (append (g₁ s) (g₂ s)))
+
+(define ((conj2 g1 g2) s)
+  (append-map g2 (g1 s)))
+
+;; Substitute through the definition of conj2
+
+;; I don’t know that these “assoc” are correct
+;;
+;; But!
+;;
+
+;; right assoc
+
+(define ((conj g g1 . gs) s)
+  (cond
+	((null? gs) (append-map g1 (g s)))
+	(else (append-map (apply conj (cons g1 gs)) (g s)))))
+
+;; left assoc--if you try this it doesn’t work
+(define ((conj g g1 . gs) s)
+  (cond
+	((null? gs) (append-map g1 (g s)))
+	(else ((apply conj (cons (lambda (s) (append-map g1 (g s))) gs)) s))))
+
+
+* Fresh reimplementation, janky.
+
+#+begin_src racket
+  #lang racket
+
+  ;; Attempt to re-implement fresh as a function.
+  ;;
+  ;; This demands procedure-arity, a highly non-standard function with
+  ;; definitely limited behavior.
+
+  (define (fresh f)
+	(let ((n (procedure-arity f)))
+	  (assert (number? n))
+	  (λ (s/c)
+		(let ((c (cdr s/c)))
+		  ((apply f (build-list n (curry + c)))
+		   (cons (car s/c) (+ n c)))))))
+#+end_src
