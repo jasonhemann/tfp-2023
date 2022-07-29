@@ -419,23 +419,104 @@ disjunction it just doesn’t matter? Let’s see anyway.
 
 ** The left-associative ~disj~
 
+#+begin_src racket
+  #lang racket
 
+(define ((disj g g1 . gs) s)
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else (let ((res (apply disj (cons (disj2 g g1) gs))))
+              (res s)))))
+
+#+end_src
+
+and split
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((disj2 g g1) s))
+	  (else ((apply disj (cons (disj2 g g1) gs)) s))))
+
+#+end_src
+
+and apply through
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((disj2 g g1) s))
+	  (else (D-rec (disj2 g g1) (car gs) (cdr gs) s))))
+#+end_src
+
+We have to abstract over ~s~ here, which is probably going to be sub-optimal.
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((λ (s) ($append (g s) (g1 s))) s))
+	  (else (D-rec (λ (s) ($append (g s) (g1 s))) (car gs) (cdr gs) s))))
+#+end_src
+
+I guess we can ~β~ in the base case.
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ($append (g s) (g1 s)))
+	  (else (D-rec (λ (s) ($append (g s) (g1 s))) (car gs) (cdr gs) s))))
+#+end_src
+
+And finish up with the arity reduction again.
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g . gs) s)
+	(D-rec g gs s))
+
+  (define (D-rec g gs s)
+	(cond
+	  ((null? gs) (g s))
+	  (else (D-rec (λ (s) ($append (g s) (g1 s))) (cdr gs) s))))
+#+end_src
+
+This variant builds up one giant big honkin’ goal, and then applies
+that dude all over creation. I *assume* that’s sub-optimal. But I
+don’t *know* it.
 
 ** The left-associative ~disj~, but arguments flipped
 
-But the disjuncts execute in the opposite order than we’re used to, or
-than we expect.
-
-However, we saw also that alternate implementations flip the order
-that the arguments execute. That’s just what we need!
+At some point, one of the problems that we saw, that Greg Rosenblatt
+also pointed out, was that the mK search heuristic was flipped for one
+of these implementations---that is to say, the *rightmost* goal ended
+up getting I think 1/2 of the search rather than the *leftmost*, as
+per usual. However, we saw also that alternate implementations flip
+the order that the arguments execute. And there’s no problem switching
+them as we recur down. This is the same derivation we just saw, but
+instead using the left-associated flipped args version.
 
 #+begin_src racket
-	#lang racket
-	(define (let ((res (disj g g1 . gs)))
-			  (res s))
-	  (cond
-		((null? gs) ((disj2 g1 g) s))
-		(else ((apply disj (cons (disj2 g1 g) gs)) s))))
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(cond
+	  ((null? gs) ((disj2 g1 g) s))
+	  (else ((apply disj (cons (disj2 g1 g) gs)) s))))
 #+end_src
 
 So, the by-now standard practice.
