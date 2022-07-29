@@ -214,7 +214,7 @@ The shortest subway system in the world is Haifa's Carmelit, with only
 six stations. The system is a line so its trains travel back and
 forth. If we wanted to describe the order in which we rode the train
 from the beginning to the end, we could use the
-\rackinline|carmelit-subway| relation in ~\cref{mnt:carmelit}. We
+\rackinline|carmelit-subway| relation in~\cref{mnt:carmelit}. We
 express this relation using the more compact miniKanren syntax because
 unfolding this relation into binary conjunctions and disjunctions
 would be painful. We certainly \emph{could} write it out by hand---in
@@ -331,7 +331,9 @@ statically how these goals will behave, so there is no benefit to
 executing them. A conjunction of no goals would simply succeed, and a
 disjunction of no goals would simply fail. Truthfully, only the impure
 \rackinline|conda| operator seemed to require these additional base
-cases (we discuss this further in~\cref{sec:impure}).
+cases (we discuss this further in~\cref{sec:impure}). If we just
+exclude the vestigial runt base case, we could let var args do the
+pattern matching for us.
 
 If we mandate that disjunction be a function of one-or-more arguments
 (or, in another parlance, \enquote{polyvariadic}), we can implement
@@ -372,7 +374,7 @@ heavily weighted in the search, here the \emph{last} goal is most
 heavily weighted. Because $n$-ary disjunction is now built in to the
 functional definition, this behavior is now transparently visible in
 the implementation of \rackinline|D-rec|. Imagine for a moment that in
-the given state \rackinline|s| each goal in~\rackinline|(g₁ . gs)|
+the given state \rackinline|s| each goal in \rackinline|(g₁ . gs)|
 produces infinitely many answers. The \rackinline|append| is doing a
 fair interleaving between its two stream arguments: giving one a
 little time to work and then handing off to the other. At each

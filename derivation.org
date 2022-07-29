@@ -57,7 +57,9 @@ So, which one is this?---~varargs-2+-left-assoc~
 #+end_src
 
 We can start by breaking the function up into a recursive variant and
-an external-facing help function:
+an external-facing help function. Unlike the earlier recursive variant
+above, this inner recursive function does not require ~apply~ since it
+uses ordinary list recursion.
 
 #+begin_src racket
   #lang racket
@@ -106,9 +108,10 @@ We had to combine and hand substitute through, as in ~((lambda (s)
 	  (else (C-rec (car gs) (cdr gs) ($append-map g2 s-inf)))))
 #+end_src
 
-Now, we can turn this into a 1+ary version; the recursion and the
-base case share a lot in common, and we can exploit that: pass back
-the stream in the base case, and split ~gs~ in the other case.
+The recursion and the base case share a lot in common. We can exploit
+that. If we pass back the stream in the base case, and split ~gs~ in
+the recursive case, we can get rid of ~g2~ and turn this into a 1+ary
+version.
 
 #+begin_src racket
   #lang racket
@@ -146,8 +149,8 @@ removing a combinator when moving from one to more than one goal.
 		[(fresh (x ...) g ...) <recur here down to base case>]))
 #+end_src
 
-To illustrate just how superfluous the 0-arity version is, we can
-always add that as a separate case in the interface function.
+To illustrate just how superfluous the 0-arity version is, see that we
+can add that back in as a separate case of the interface function.
 
 #+begin_src racket
   #lang racket
@@ -164,17 +167,18 @@ always add that as a separate case in the interface function.
 
 ** So. Can we do the same thing for *all* of those variants?
 
-Is this transformation sequence equally applicable across all of the 4
-versions? Or some analogous version of it?
+Is this transformation sequence (or some analogous version of it)
+equally applicable across all of the 4 varags versions?
+
+* Open question.
 
 To recapitulate, our initial motivation was to remove some macros.
 This led to using variadic functions to combine arbitrary-length goal
 sequences. I want to tell a story where many, if not all, of the
-decisions fell out as a consequence of this choice.
+decisions fell out as a consequence of this choice. Can we do that?
 
 
-Well come to think of it, if we just exclude the vestigial runt base
-case, we could let var args do the pattern matching for us.
+
 
 #+begin_src racket
   #lang racket
