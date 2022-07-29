@@ -89,12 +89,14 @@
   (define ((conj g g1 . gs) s)
     (cond
       ((null? gs) ((conj2 g g1) s))
-      (else ((apply conj (cons (conj2 g g1) gs)) s))))
+      (else (let ((res (apply conj (cons (conj2 g g1) gs))))
+              (res s)))))
 
   (define ((disj g g1 . gs) s)
     (cond
       ((null? gs) ((disj2 g g1) s))
-      (else ((apply disj (cons (disj2 g g1) gs)) s))))
+      (else (let ((res (apply disj (cons (disj2 g g1) gs))))
+              (res s)))))
 
   )
 
@@ -104,12 +106,14 @@
   (define ((conj g g1 . gs) s)
     (cond
       ((null? gs) ((conj2 g g1) s))
-      (else ((conj2 g (apply conj (cons g1 gs))) s))))
+      (else (let ((res (conj2 g (apply conj (cons g1 gs)))))
+              (res s)))))
 
   (define ((disj g g1 . gs) s)
     (cond
       ((null? gs) ((disj2 g g1) s))
-      (else ((disj2 g (apply disj (cons g1 gs))) s))))
+      (else (let ((res (disj2 g (apply disj (cons g1 gs)))))
+              (res s)))))
 
   )
 
@@ -119,12 +123,14 @@
   (define ((conj g g1 . gs) s)
     (cond
       ((null? gs) ((conj2 g1 g) s))
-      (else ((apply conj (cons (conj2 g1 g) gs)) s))))
+      (else (let ((res (apply conj (cons (conj2 g1 g) gs))))
+              (res s)))))
 
   (define ((disj g g1 . gs) s)
     (cond
       ((null? gs) ((disj2 g1 g) s))
-      (else ((apply disj (cons (disj2 g1 g) gs)) s))))
+      (else (let ((res (apply disj (cons (disj2 g1 g) gs))))
+              (res s)))))
 
   )
 
@@ -134,12 +140,14 @@
   (define ((conj g g1 . gs) s)
     (cond
       ((null? gs) ((conj2 g1 g) s))
-      (else ((conj2 (apply conj (cons g1 gs)) g) s))))
+      (else (let ((res (conj2 (apply conj (cons g1 gs)) g)))
+              (res s)))))
 
   (define ((disj g g1 . gs) s)
     (cond
       ((null? gs) ((disj2 g1 g) s))
-      (else ((disj2 (apply disj (cons g1 gs)) g) s))))
+      (else (let ((res (disj2 (apply disj (cons g1 gs)) g)))
+              (res s)))))
 
   )
 
