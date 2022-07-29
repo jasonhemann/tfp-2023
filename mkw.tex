@@ -157,9 +157,9 @@ would simultaneously aid future would-be implementers when studying
 the source code, and also that the functional core would make the
 language easier to port to other functional host languages. This
 microKanren approach has found purchase as a tool for understanding
-through implementation the guts of a relational programming language.
-To support both those efforts, the authors chose to program
-microKanren in a deliberately small and quotidian set of Scheme
+the guts of a relational programming language through studying its
+implementation. To support both those efforts, the authors chose to
+program microKanren in a deliberately small and workaday set of Scheme
 primitives.
 
 Until now microKanren implementation technique had divided the
@@ -172,15 +172,15 @@ ourselves the luxury of some changes to the core language's syntax.
 
 Even implementers using and programmers studying implementations
 written in languages \emph{with} sufficiently expressive macro systems
-can benefit from these improvements. There are benefits to parsimony.
-For a language this means having a small highly expressive set of
-primitives~\cite{somedescriptionofscheme}. The microKanren authors
-measured their result by the number of lines in the core
-implementation, the number of additional lines for their and the
-limited features they required from the host. So replacing less
-powerful language primitives by comparatively short but more powerful
-variants is a win. Beyond that, this more powerful kernel language
-obviates several macros in the desugaring layer.
+can benefit from these improvements. There are benefits to using a
+limited set of features. For a language this means having a small
+highly expressive set of primitives~\cite{somedescriptionofscheme}.
+The microKanren authors measured their result by the number of lines
+in the core implementation, the number of additional lines for their
+and the limited features they required from the host. So replacing
+less powerful language primitives by comparatively short but more
+powerful variants is a win. Beyond that, this more powerful kernel
+language obviates several macros in the desugaring layer.
 
 Beyond being a conceptually simpler foundation for a full Kanren
 language, this implementation is more \emph{efficient}. The source of
@@ -414,14 +414,14 @@ recursive call, the state is accumulated by mapping (using the special
 delaying implementation of append-map for miniKanren streams) the next
 goal in the list. This tail-recursive left-fold implementation happens
 to also left-associate the conjuncts. Left associating conjuncts is so
-important dramatically improves miniKanren's search. A full through
+important dramatically improves miniKanren's search. A full, thorough,
 explanation of the behavior is outside the scope of our work here, but
 see discussions by Rosenblatt and Ballantyne~\cite{here,nowhere}. The
 matter is so significant that the community might consider
-reclassifying it as a matter of correctness.
-
-
-it was the definition of
+reclassifying left-associative conjunction as a matter of correctness
+rather than an optimization, as in \enquote{tail call optimization}
+vs. \enquote{Properly Implemented Tail Call
+  Handling}~\cite{felleisen2014requestions}.
 
 Our desugaring macros would have worked whether we left or right
 associated. Removing a degree of freedom in the implementation, and
@@ -460,7 +460,7 @@ We might say we didn’t even need the other version.
 Though this note mainly concerns the choice to implement surface
 language functionality as macros, it may also point to these as more
 natural user-level primitives than \rackinline|conde|. An
-implementation could chose to forego \rackinline|conde| and just
+implementation could choose to forego \rackinline|conde| and just
 provide those underlying logical primitives \rackinline|C| and
 \rackinline|D| to the user.
 
@@ -608,15 +608,15 @@ to make \rackinline|once| a primitive higher-order goal.
 narrows the gap between implementations in functional host languages
 with and without macro systems.
 
-More languages that ever before support variable arity
+More languages than ever before support variable arity
 functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
 including Raku, Java, and Ruby, to name just a few. Many of these
 languages also support polyvariadic functions. The authors hope that
 this document helps implementers build more elegant, expressive and
 efficient Kanrens in their chosen host languages.
 
-Languages with variadic but without polyvariadic (wits \enquote{at
-  least $k$ arguments}) functions---how do they fare here.
+Languages with variadic but without polyvariadic (that is to say
+\enquote{at least $k$ arguments}) functions---how do they fare here?
 
 This is closer to the design of Prolog,
 where the user represents conjuction of goals in the body of a clause
@@ -637,11 +637,10 @@ programs representable when we can avoid doing so.
 
 Of course, no implementer \emph{needs} a macro system to implement a
 shallow embedding of an LP language. In our implementations, we still
-use macros to implement \rackinline|define-relation| and
-\rackinline|fresh|, the former to prevent exposing the implementation
-of streams and delays, and the latter both for the added efficiency
-and to avoid the awkwardness of introducing each variable one at a
-time.
+use macros to implement \rackinline|defrel| and \rackinline|fresh|,
+the former to prevent exposing the implementation of streams and
+delays, and the latter both for the added efficiency and to avoid the
+awkwardness of introducing each variable one at a time.
 
 From time to time we find that the usual miniKanren implementation is
 itself lower-level than we would like to program with relations.
@@ -651,7 +650,7 @@ expressive and highly optimized language forms, as in the original
 \rackinline|Kanren|. It is nice to find we can spread some of that
 extra expressiveness to the broader Kanren language community.
 
-This note shows that, at the cost of one additional feature--namely
+This note shows that at the cost of one additional feature--namely
 variadic functions---implementers provide a somewhat more powerful
 core language and significantly reduce the need for macros in
 implementing a language as expressive as the full

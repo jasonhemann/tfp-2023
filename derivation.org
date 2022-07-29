@@ -188,16 +188,15 @@ is aces and this is a good paper. If we are stuck with the
 backward-disj, then that’s okay but not great.
 
 #+begin_src racket
-  #lang racket
-    (define ((conj g g1 . gs) s)
-    (cond
-      ((null? gs) ((conj2 g g1) s))
-      (else ((conj2 g (apply conj (cons g1 gs))) s))))
+#lang racket
+  (define ((conj g g1 . gs) s)
+  (cond
+	((null? gs) ((conj2 g g1) s))
+	(else ((conj2 g (apply conj (cons g1 gs))) s))))
 #+end_src
 
 So, alright. We’ll try it this way. Break it apart into a recursive
 and non-recursive fragment.
-
 
 #+begin_src racket
   #lang racket
