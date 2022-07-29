@@ -4,7 +4,7 @@
 
 The “naturally-recursive” macro-based implementations we came up with
 go the wrong direction. They nest the goals unfortunately, in ways
-that we can see in Redex.
+that we can see in ~redex~.
 
 ** Show how using var-args for functions points the way to the correct definitions
 
@@ -46,6 +46,16 @@ either. Then we can pick from a smörgåsbord of options.
 
 ** We derivation our “clean” version from one of these short recursive variants.
 
+The basic steps seem to be
+
+1. I mean, honestly. That 0-ary base case needs to go. We gotta get rid of that.
+2. To get rid of macro, start with 2-ary versions. These blend easily.
+3. To avoid ~apply~, use variadic to make a help function, and just use list recursion
+4. We should be able to simplify by substituting through the old ~xyzj/2~ definition
+5. We ought to be able to reduce the base case
+
+** First try
+
 So, which one is this?---~varargs-2+-left-assoc~
 
 #+begin_src racket
@@ -84,7 +94,7 @@ If we substitute through in the definition of ~conj2~, we get:
 	(cond
 	  ((null? gs) ((lambda (s) ($append-map g2 (g1 s))) s))
 	  (else
-	   (C-rec (lambda (s) ($append-map g2 (g1 s))) (car gs) (cdr gs) s))))
+		(C-rec (lambda (s) ($append-map g2 (g1 s))) (car gs) (cdr gs) s))))
 #+end_src
 
 Here is the important piece; since we only need ~s~ to *build the
@@ -195,213 +205,309 @@ backward-disj, then that’s okay but not great.
 	(else ((conj2 g (apply conj (cons g1 gs))) s))))
 #+end_src
 
-So, alright. We’ll try it this way. Break it apart into a recursive
-and non-recursive fragment.
+So, alright. We’ll try it this way. Break it apart into two mutually
+recursive functions.
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  (C-rec g g1 gs s))
+  (define ((conj g g1 . gs) s)
+	(C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
 	(cond
 	  ((null? gs) ((conj2 g g1) s))
-	  (else ((conj2 g (C-rec g1 (car gs) (cdr gs) s)) s))))
-  ;; Cf ((conj2 g (apply conj (cons g1 gs))) s)
+	  (else ((conj2 g (apply conj (cons g1 gs))) s))))
 #+end_src
 
-And then we try and substitute through the definition of ~conj2~.
+Okay, now this must be where things get different. We cannot (easily)
+replace the subsequent line by a recursive call to ~C-rec~, because we
+are still waiting on an ~s~. So the best we can do is this,
+abstracting over ~s~ and waiting.
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  (C-rec g g1 gs s))
+  (define ((conj g g1 . gs) s)
+	(C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
 	(cond
-	  ((null? gs) ((λ (s) ($append-map g1 (g s))) s))
-	  (else ((λ (s) ($append-map (C-rec g1 (car gs) (cdr gs) s) (g s))) s))))
+	  ((null? gs) ((conj2 g g1) s))
+	  (else ((conj2 g (λ (s) (C-rec g1 (car gs) (cdr gs) s))) s))))
 #+end_src
 
-Okay, now this must be where things get different. Because in the
-earlier version, we could construct the stream on the way /down/. Can
-we not do that here?
+From here we can try and substitute through the definition of ~conj2~.
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  (C-rec g g1 gs s))
+  (define ((conj g g1 . gs) s)
+	(C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
 	(cond
-	  ((null? gs) ((λ (s) ($append-map g1 (g s))) s))
-	  (else ((λ (s) ($append-map (C-rec g1 (car gs) (cdr gs) s) (g s))) s))))
+	  ((null? gs) ((lambda (s) ($append-map g1 (g s))) s))
+	  (else ((lambda (s) ($append-map (λ (s) (C-rec g1 (car gs) (cdr gs) s)) (g s))) s))))
 #+end_src
 
-Here it doesn’t look like the ~lambda~ is doing anything for us, and
-we can ~β~-reduce those.
+In the earlier version, we could construct the stream on the way
+/down/. We cannot do that here. We can ~β~-reduce here, since the
+lambdas weren’t doing anything for us.
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  (C-rec g g1 gs s))
+  (define ((conj g g1 . gs) s)
+	(C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
 	(cond
 	  ((null? gs) ($append-map g1 (g s)))
-	  (else ($append-map (C-rec g1 (car gs) (cdr gs) s) (g s)))))
+	  (else ($append-map (λ (s) (C-rec g1 (car gs) (cdr gs) s)) (g s)))))
 #+end_src
 
-We can try to pass the stream in, and see what that does.
+In the earlier derivation we were able to turn the stream itself into
+a parameter, and change the recursive function’s arity. We can do that
+here, although again this abstraction makes the results a little less
+pleasant.
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  (C-rec g1 gs s (g s)))
+  (define ((conj g g1 . gs) s)
+	(C-rec g1 gs (g s)))
 
-  (define (C-rec g1 gs s s-inf)
+  (define (C-rec g1 gs s-inf)
 	(cond
 	  ((null? gs) ($append-map g1 s-inf))
-	  (else ($append-map (C-rec g1 (car gs) (cdr gs) s) s-inf))))
+	  (else ($append-map (λ (s) (C-rec (car gs) (cdr gs) (g1 s))) s-inf))))
 #+end_src
 
-And we could curry the ~$append-map~, pull the stream back, and that gets a little something.
+We can try and loosen the 2+ requirement, a bit at least.
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  ((C-rec g1 gs s) (g s)))
+  (define ((conj g . gs) s)
+	(C-rec gs (g s)))
 
-  (define ((C-rec g1 gs s) s-inf)
+  (define (C-rec gs s-inf)
 	(cond
-	  ((null? gs) ((curry $append-map g1) s-inf))
-	  (else ((curry $append-map (C-rec g1 (car gs) (cdr gs) s)) s-inf))))
+	  ((null? gs) s-inf)
+	  (else ($append-map (λ (s) (C-rec (cdr gs) ((car gs) s))) s-inf))))
 #+end_src
 
-And we can kind of ~eta~-reduce that definition.
+It’s not /totally/ clear that there’s some optimization we’re
+prevented from performing, but needing to construct a closure for
+every recursive call is expensive, I guess compared to doing not-that.
 
-#+begin_src racket
-  #lang racket
-	(define ((conj g g1 . gs) s)
-	  ((C-rec g1 gs s) (g s)))
-
-  (define (C-rec g1 gs s)
-	(cond
-	  ((null? gs) (curry $append-map g1))
-	  (else (curry $append-map (C-rec g1 (car gs) (cdr gs) s)))))
-#+end_src
-
-But I’m having trouble understanding how one is obviously a worse
+But I’m having trouble understanding how one is _so_ obviously a worse
 definition, or how one permits an optimization the other clearly
 forbids, in a way that leads to the thesis "basic programming skills
-get us to the clever definition." Do I want to go with “the 1+ary
-version looks uglier”?
+get us to the clever definition" and that we can see from horse sense.
 
+Maybe the nested lambdas there is it. However.
+
+** The last case we need to concern ourselves with: ~disj~
+
+** fold right variant.
+
+This one wound up with a nested lambda, and does a non-trivial amount
+of work to it. Is the alternative nicer?
 
 #+begin_src racket
   #lang racket
-	(define ((conj g g1 . gs) s)
-	  ((C-rec g1 gs s) (g s)))
-
-  (define (C-rec g1 gs s)
+  (define ((disj g g1 . gs) s)
 	(cond
-	  ((null? gs) (curry $append-map g1))
-	  (else (curry $append-map (C-rec g1 (car gs) (cdr gs) s)))))
+	  ((null? gs) ((disj2 g g1) s))
+	  (else ((disj2 g (apply disj (cons g1 gs))) s))))
+
 #+end_src
 
-
-** Some other older try I’m not thinking about right now. Detritus.
+Mutual recursion
 
 #+begin_src racket
   #lang racket
-  (define ((C g g1 . gs) s)
-  (cond
-    ((null? gs) (append-map g (g1 s)))
-    (else (append-map g ((apply C (cons g1 gs)) s)))))
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
 
-#+end_src
-
-Which is to say
-
-#+begin_src racket
-#lang racket
-  (define ((conj2 g g1) s)
-	(append-map g (g1 s)))
-
-  (define ((C g g1 . gs) s)
+  (define (D-rec g g1 gs s)
 	(cond
-	  ((null? gs) ((conj2 g g1) s))
-	  (else ((conj2 g (apply C (cons g1 gs))) s))))
+	  ((null? gs) ((disj2 g g1) s))
+	  (else ((disj2 g (apply disj (cons g1 gs))) s))))
 #+end_src
 
-And that works. We could have in the recursion associated it the other way
-
-#+begin_src racket
-  #lang racket
-
-  (define ((C g g1 . gs) s)
-  (cond
-	((null? gs) ((conj2 g g1) s))
-	(else ((apply C (cons (conj2 g g1) gs)) s))))
-
-#+end_src
-What about in the version before that?
-
-#+begin_src racket
-  #lang racket
-  ;; ne-listof goals -> s -> $tr
-(define ((C g . gs) s)
-  (cond
-    ((null? gs) (g s))
-    (else (append-map g ((apply C gs) s)))))
-
-
-(define ((C g₁ . gs) s)
-  (C-rec (g₁ s) gs))
-
-(define (C-rec s∞ gs)
-  (cond
-    ((null? gs) s∞)
-    (else
-      (C-rec (append-map (car gs) s∞) (cdr gs)))))
-
-
-#+end_src
-
-It would be unfortunate to mandate
-
-This list of goals then needed to be processed one at a
-time and build a resulting stream of answers.
+But since unlike the earlier version we don’t have all the parts yet,
+we cannot build the recursive function right now. Instead we have to
+~λ~ abstract.
 
 
 #+begin_src racket
   #lang racket
-  (define ((D . gs) s)
-  (cond
-    ((null? gs) (list s))
-    (else (g s))))
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
 
-
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((disj2 g g1) s))
+	  (else ((disj2 g (λ (s) ((apply disj (cons g1 gs)) s))) s))))
 #+end_src
 
-1. I mean, honestly. That 0-ary base case needs to go. We gotta get rid of that.
-2. To get rid of macro, start with 2-ary versions. These blend easily.
-1. To avoid the macro
-2. need variadic functions and recursively process arg list.
-: oughnt't introduce artificial extra goals in base case.
-: oughtn't need artificial base cases
-: need to come in with an initial value for the accumulator
-: so need to demand at least one goal to start with
+... and then we can build the recursion
 
 
-(define-syntax conj
-  (syntax-rules ()
-    ((conj) S)
-    ((conj g) g)
-    ((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((disj2 g g1) s))
+	  (else ((disj2 g (λ (s) (D-rec g1 (car gs) (cdr gs) s))) s))))
+#+end_src
+
+Now seems like a nice time to unfold the definitions of ~disj2~.
 
 
-;; wasted disj attempt
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((λ (s) ($append (g s) (g1 s))) s))
+	  (else ((λ (s) ($append (g s) ((λ (s) (D-rec g1 (car gs) (cdr gs) s)) s))) s))))
+#+end_src
+
+This makes the β reductions come out very nice.
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ($append (g s) (g1 s)))
+	  (else ($append (g s) (D-rec g1 (car gs) (cdr gs) s)))))
+#+end_src
+
+And this is a nice time to reduce the arity.
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g . gs) s)
+	(D-rec g gs s))
+
+  (define (D-rec g gs s)
+	(cond
+	  ((null? gs) (g s))
+	  (else ($append (g s) (D-rec (car gs) (cdr gs) s)))))
+#+end_src
+
+This approach has to be the right solution. It might be that this
+doesn’t take the conjuncts in the correct order or something, in which
+case we have to switch which goal goes in which position, but I have a
+real hard time believing that this isn’t the correct answer.
+
+I worry the other disj implementation we’re after ends up with those
+same sadly-nested lambdas. And I suspect that performance wise that’s
+a bad thing.
+
+I *thought* the straightforward left-associative, left recursion
+~disj~ implementation you get that great performance, the same with
+conjunction. The fact that the above is so nice makes me suspect that
+the other implementation has to be incorrect. Or, maybe with
+disjunction it just doesn’t matter? Let’s see anyway.
+
+** The left-associative ~disj~
+
+
+
+** The left-associative ~disj~, but arguments flipped
+
+But the disjuncts execute in the opposite order than we’re used to, or
+than we expect.
+
+However, we saw also that alternate implementations flip the order
+that the arguments execute. That’s just what we need!
+
+#+begin_src racket
+	#lang racket
+	(define (let ((res (disj g g1 . gs)))
+			  (res s))
+	  (cond
+		((null? gs) ((disj2 g1 g) s))
+		(else ((apply disj (cons (disj2 g1 g) gs)) s))))
+#+end_src
+
+So, the by-now standard practice.
+
+*** Split the function in two
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((disj2 g1 g) s))
+	  (else ((apply disj (cons (disj2 g1 g) gs)) s))))
+#+end_src
+
+We can directly substitute the call ~((apply disj (cons (disj2 g1 g)
+gs)) s)~ through for the recursion.
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((disj2 g1 g) s))
+	  (else (D-rec (disj2 g1 g) (car gs) (cdr gs) s))))
+#+end_src
+
+*** Substitute through for ~disj2~
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((lambda (s) ($append (g1 s) (g s))) s))
+	  (else (D-rec (lambda (s) ($append (g1 s) (g s))) (car gs) (cdr gs) s))))
+#+end_src
+
+*** ~β~-reduce where we can
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g g1 . gs) s)
+	(D-rec g g1 gs s))
+
+  (define (D-rec g g1 gs s)
+	(cond
+	  ((null? gs) ($append (g1 s) (g s)))
+	  (else (D-rec (lambda (s) ($append (g1 s) (g s))) (car gs) (cdr gs) s))))
+#+end_src
+
+*** We cannot really do much to substitute in a stream, but we can reduce the arity
+
+#+begin_src racket
+  #lang racket
+  (define ((disj g . gs) s)
+	(D-rec g gs s))
+
+  (define (D-rec g gs s)
+	(cond
+	  ((null? gs) (g s))
+	  (else (D-rec (lambda (s) ($append ((car gs) s) (g s))) (cdr gs) s))))
+#+end_src
+
+
+** Earlier, broken disj attempt. Just scraps
 
 
 (define ((D . gs) s)
