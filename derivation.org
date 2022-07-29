@@ -177,8 +177,141 @@ This led to using variadic functions to combine arbitrary-length goal
 sequences. I want to tell a story where many, if not all, of the
 decisions fell out as a consequence of this choice. Can we do that?
 
+** Let’s try and do a similar derivation from one of the other versions.
+
+I want to try one of the more interesting variants. I’m actually
+interested in all four versions, because I want to know whether we can
+get tail recursive ~disj~ taking its arguments the right way, and
+ensuring that we /cannot/ do a similar derivation for the natl.
+recursive variants, and for good reason. If we can do that, everything
+is aces and this is a good paper. If we are stuck with the
+backward-disj, then that’s okay but not great.
+
+#+begin_src racket
+  #lang racket
+    (define ((conj g g1 . gs) s)
+    (cond
+      ((null? gs) ((conj2 g g1) s))
+      (else ((conj2 g (apply conj (cons g1 gs))) s))))
+#+end_src
+
+So, alright. We’ll try it this way. Break it apart into a recursive
+and non-recursive fragment.
 
 
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  (C-rec g g1 gs s))
+
+  (define (C-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((conj2 g g1) s))
+	  (else ((conj2 g (C-rec g1 (car gs) (cdr gs) s)) s))))
+  ;; Cf ((conj2 g (apply conj (cons g1 gs))) s)
+#+end_src
+
+And then we try and substitute through the definition of ~conj2~.
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  (C-rec g g1 gs s))
+
+  (define (C-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((λ (s) ($append-map g1 (g s))) s))
+	  (else ((λ (s) ($append-map (C-rec g1 (car gs) (cdr gs) s) (g s))) s))))
+#+end_src
+
+Okay, now this must be where things get different. Because in the
+earlier version, we could construct the stream on the way /down/. Can
+we not do that here?
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  (C-rec g g1 gs s))
+
+  (define (C-rec g g1 gs s)
+	(cond
+	  ((null? gs) ((λ (s) ($append-map g1 (g s))) s))
+	  (else ((λ (s) ($append-map (C-rec g1 (car gs) (cdr gs) s) (g s))) s))))
+#+end_src
+
+Here it doesn’t look like the ~lambda~ is doing anything for us, and
+we can ~β~-reduce those.
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  (C-rec g g1 gs s))
+
+  (define (C-rec g g1 gs s)
+	(cond
+	  ((null? gs) ($append-map g1 (g s)))
+	  (else ($append-map (C-rec g1 (car gs) (cdr gs) s) (g s)))))
+#+end_src
+
+We can try to pass the stream in, and see what that does.
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  (C-rec g1 gs s (g s)))
+
+  (define (C-rec g1 gs s s-inf)
+	(cond
+	  ((null? gs) ($append-map g1 s-inf))
+	  (else ($append-map (C-rec g1 (car gs) (cdr gs) s) s-inf))))
+#+end_src
+
+And we could curry the ~$append-map~, pull the stream back, and that gets a little something.
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  ((C-rec g1 gs s) (g s)))
+
+  (define ((C-rec g1 gs s) s-inf)
+	(cond
+	  ((null? gs) ((curry $append-map g1) s-inf))
+	  (else ((curry $append-map (C-rec g1 (car gs) (cdr gs) s)) s-inf))))
+#+end_src
+
+And we can kind of ~eta~-reduce that definition.
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  ((C-rec g1 gs s) (g s)))
+
+  (define (C-rec g1 gs s)
+	(cond
+	  ((null? gs) (curry $append-map g1))
+	  (else (curry $append-map (C-rec g1 (car gs) (cdr gs) s)))))
+#+end_src
+
+But I’m having trouble understanding how one is obviously a worse
+definition, or how one permits an optimization the other clearly
+forbids, in a way that leads to the thesis "basic programming skills
+get us to the clever definition." Do I want to go with “the 1+ary
+version looks uglier”?
+
+
+#+begin_src racket
+  #lang racket
+	(define ((conj g g1 . gs) s)
+	  ((C-rec g1 gs s) (g s)))
+
+  (define (C-rec g1 gs s)
+	(cond
+	  ((null? gs) (curry $append-map g1))
+	  (else (curry $append-map (C-rec g1 (car gs) (cdr gs) s)))))
+#+end_src
+
+
+** Some other older try I’m not thinking about right now. Detritus.
 
 #+begin_src racket
   #lang racket
