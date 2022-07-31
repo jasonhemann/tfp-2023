@@ -29,13 +29,17 @@
 %% Declare bibliography sources (one \addbibresource command per source)
 \addbibresource{mkw.bib}
 
-
+\usepackage{nag} %% should complain about old and outdated commands
 \usepackage{minted}
 \usepackage[strict,autostyle]{csquotes} %% enquote &c that doesn't interfere w/cdlatex usage
 %% http://ftp.lyx.org/pub/tex-archive/macros/latex/contrib/csquotes/csquotes.pdf
+%% \usepackage[xspace]{ellipsis} they suggest using xetex instead
+%% \usepackage{setspace} %% set the spacing (single double, etc)
 
 \setmonofont{DejaVuSansMono}[Scale=MatchLowercase]
 \tracinglostchars=2
+\usepackage[defaultlines=3,all]{nowidow} %% Eliminates widow and orphans
+\usepackage{todonotes}
 
 \newmintinline[rackinline]{racket}{}
 \newmintinline{prolog}{}
@@ -51,9 +55,8 @@
 \acmDOI{XXXXXXX.XXXXXXX}
 
 %% These commands are for a PROCEEDINGS abstract or paper.
-\acmConference[Conference acronym 'XX]{Make sure to enter the correct
-  conference title from your rights confirmation emai}{June 03--05,
-  2018}{Woodstock, NY}
+\acmConference[mKW '22]{miniKanren Workshop}{September 15,
+  2022}{Ljubljana, Slovenia}
 %%
 %%  Uncomment \acmBooktitle if the title of the proceedings is different
 %%  from ``Proceedings of ...''!
@@ -137,9 +140,8 @@
   feature---namely variadic and \enquote{rest argument} functions---we
   can implement a slightly higher-level kernel language. This
   implementation includes conjunction and disjunction for microKanren
-  without creating superfluous closures. These insights lead to a
-  shorter and simpler overall implementation that is more elegant and perhaps
-  more performant, but the latter is not the goal here.
+  that do not create superfluous closures. The result is a
+  shorter and simpler overall implementation that is more elegant.
 \end{abstract}
 
 %%
@@ -160,27 +162,27 @@
 \section{Introduction}
 
 microKanren~\cite{hemann2013muKanren} is a compact approach to
-implementing a relational programming language. A design goal
-for this reimplementation of miniKanren has been to drop some of the
-complexity associate with mixing macros with function definitions,
-especially for those implementers trying to avoid macros.  This goal
-has not been met, but we show how the macros for conjunction and
-disjunction can be done, leaving an underlying
-pure functional core. In doing so, the authors hope this separation
-would simultaneously aid future would-be implementers when studying
-the source code, and also that the functional core would make the
-language easier to port to other functional host languages. This
-microKanren approach has worked out well as a tool for understanding
-the guts of a relational programming language through studying its
-implementation. To support both those efforts, the authors have chosen to
-reprogram these foundational parts of (relational) logic programming
-using a new kind of microKanren in a deliberately small and workaday set
-of Scheme primitives.
+implementing a relational programming language. The microKanren
+approach has worked out well as a tool for understanding the guts of a
+relational programming language through studying its implementation. A
+design goal for this reimplementation of miniKanren has been to drop
+some of the complexity associated with mixing macros and function
+definitions, especially for those implementers trying to avoid macros.
+This goal has not been met, but we show how the macros for conjunction
+and disjunction can be avoided, leaving an underlying pure functional
+core. In doing so, the authors hope this separation will
+simultaneously aid future would-be implementers when studying the
+source code, and also that the functional core would make the language
+easier to port to other functional host languages. To support both
+those efforts, the authors have chosen to reprogram these foundational
+parts of (relational) logic programming using a new kind of
+microKanren in a deliberately small and workaday set of Scheme
+primitives.
 
 Until now microKanren implementation technique has divided the
 programming languages of the world more or less into the expressive
-macro system \enquote{have}s and the macro system-less \enquote{have
-  not}s. This note shows how an implementer using a functional
+macro system \enquote{haves} and the macro system-less \enquote{have
+  nots}. This note shows how an implementer using a functional
 language with variadic (any number of arguments) functions but without
 \rackinline|apply| or a macro system can still achieve an intermediate
 point.
@@ -211,15 +213,14 @@ exposed constructs. This, too, is very speculative.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren
 implementations and illustrate why surface syntax
-macros had seemed practically mandatory. In~\cref{sec:conde}, we discuss
-the re-implementation of conjunction and disjunction, and in
+macros had seemed practically mandatory. In~\cref{sec:conde}, we implement conjunction and disjunction, and in
 \cref{sec:impure} we discuss the re-implementation of the impure
 operators. We close with a discussion of some performance impacts of
 these implementation choices, and consider how Kanren language
 implementers outside of the Scheme family might benefit from these
 alternative implementations.
 
-\section{All Aboard}\label{sec:all-aboard}
+\section{All Aboard!}\label{sec:all-aboard}
 
 We assume the reader is familiar with the miniKanren language and in
 particular with microKanren implementations. We refer the reader
@@ -227,7 +228,7 @@ to~\cite{friedman2018reasoned,hemann2013muKanren,hemann2016small} for
 further explanation, or to~\href{minikanren.org}{minikanren.org} for a
 slew of implementations across many host languages.
 
-The shortest subway system in the world is Haifa's Carmelit, with only
+The world's shortest subway system is Haifa's Carmelit, with only
 six stations. The system is a line, so its trains travel back and
 forth. If we wanted to describe the order in which we rode the train
 from the beginning to the end, we could use the
@@ -284,8 +285,8 @@ provide them. Witness the Scheme's \rackinline|and| and
 in a typical miniKanren implementation, the \rackinline|conde| macro
 is a shallow syntactic wrapper for an $n$-way disjunction
 (\rackinline|disj|) of $m*$-way conjunctions (\rackinline|conj|).
-~\Cref{mnt:conj-and-disj-reimplementation} shows our
-re-implementation.
+~\Cref{mnt:conj-and-disj-reimplementation} shows our new
+implementation.
 
 %% THIS 1-or-more arguments model seems ideal, even for conda/condu?
 
