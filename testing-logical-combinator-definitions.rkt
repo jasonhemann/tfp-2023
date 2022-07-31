@@ -1,47 +1,35 @@
 #lang racket
 (require (except-in rackunit fail))
 (require "./logical-combinator-function-definitions.rkt")
+
 ;; left to right
-;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-left-assoc))
-;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-right-assoc))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-left-assoc))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-right-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;;
 ;; right to left
-;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-left-assoc-flip))
-;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-right-assoc-flip))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-left-assoc-flip))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-right-assoc-flip))
+;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc-flip))
+;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc-flip))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc-flip))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc-flip))
 ;;
 ;; mixed
 (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
 
-
 ;; Testing different implementations of underlying logical combinators
 ;; for miniKanren.
-;;
 
-;; (module+ test-alternative-arities
-
-;;   (test-equal?
-;;    "Supports a list of no goals"
-;;    (with-output-to-string
-;;      (λ ()
-;;        ((conj)
-;;         'cat)))
-;;    "")
-
-;;   (test-equal?
-;;    "Works with a single goal"
-;;    (with-output-to-string
-;;      (λ ()
-;;        ((conj (λ (s)
-;;                 (displayln "first")
-;;                 (list s)))
-;;         'cat)))
-
-;;    "first\n"))
+(test-equal?
+ "Works with a single goal"
+ (with-output-to-string
+   (λ ()
+     ((conj (λ (s)
+              (displayln "first")
+              (list s)))
+      'cat)))
+ "first\n")
 
 (define conj-output-string
   (with-output-to-string
@@ -96,9 +84,9 @@
 (match disj-output-string
   ["first\nsecond\nthird\nfourth\nfifth\n" (printf "disjunctions evaluate from left to right\n")]
   ["fifth\nfourth\nthird\nsecond\nfirst\n" (printf "disjunctions evaluate from right to left\n")]
-  [else (printf "disjunctions neither go left to right nor right to left instead~n ~s ~n") disj-output-string])
+  [else (printf "disjunctions neither go left to right nor right to left instead~n ~s ~n" disj-output-string)])
 
-(define disj-result-string
+(define disj-result
   ((disj
     (λ (s)
       (list 'first))
@@ -112,7 +100,14 @@
       (list 'fifth)))
    'cat))
 
-(printf "disj result string is ~s ~n" disj-result-string)
+(define disj-result-left-to-right? (equal? disj-result '(first second third fourth fifth)))
+(define disj-result-right-to-left? (equal? disj-result '(fifth fourth third second first)))
+
+(when disj-result-left-to-right?
+  (printf "disj seems to produce answers in left to right order\n"))
+
+(when disj-result-right-to-left?
+  (printf "disj seems to produce answers in right to left order\n"))
 
 (define-relation (answer-of arg)
   (disj (λ (s/c) (list arg))
@@ -139,5 +134,15 @@
 (define last-disjunct-apprx-half? (is-within-of (/ (* seconds (expt 2. 3)) fifths) .01 1))
 (define first-disjunct-apprx-half? (is-within-of (/ (* fourths (expt 2. 3)) firsts) .01 1))
 
-(when first-disjunct-apprx-half? (printf "First disjunct gets approximately half the time."))
-(when last-disjunct-apprx-half? (printf "Last disjunct gets approximately half the time."))
+(when first-disjunct-apprx-half? (printf "First disjunct gets approximately half the time.\n"))
+(when last-disjunct-apprx-half? (printf "Last disjunct gets approximately half the time.\n"))
+
+(test-true
+ "This combination of logical operators give give the properties we want"
+ (and
+  disj-result-left-to-right?
+  first-disjunct-apprx-half?)
+ )
+
+;; left associative conjunction  ((((a & b) & c) & d) & e)
+;; right associative conjunction (a & (b & (c & (d & e))))

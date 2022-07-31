@@ -2,7 +2,7 @@
 (require (except-in rackunit fail))
 (provide (all-defined-out))
 
-;; So it seems like, if we build the 2+arg version based on
+;; So it seems like, if we build the 1+arg version based on
 ;; conj2/disj2 primitives, we can implement them with:
 ;;
 ;; - macros or varargs
@@ -23,162 +23,153 @@
 
 
 
-(module* macros-2+-left-assoc #f
+(module* macros-1+-left-assoc #f
   (provide (all-defined-out))
 
   (define-syntax conj
     (syntax-rules ()
-      ((conj g g1) (conj2 g g1))
+      ((conj g) g)
       ((conj g g1 gs ...) (conj (conj2 g g1) gs ...))))
 
   (define-syntax disj
     (syntax-rules ()
-      ((disj g g1) (disj2 g g1))
+      ((disj g) g)
       ((disj g g1 gs ...) (disj (disj2 g g1) gs ...))))
 
   )
 
-(module* macros-2+-right-assoc #f
+(module* macros-1+-right-assoc #f
   (provide (all-defined-out))
 
   (define-syntax conj
     (syntax-rules ()
-      ((conj g g1) (conj2 g g1))
+      ((conj g) g)
       ((conj g g1 gs ...) (conj2 g (conj g1 gs ...)))))
 
   (define-syntax disj
     (syntax-rules ()
-      ((disj g g1) (disj2 g g1))
+      ((disj g) g)
       ((disj g g1 gs ...) (disj2 g (disj g1 gs ...)))))
 
   )
 
-(module* macros-2+-left-assoc-flip #f
+(module* macros-1+-left-assoc-flip #f
   (provide (all-defined-out))
 
   (define-syntax conj
     (syntax-rules ()
-      ((conj g g1) (conj2 g1 g))
+      ((conj g) g)
       ((conj g g1 gs ...) (conj (conj2 g1 g) gs ...))))
 
   (define-syntax disj
     (syntax-rules ()
-      ((disj g g1) (disj2 g1 g))
+      ((disj g) g)
       ((disj g g1 gs ...) (disj (disj2 g1 g) gs ...))))
 
   )
 
-(module* macros-2+-right-assoc-flip #f
+(module* macros-1+-right-assoc-flip #f
   (provide (all-defined-out))
 
   (define-syntax conj
     (syntax-rules ()
-      ((conj g g1) (conj2 g1 g))
+      ((conj g) g)
       ((conj g g1 gs ...) (conj2 (conj g1 gs ...) g))))
 
   (define-syntax disj
     (syntax-rules ()
-      ((disj g g1) (disj2 g g1))
+      ((disj g) g)
       ((disj g g1 gs ...) (disj2 (disj g1 gs ...) g))))
 
   )
 
-(module* varargs-2+-left-assoc #f
+(module* varargs-1+-left-assoc #f
   (provide (all-defined-out))
 
-  (define ((conj g g1 . gs) s)
+  (define (conj g . gs)
     (cond
-      ((null? gs) ((conj2 g g1) s))
-      (else (let ((res (apply conj (cons (conj2 g g1) gs))))
-              (res s)))))
+      ((null? gs) g)
+      (else (apply conj (cons (conj2 g (car gs)) (cdr gs))))))
 
-  (define ((disj g g1 . gs) s)
+  (define (disj g . gs)
     (cond
-      ((null? gs) ((disj2 g g1) s))
-      (else ((apply disj (cons (disj2 g g1) gs)) s))))
+      ((null? gs) g)
+      (else (apply disj (cons (disj2 g (car gs)) (cdr gs))))))
 
   )
 
 (module* varargs-conj-left-disj-right #f
   (provide (all-defined-out))
 
-  (define ((conj g g1 . gs) s)
+  (define (conj g . gs)
     (cond
-      ((null? gs) ((conj2 g g1) s))
-      (else (let ((res (apply conj (cons (conj2 g g1) gs))))
-              (res s)))))
+      ((null? gs) g)
+      (else (apply conj (cons (conj2 g (car gs)) (cdr gs))))))
 
-  (define ((disj g g1 . gs) s)
+  (define (disj g . gs)
     (cond
-      ((null? gs) ((disj2 g g1) s))
-      (else ((disj2 g (apply disj (cons g1 gs))) s))))
+      ((null? gs) g)
+      (else (disj2 g (apply disj (cons (car gs) (cdr gs)))))))
 
   )
 
-(module* varargs-2+-right-assoc #f
+(module* varargs-1+-right-assoc #f
   (provide (all-defined-out))
 
-  (define ((conj g g1 . gs) s)
+  (define (conj g . gs)
     (cond
-      ((null? gs) ((conj2 g g1) s))
-      (else (let ((res (conj2 g (apply conj (cons g1 gs)))))
-              (res s)))))
+      ((null? gs) g)
+      (else (conj2 g (apply conj (cons (car gs) (cdr gs)))))))
 
-  (define ((disj g g1 . gs) s)
+  (define (disj g . gs)
     (cond
-      ((null? gs) ((disj2 g g1) s))
-      (else (let ((res (disj2 g (apply disj (cons g1 gs)))))
-              (res s)))))
+      ((null? gs) g)
+      (else (disj2 g (apply disj (cons (car gs) (cdr gs)))))))
 
   )
 
-(module* varargs-2+-left-assoc-flip #f
+(module* varargs-1+-left-assoc-flip #f
   (provide (all-defined-out))
 
-  (define ((conj g g1 . gs) s)
+  (define (conj g . gs)
     (cond
-      ((null? gs) ((conj2 g1 g) s))
-      (else (let ((res (apply conj (cons (conj2 g1 g) gs))))
-              (res s)))))
+      ((null? gs) g)
+      (else (apply conj (cons (conj2 (car gs) g) (cdr gs))))))
 
-  (define ((disj g g1 . gs) s)
+  (define (disj g . gs)
     (cond
-      ((null? gs) ((disj2 g1 g) s))
-      (else (let ((res (apply disj (cons (disj2 g1 g) gs))))
-              (res s)))))
+      ((null? gs) g)
+      (else (apply disj (cons (disj2 (car gs) g) (cdr gs))))))
 
   )
 
-(module* varargs-2+-right-assoc-flip #f
+(module* varargs-1+-right-assoc-flip #f
   (provide (all-defined-out))
 
-  (define ((conj g g1 . gs) s)
+  (define (conj g . gs)
     (cond
-      ((null? gs) ((conj2 g1 g) s))
-      (else (let ((res (conj2 (apply conj (cons g1 gs)) g)))
-              (res s)))))
+      ((null? gs) g)
+      (else (conj2 (apply conj (cons (car gs) (cdr gs))) g))))
 
-  (define ((disj g g1 . gs) s)
+  (define (disj g . gs)
     (cond
-      ((null? gs) ((disj2 g1 g) s))
-      (else (let ((res (disj2 (apply disj (cons g1 gs)) g)))
-              (res s)))))
+      ((null? gs) g)
+      (else (disj2 (apply disj (cons (car gs) (cdr gs))) g))))
 
   )
 
 (module* varargs-conj-left-disj-right-flip #f
   (provide (all-defined-out))
 
-  (define ((conj g g1 . gs) s)
+  (define (conj g . gs)
     (cond
-      ((null? gs) ((conj2 g g1) s))
-      (else (let ((res (apply conj (cons (conj2 g g1) gs))))
-              (res s)))))
+      ((null? gs) g)
+      (else (apply conj (cons (conj2 g (car gs)) (cdr gs))))))
 
-  (define ((disj g g1 . gs) s)
+  (define (disj g . gs)
     (cond
-      ((null? gs) ((disj2 g1 g) s))
-      (else ((disj2 (apply disj (cons g1 gs)) g) s))))
+      ((null? gs) g)
+      (else (disj2 (apply disj (cons (car gs) (cdr gs))) g))))
 
   )
 
