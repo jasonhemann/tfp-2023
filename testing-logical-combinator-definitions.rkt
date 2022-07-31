@@ -2,34 +2,27 @@
 (require (except-in rackunit fail))
 (require "./logical-combinator-function-definitions.rkt")
 
-;; left to right
+;; left associative conjunction ((((a & b) & c) & d) & e)
+;; right associative conjunction (a & (b & (c & (d & e))))
+;;
+;; execute goals from leftmost argument to rightmost argument
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;;
-;; right to left
+;; execute goals from rightmost argument to leftmost argument
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc-flip))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc-flip))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc-flip))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc-flip))
 ;;
 ;; mixed
-(require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
+(require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
 
 ;; Testing different implementations of underlying logical combinators
 ;; for miniKanren.
-
-(test-equal?
- "Works with a single goal"
- (with-output-to-string
-   (λ ()
-     ((conj (λ (s)
-              (displayln "first")
-              (list s)))
-      'cat)))
- "first\n")
 
 (define conj-output-string
   (with-output-to-string
@@ -54,11 +47,18 @@
          'cat)
        (void)))))
 
-(match conj-output-string
-  ["first\nsecond\nthird\nfourth\nfifth\n" (printf "conjunctions evaluate from left to right\n")]
-  ["fifth\nfourth\nthird\nsecond\nfirst\n" (printf "conjunctions evaluate from right to left\n")]
-  [else (printf "conjunctions neither go left to right nor right to left instead~n ~s ~n" conj-output-string)])
+(define leftmost-conjunct-evaluated-first-rightmost-conjunct-evaluated-last? (equal? conj-output-string "first\nsecond\nthird\nfourth\nfifth\n"))
+(define rightmost-conjunct-evaluated-first-leftmost-conjunct-evaluated-last? (equal? conj-output-string "fifth\nfourth\nthird\nsecond\nfirst\n"))
 
+(when leftmost-conjunct-evaluated-first-rightmost-conjunct-evaluated-last?
+  (printf "conjunctions evaluate from left to right\n"))
+
+(when rightmost-conjunct-evaluated-first-leftmost-conjunct-evaluated-last?
+  (printf "conjunctions evaluate from right to left\n"))
+
+(when (not (or leftmost-conjunct-evaluated-first-rightmost-conjunct-evaluated-last?
+               rightmost-conjunct-evaluated-first-leftmost-conjunct-evaluated-last?))
+  (printf "conjunctions neither go left to right nor right to left instead~n ~s ~n" conj-output-string))
 
 (define disj-output-string
   (with-output-to-string
@@ -104,10 +104,10 @@
 (define disj-result-right-to-left? (equal? disj-result '(fifth fourth third second first)))
 
 (when disj-result-left-to-right?
-  (printf "disj seems to produce answers in left to right order\n"))
+  (printf "disj answer stream comes from goals in left to right order\n"))
 
 (when disj-result-right-to-left?
-  (printf "disj seems to produce answers in right to left order\n"))
+  (printf "disj answer stream comes from goals in right to left order\n"))
 
 (define-relation (answer-of arg)
   (disj (λ (s/c) (list arg))
@@ -137,6 +137,16 @@
 (when first-disjunct-apprx-half? (printf "First disjunct gets approximately half the time.\n"))
 (when last-disjunct-apprx-half? (printf "Last disjunct gets approximately half the time.\n"))
 
+(test-equal?
+ "Works with a single goal"
+ (with-output-to-string
+   (λ ()
+     ((conj (λ (s)
+              (displayln "first")
+              (list s)))
+      'cat)))
+ "first\n")
+
 (test-true
  "This combination of logical operators give give the properties we want"
  (and
@@ -144,5 +154,3 @@
   first-disjunct-apprx-half?)
  )
 
-;; left associative conjunction  ((((a & b) & c) & d) & e)
-;; right associative conjunction (a & (b & (c & (d & e))))
