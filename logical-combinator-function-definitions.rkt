@@ -1,5 +1,5 @@
 #lang racket
-(require rackunit)
+(require (except-in rackunit fail))
 (provide (all-defined-out))
 
 ;; So it seems like, if we build the 2+arg version based on
@@ -95,8 +95,7 @@
   (define ((disj g g1 . gs) s)
     (cond
       ((null? gs) ((disj2 g g1) s))
-      (else (let ((res (apply disj (cons (disj2 g g1) gs))))
-              (res s)))))
+      (else ((apply disj (cons (disj2 g g1) gs)) s))))
 
   )
 
@@ -195,6 +194,9 @@
 
 (define ((conj2 g1 g2) s/c)
   ($append-map g2 (g1 s/c)))
+
+(define succeed (λ (s/c) (list s/c)))
+(define fail (λ (s/c) (list)))
 
 (define ($append $1 $2)
   (cond
