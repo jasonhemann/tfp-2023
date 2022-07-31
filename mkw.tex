@@ -280,10 +280,10 @@ re-implementation.
   (define ((conj g . gs) s)
     (C gs (g s)))
 
-  (define (C gs s-inf)
+  (define (C gs s∞)
     (cond
-      ((null? gs) s-inf)
-      (else (C (cdr gs) (＄append-map (car gs) s-inf)))))
+      ((null? gs) s∞)
+      (else (C (cdr gs) (append-map∞ (car gs) s∞)))))
 
   (define ((disj g . gs) s)
     (D g gs s))
@@ -291,7 +291,7 @@ re-implementation.
   (define (D g gs s)
     (cond
       ((null? gs) (g s))
-      (else (＄append (g s) (D (car gs) (cdr gs) s)))))
+      (else (append∞ (g s) (D (car gs) (cdr gs) s)))))
   \end{minted}
   \caption{Re-implementations of \rackinline|conj| and \rackinline|disj|.}
   \label{mnt:conj-and-disj-reimplementation}
@@ -378,7 +378,7 @@ remaining goals.
   (define (D g gs s)
     (cond
       ((null? gs) (g s))
-      (else (＄append (g s) (D (car gs) (cdr gs) s)))))
+      (else (append-inf (g s) (D (car gs) (cdr gs) s)))))
 \end{minted}
 
 At the cost of an \rackinline|apply|, we can define this as a single
@@ -388,7 +388,7 @@ explicitly recursive function.
   (define ((disj g . gs) s)
     (cond
       ((null? gs) (g s))
-      (else (＄append (g s) ((apply disj gs) s)))))
+      (else (append-inf (g s) ((apply disj gs) s)))))
 \end{minted}
 
 We will increase the required arity by one, and substitute through in
@@ -397,11 +397,11 @@ the base case. This draws out a similarity between the two clauses.
 \begin{minted}[autogobble,stripall]{racket}
   (define ((disj g g1 . gs) s)
     (cond
-      ((null? gs) (＄append (g s) (g1 s)))
-      (else (＄append (g s) ((apply disj (cons g1 gs)) s)))))
+      ((null? gs) (append-inf (g s) (g1 s)))
+      (else (append-inf (g s) ((apply disj (cons g1 gs)) s)))))
 \end{minted}
 
-We can replace these calls to \rackinline|＄append| by the definition
+We can replace these calls to \rackinline|append-inf| by the definition
 of \rackinline|disj2|.
 
 \begin{minted}[autogobble,stripall]{racket}
@@ -411,7 +411,7 @@ of \rackinline|disj2|.
       (else ((disj2 g (apply disj (cons g1 gs))) s))))
 \end{minted}
 
-And in all cases \rackinline|s| is a curried parameter we can $η$
+And in all cases \rackinline|s| is a curried parameter we can η
 away.
 
 \begin{minted}[autogobble,stripall]{racket}
@@ -431,8 +431,46 @@ requiring two or more goals.
       ((disj g g1 gs ...) (disj2 g (disj g1 gs ...)))))
 \end{minted}
 
+Or, if we prefer the one-argument version, then the following, as
+\rackinline|(λ (s) (g s))| simply η reduces to \rackinline|g|.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define-syntax disj
+    (syntax-rules ()
+      ((disj g) g)
+      ((disj g gs ...) (disj2 g (disj gs ...)))))
+\end{minted}
+
+DAN, ACTUALLY I THINK THIS WORKS OUT EITHER WAY WITH THE TWO ARGUMENT
+VERSIONS OR JUST THE ONE ARGUMENT VERSION.
+
+We can demonstrate the correctness of our \rackinline|conj| in the
+same manner.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define ((conj g . gs) s)
+    (C gs (g s)))
+
+  (define (C gs s-inf)
+    (cond
+      ((null? gs) s-inf)
+      (else (C (cdr gs)
+               (append-map-inf (car gs) s-inf)))))
+\end{minted}
+
+We can derive ... STOPPED HERE
+
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
+  (define ((conj g . gs) s)
+    (C gs (g s)))
+
+  (define (C gs s-inf)
+    (cond
+      ((null? gs) s-inf)
+      (else (C (cdr gs)
+               (append-map-inf (car gs) s-inf)))))
+
 (define ((D g1 . gs) s)
   (D-rec (g1 s) gs s))
 
@@ -658,7 +696,7 @@ implementation.
     (else (lambda () (A-rec (s-inf) a q-and-a* s)))))
   \end{minted}
   \caption{A functional \rackinline|conda| implementation.}
-  \label{mnt:conda-bad-re-implementation}
+  \label{mnt:conda-good-re-implementation}
 \end{listing}
 
 The implementation in~\cref{mnt:conda-bad-re-implementation} includes
@@ -685,8 +723,8 @@ to make \rackinline|once| a primitive higher-order goal.
         (else (lambda ()
                 (loop (s-inf))))))))
   \end{minted}
-  \caption{A functional \rackinline|conda| implementation.}
-  \label{mnt:conda-bad-re-implementation}
+  \caption{A functional \rackinline|once| implementation.}
+  \label{mnt:condu-bad-re-implementation}
 \end{listing}
 
 \section{Conclusion}\label{sec:conclusion}
