@@ -229,7 +229,7 @@ indentation by trying to keep them somewhat balanced: the program
 itself does not seem to obviously encourage one particular choice.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (defrel (carmelit-subway a b c d e f)
   (conde
    ((== a 'carmel-center)
@@ -268,15 +268,15 @@ together like building circuitry from logic gates. Such higher-level
 logical operations may or may not be present in the core language, but
 if not the programmer will reasonably expect some syntax sugar to
 provide them. Witness the Scheme's \rackinline|and| and
-\rackinline|or| macros as examples.~\cite{r7rssmall}. In a typical
-miniKanren implementation, the \rackinline|conde| macro is a shallow
-syntactic wrapper for an $n$-way disjunction (\rackinline|disj|) of
-$n$-way conjunctions (\rackinline|conj|).
+\rackinline|or| macros as examples.~\cite{r7rssmall}. Like in a
+typical miniKanren implementation, the \rackinline|conde| macro is a
+shallow syntactic wrapper for an $n$-way disjunction
+(\rackinline|disj|) of $n$-way conjunctions (\rackinline|conj|).
 ~\Cref{mnt:conj-and-disj-reimplementation} shows our
 re-implementation.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
     (C gs (g s)))
 
@@ -286,7 +286,7 @@ re-implementation.
       (else (C (cdr gs) (＄append-map (car gs) s-inf)))))
 
   (define ((disj g . gs) s)
-    (D-rec g gs s))
+    (D g gs s))
 
   (define (D g gs s)
     (cond
@@ -297,12 +297,15 @@ re-implementation.
   \label{mnt:conj-and-disj-reimplementation}
 \end{listing}
 
-These implementations rely on variadic functions, but do not require
+Mandating that disjunction be a function of one-or-more arguments (or,
+in another parlance, \enquote{polyvariadic}), lets us we implement
+these operators as a shallow wrappers over a folds. These
+implementations rely on variadic functions, but do not require
 \rackinline|apply|. They no longer rely on binary \rackinline|conj2|
 and \rackinline|disj2|, and they do not build any closures.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conde
   (syntax-rules ()
     ((conde (g g1 ...) ...)
@@ -336,7 +339,7 @@ disjunction of no goals would simply fail. Truthfully, only the impure
 cases (we discuss this further in~\cref{sec:impure}).
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conj
   (syntax-rules ()
     ((conj) S)
@@ -359,21 +362,77 @@ cases (we discuss this further in~\cref{sec:impure}).
   \label{mnt:conj-and-disj-implementation}
 \end{listing}
 
+\subsection{Implementation Correctness}
 
-If we mandate that disjunction be a function of one-or-more arguments
-(or, in another parlance, \enquote{polyvariadic}), we can implement
-our disjunction as a shallow wrapper over a left-fold. For clarity,
-and to avoid \enquote{namespace collisions}, we use \rackinline|D| for
-our re-implementation of disjunction and we call its internal help
-function \rackinline|D-rec|.
+A developer equipped with variadic functions might come by such
+operations as follows. We start with \rackinline|disj|. From the first
+goal (the host language syntactically guarantees one must exist) and a
+state, \rackinline|D| can produce an answer stream \rackinline|(g s)|.
+The function \rackinline|D| is merely a fold over the list of the
+remaining goals.
 
+\begin{minted}[autogobble,stripall]{racket}
+  (define ((disj g . gs) s)
+    (D g gs s))
 
-If we just exclude the vestigial runt base case, we could let var args
-do the pattern matching for us.
+  (define (D g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else (＄append (g s) (D (car gs) (cdr gs) s)))))
+\end{minted}
 
+At the cost of an \rackinline|apply|, we can define this as a single
+explicitly recursive function.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define ((disj g . gs) s)
+    (cond
+      ((null? gs) (g s))
+      (else (＄append (g s) ((apply disj gs) s)))))
+\end{minted}
+
+We will increase the required arity by one, and substitute through in
+the base case. This draws out a similarity between the two clauses.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define ((disj g g1 . gs) s)
+    (cond
+      ((null? gs) (＄append (g s) (g1 s)))
+      (else (＄append (g s) ((apply disj (cons g1 gs)) s)))))
+\end{minted}
+
+We can replace these calls to \rackinline|＄append| by the definition
+of \rackinline|disj2|.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define ((disj g g1 . gs) s)
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else ((disj2 g (apply disj (cons g1 gs))) s))))
+\end{minted}
+
+And in all cases \rackinline|s| is a curried parameter we can $η$
+away.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define (disj g g1 . gs)
+    (cond
+      ((null? gs) (disj2 g g1))
+      (else (disj2 g (apply disj (cons g1 gs))))))
+\end{minted}
+
+This definition now compares favorably to a macro-based implementation
+requiring two or more goals.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define-syntax disj
+    (syntax-rules ()
+      ((disj g g1) (disj2 g g1))
+      ((disj g g1 gs ...) (disj2 g (disj g1 gs ...)))))
+\end{minted}
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define ((D g1 . gs) s)
   (D-rec (g1 s) gs s))
 
@@ -387,11 +446,7 @@ do the pattern matching for us.
   \label{mnt:disj-re-implementation}
 \end{listing}
 
-From the first goal (the host language syntactically guarantees one
-must exist) and a state, \rackinline|D| can produce an answer stream
-\rackinline|(g1 s)|, which it passes along as the first argument to
-\rackinline|D-rec|. The function \rackinline|D-rec| is merely a fold
-over the list of the remaining goals. Whereas the implementation in
+Whereas the implementation in
 \cref{mnt:conj-and-disj-implementation} implements general disjunction
 as a right fold, the function \rackinline|D-rec| is instead a
 tail-recursive left fold, accumulating the resulting answer stream in
@@ -422,7 +477,7 @@ could rearrange the programmer's arguments. For example, reversing a
 list of arguments is an exemplary use of an APS macro.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define ((C g1 . gs) s)
   (C-rec (g1 s) gs))
 
@@ -467,7 +522,7 @@ We might say we didn’t even need the other version.
 
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (defrel (carmelit-subway a b c d e f)
   (D
    (C (== a 'carmel-center)
@@ -507,7 +562,7 @@ given that we needed one the other came along for the ride, so to
 speak.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conda
   (syntax-rules ()
     ((conda (g0 g ...)) (conj g0 g ...))
@@ -554,7 +609,7 @@ seems even worse for introducing another complex function definition
 that is nearly identical to one used in the below case.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conda
   (syntax-rules ()
     ((conda (g0 g ...)) (conj g0 g ...))
@@ -587,7 +642,7 @@ suspect that a programmer would eventually feel the need for a nested
 implementation.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define ((conda q a . q-and-a*) s)
   (A-rec (q s) a q-and-a* s))
 
@@ -618,7 +673,8 @@ of~\cref{mnt:conda-bad-re-implementation}. However, we instead choose
 to make \rackinline|once| a primitive higher-order goal.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]
+    {racket}
 (define (once g)
   (lambda (s)
     (let loop ((s-inf (g s)))
@@ -696,12 +752,9 @@ debates during design decision deliberations.
 \printbibliography{}
 
 \end{document}
-\endinput
+
 %%
 %% End of file `sample-sigplan.tex'.
-
-
-\documentclass[sigplan,screen]{acmart}
 
 
 %%% Local Variables:
