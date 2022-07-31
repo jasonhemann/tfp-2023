@@ -5,28 +5,22 @@
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-right-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-left-assoc))
-(require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-right-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-right-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;;
 ;; right to left
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-left-assoc-flip))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-right-assoc-flip))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-left-assoc-flip))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-right-assoc-flip))
+;;
+;; mixed
+(require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
+
 
 ;; Testing different implementations of underlying logical combinators
 ;; for miniKanren.
 ;;
-;; I want to test that these actually _work_ as intended, and confirm
-;; the order of conjunctions---that they actually behave as expected.
-;;
-;; One way to test _correctness_ is to test a miniKanren over them.
-;; However, this is difficult because these definitions sit in the
-;; middle of an mK implementation.
-;;
-;; I want to test several versions each using the same underlying
-;; implementation portion, and same structure above, and I don’t know
-;; how to do that just yet. So, what is the right way to organize that
-;; code style.
 
 ;; (module+ test-alternative-arities
 
@@ -139,16 +133,11 @@
 (define fourths (length (filter (curry eqv? 'fourth) result-stream)))
 (define fifths (length (filter (curry eqv? 'fifth) result-stream)))
 
-(test-=
- (string-append "test that last element gets approximately half the time \n"
-                "failure means last element does NOT get approximately half the time")
- (/ (* seconds (expt 2. 3)) fifths)
- 1
- .01)
+(define (is-within-of n epsilon target)
+  (<= (- target epsilon) n (+ target epsilon)))
 
-(test-=
- (string-append "test that last element gets approximately half the time \n"
-                "failure means last element does NOT get approximately half the time")
- (/ (* fourths (expt 2. 3)) firsts)
- 1
- .01)
+(define last-disjunct-apprx-half? (is-within-of (/ (* seconds (expt 2. 3)) fifths) .01 1))
+(define first-disjunct-apprx-half? (is-within-of (/ (* fourths (expt 2. 3)) firsts) .01 1))
+
+(when first-disjunct-apprx-half? (printf "First disjunct gets approximately half the time."))
+(when last-disjunct-apprx-half? (printf "Last disjunct gets approximately half the time."))
