@@ -1,9 +1,9 @@
 #lang racket
 (require rackunit)
 ;; left to right
-(require (submod "./logical-combinator-function-definitions.rkt" macros-2+-left-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-2+-right-assoc))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-left-assoc))
+(require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-2+-right-assoc))
 ;;
 ;; right to left
@@ -48,7 +48,7 @@
 
 ;;    "first\n"))
 
-(define output-string
+(define conj-output-string
   (with-output-to-string
     (λ ()
       ((conj
@@ -70,7 +70,51 @@
        'cat))))
 
 
-(match output-string
-  ["first\nsecond\nthird\nfourth\nfifth\n" (printf "conjunctions evaluate from left to right")]
-  ["fifth\nfourth\nthird\nsecond\nfirst\n" (printf "conjunctions evaluate from right to left")]
-  [else (printf "conjunctions neither go left to right nor right to left instead~n ~s ~n") output-string])
+(match conj-output-string
+  ["first\nsecond\nthird\nfourth\nfifth\n" (printf "conjunctions evaluate from left to right\n")]
+  ["fifth\nfourth\nthird\nsecond\nfirst\n" (printf "conjunctions evaluate from right to left\n")]
+  [else (printf "conjunctions neither go left to right nor right to left instead~n ~s ~n") conj-output-string])
+
+
+(define disj-output-string
+  (with-output-to-string
+    (λ ()
+      ((disj
+        (λ (s)
+          (displayln "first")
+          (list s))
+        (λ (s)
+          (displayln "second")
+          (list s))
+        (λ (s)
+          (displayln "third")
+          (list s))
+        (λ (s)
+          (displayln "fourth")
+          (list s))
+        (λ (s)
+          (displayln "fifth")
+          (list s)))
+       'cat))))
+
+(match disj-output-string
+  ["first\nsecond\nthird\nfourth\nfifth\n" (printf "disjunctions evaluate from left to right\n")]
+  ["fifth\nfourth\nthird\nsecond\nfirst\n" (printf "disjunctions evaluate from right to left\n")]
+  [else (printf "disjunctions neither go left to right nor right to left instead~n ~s ~n") disj-output-string])
+
+
+(define disj-result-string
+  ((disj
+    (λ (s)
+      (list 'first))
+    (λ (s)
+      (list 'second))
+    (λ (s)
+      (list 'third))
+    (λ (s)
+      (list 'fourth))
+    (λ (s)
+      (list 'fifth)))
+   'cat))
+
+(printf "disj result string is ~s ~n" disj-result-string)
