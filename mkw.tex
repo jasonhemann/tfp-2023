@@ -174,42 +174,43 @@ core. In doing so, the authors hope this separation will
 simultaneously aid future would-be implementers when studying the
 source code, and also that the functional core would make the language
 easier to port to other functional host languages. To support both
-those efforts, the authors have chosen to reprogram these foundational
+those efforts, the authors have chosen to program these foundational
 parts of (relational) logic programming using a new kind of
 microKanren in a deliberately small and workaday set of Scheme
 primitives.
 
-Until now microKanren implementation technique has divided the
-programming languages of the world more or less into the expressive
-macro system \enquote{haves} and the macro system-less \enquote{have
-  nots}. This note shows how an implementer using a functional
-language with variadic (any number of arguments) functions but without
+Until now microKanren implementations have divided the programming
+languages of the world more or less into the expressive macro system
+\enquote{haves} and the macro system-less \enquote{have nots}. This
+note shows how an implementer using a functional language with
+variadic (any number of arguments) functions but without
 \rackinline|apply| or a macro system can still achieve an intermediate
 point.
 
 Even implementers using and programmers studying implementations
 written in languages \emph{with} sufficiently expressive macro systems
 can benefit from these improvements. There are benefits to using a
-limited set of features in a language. Earlier microKanren implementers
-measured their result by the number of lines in the core
-implementation, the number of additional lines for their and the
-limited features they required from the host. So replacing less
-powerful language primitives by comparatively short but more powerful
-variants is a win. Beyond that, this more powerful kernel language
-obviates several macros in the desugaring layer, and eventually
-leads us to see merit in modifying the core
-language's syntax. This is, of course, subjective.
+limited set of features in a language. Based on an evaluation
+of~\href{minikanren.org}{minikanren.org}, earlier microKanren
+implementers measured their results by the number of lines in the core
+implementation, the number of additional lines for the surface syntax,
+and the limited features they required from the host. So replacing
+less powerful language primitives by comparatively short but more
+powerful variants is a win. Beyond that, this more powerful kernel
+language obviates several macros in the desugaring layer, and
+eventually leads us to see merit in modifying the core language's
+syntax. This is, of course, subjective.
 
 Beyond being a conceptually simpler foundation for a full Kanren
-language at the level of ``The Reasoned Schemer, 2nd ed.'', this
-implementation appears to be more \emph{efficient}. The
-source of the original inefficiency---the right-association of
-conjunctions---is already known miniKanren implementation folklore. We
-were pleasantly surprised that thinking about the expressivity of
-primitives and code improvement \enquote{horse sense} led us surprisingly
-to slightly faster implementations. This same horse sense might lead one
-to suggest these improved variants should actually be the programmer's
-exposed constructs. This, too, is very speculative.
+language at the level of \citetitle{friedman2018reasoned}, this
+implementation appears to be more \emph{efficient}. The source of the
+original inefficiency---right-associative conjunction---is already
+known miniKanren implementation folklore. We were pleasantly surprised
+that thinking about the expressivity of primitives and code
+improvement \enquote{horse sense} led us to this same idea. That very
+horse sense might lead one to suggest these improved variants should
+actually be the external programming constructs. This, too, is very
+speculative.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren
 implementations and illustrate why surface syntax
@@ -223,10 +224,11 @@ alternative implementations.
 \section{All Aboard!}\label{sec:all-aboard}
 
 We assume the reader is familiar with the miniKanren language and in
-particular with microKanren implementations. We refer the reader
-to~\cite{friedman2018reasoned,hemann2013muKanren,hemann2016small} for
-further explanation, or to~\href{minikanren.org}{minikanren.org} for a
-slew of implementations across many host languages.
+particular with microKanren implementations. We refer the reader to
+some elementary
+resources~\cite{friedman2018reasoned,hemann2013muKanren,hemann2016small}
+for further explanation, or to~\href{minikanren.org}{minikanren.org}
+for a slew of implementations across many host languages.
 
 The world's shortest subway system is Haifa's Carmelit, with only
 six stations. The system is a line, so its trains travel back and
@@ -245,18 +247,18 @@ itself does not seem to obviously encourage one particular choice.
   \begin{minted}[autogobble,stripall]{racket}
 (defrel (carmelit-subway a b c d e f)
   (conde
-   ((== a 'carmel-center)
-    (== b 'golomb)
-    (== c 'masada)
-    (== d 'haneviim)
-    (== e 'hadar-city-hall)
-    (== f 'downtown))
-   ((== a 'downtown)
-    (== b 'hadar-city-hall)
-    (== c 'haneviim)
-    (== d 'masada)
-    (== e 'golomb)
-    (== f 'carmel-center))))
+    ((== a 'carmel-center)
+     (== b 'golomb)
+     (== c 'masada)
+     (== d 'haneviim)
+     (== e 'hadar-city-hall)
+     (== f 'downtown))
+    ((== a 'downtown)
+     (== b 'hadar-city-hall)
+     (== c 'haneviim)
+     (== d 'masada)
+     (== e 'golomb)
+     (== f 'carmel-center))))
   \end{minted}
   \caption{A miniKanren implementation of the Carmelit subway.}
   \label{mnt:carmelit}
@@ -279,16 +281,13 @@ language's debug model.
 Programmers rightly expect better than having to chain their logic
 together like building circuitry from logic gates. Such higher-level
 logical operations may or may not be present in the core language, but
-if not the programmer will reasonably expect some syntax sugar to
-provide them. Witness the Scheme's \rackinline|and| and
+if not, the programmer will reasonably expect some syntax sugar to
+provide them. Witness Scheme's \rackinline|and| and
 \rackinline|or| macros as examples.~\cite{shinn2013revisedreport} Like
 in a typical miniKanren implementation, the \rackinline|conde| macro
-is a shallow syntactic wrapper for an $n$-way disjunction
-(\rackinline|disj|) of $m*$-way conjunctions (\rackinline|conj|).
+is a shallow syntactic wrapper for disjuctive normal form.
 ~\Cref{mnt:conj-and-disj-reimplementation} shows our new
 implementation.
-
-%% THIS 1-or-more arguments model seems ideal, even for conda/condu?
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -299,8 +298,8 @@ implementation.
     (cond
       ((null? gs) s∞)
       (else
-        (C (cdr gs)
-           (append-map∞ (car gs) s∞)))))
+       (C (cdr gs)
+          (append-map∞ (car gs) s∞)))))
 
   (define ((disj g . gs) s)
     (D g gs s))
@@ -309,50 +308,39 @@ implementation.
     (cond
       ((null? gs) (g s))
       (else
-        (append∞ (g s)
-          (D (car gs) (cdr gs) s)))))
+       (append∞ (g s)
+         (D (car gs) (cdr gs) s)))))
+
+(define-syntax conde
+  (syntax-rules ()
+    ((conde (g g₁ ...) ...)
+     (disj (conj g g₁ ...) ...))))
   \end{minted}
   \caption{Re-implementations of \rackinline|conj| and \rackinline|disj|.}
   \label{mnt:conj-and-disj-reimplementation}
 \end{listing}
 
-Mandating that one-or-more arguments disjunctions (or, in another
-parlance, \enquote{polyvariadic} disjunctions) lets us re-implement
-these operators as a shallow wrappers over a folds.
-The first step in each is merely to remove the rest argument gs and treat as
-if there was no need for rest argument.  That is, all of our focus
- will be on the list, \rackinline|gs|. These
-implementations rely on variadic functions, but do not require
-\rackinline|apply|. They no longer rely on binary \rackinline|conj₂|
-and \rackinline|disj₂|, and they do not build any closures.
+Mandating one-or-more arguments lets us re-implement these operators
+as shallow wrappers over folds. The first step in each is merely to
+remove the rest argument \rackinline|gs| and act as if there were no
+need for a rest argument. That is, all of our focus will be on the
+\emph{list}, \rackinline|gs|. These implementations rely on variadic
+functions, but do not require \rackinline|apply|. They no longer rely
+on binary \rackinline|conj₂| and \rackinline|disj₂|, and they do not
+build any extraneous closures. Unnecessarily building closures at
+runtime is always a bad idea.
 
-%% Have we ever stated that one of our unwritten goals is to minimize
-%% the number of closures we build.  And did we give an argument for
-%% for why we would have that as a desiderata.
-
-The
-function \rackinline|C| does not take in the state \rackinline|s|; the
-help procedure does not need the state for conjunction. In each
+The function \rackinline|C| does not take in the state \rackinline|s|;
+the help procedure does not need the state for conjunction. In each
 recursive call, we accumulate by mapping (using the special delaying
 implementation of append-map for miniKanren streams) the next goal in
 the list. This left-fold implementation of conjunction therefore
-left-associate the conjuncts.
-
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(define-syntax conde
-  (syntax-rules ()
-    ((conde (g g₁ …) …)
-     (disj (conj g g₁ …) …))))
-  \end{minted}
-\caption{A 1+ arity implementation of \rackinline|conde|.}
-  \label{mnt:conde-implementation}
-\end{listing}
+left-associates the conjuncts.
 
 Compare these to typical macro-based microKanren implementations of
 the underlying conjunction and disjunction operations in
-\cref{mnt:conj-and-disj-implementation}. Here, \rackinline|S| and
-\rackinline|F| represent primitive goals that unconditionally succeed
+\cref{mnt:conj-and-disj-implementation}. Here, \rackinline|#s| and
+\rackinline|#f| represent primitive goals that unconditionally succeed
 and fail, respectively. Those \rackinline|conj| and \rackinline|disj|
 macros are not \emph{quite} defined as simple recursions over their
 binary functional primitives. The definition of 0-way conjunction
@@ -370,24 +358,24 @@ statically how these goals should behave, so there is no benefit to
 executing them. A conjunction of no goals would simply succeed, and a
 disjunction of no goals would simply fail. Truthfully, only the impure
 \rackinline|conda| operator seems to require these additional base
-cases (we discuss this further in~\cref{sec:impure}).
+cases (discussed further in~\cref{sec:impure}).
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conj
   (syntax-rules ()
-    ((conj) S)
+    ((conj) #s)
     ((conj g) g)
-    ((conj g₀ g …) (conj₂ g₀ (conj g …)))))
+    ((conj g₀ g ...) (conj₂ g₀ (conj g ...)))))
 
 (define ((conj₂ g₁ g₂) s)
   (append-map g₂ (g₁ s)))
 
 (define-syntax disj
   (syntax-rules ()
-    ((disj) F)
+    ((disj) #f)
     ((disj g) g)
-    ((disj g₀ g …) (disj₂ g₀ (disj g …)))))
+    ((disj g₀ g ...) (disj₂ g₀ (disj g ...)))))
 
 (define ((disj₂ g₁ g₂) s)
   (append (g₁ s) (g₂ s)))
@@ -398,25 +386,22 @@ cases (we discuss this further in~\cref{sec:impure}).
 
 \subsection{Implementation Correctness}
 
-A developer equipped with variadic functions might come by such
-operations as follows. We start with the definition of
-\rackinline|disj| from \cref{mnt:conj-and-disj-reimplementation}. From
-the first goal (the host language syntactically guarantees one must
-exist) and a state, \rackinline|D| can produce an answer stream
-\rackinline|(g s)|. The function \rackinline|D| is merely a fold over
-the list of the remaining goals. At the cost of an \rackinline|apply|,
-we can define this as a single explicitly recursive function.
+A developer equipped with variadic functions might discover these
+definitions as follows. We start with the definition of
+\rackinline|disj| from \cref{mnt:conj-and-disj-reimplementation}. At
+the cost of an \rackinline|apply|, we can define this as a single
+explicitly recursive function.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((disj g . gs) s)
     (cond
       ((null? gs) (g s))
       (else
-        (append∞ (g s)
-          ((apply disj gs) s)))))
+       (append∞ (g s)
+         ((apply disj gs) s)))))
 \end{minted}
 
-We inverse β-substitute in the recursive case, to draws out a
+We inverse β-substitute in the recursive case, to draw out a
 similarity between the two clauses.
 
 \begin{minted}[autogobble,stripall]{racket}
@@ -424,13 +409,13 @@ similarity between the two clauses.
     (cond
       ((null? gs) (g s))
       (else
-        ((λ (s)
-            (append∞ (g s)
-              ((apply disj gs) s)))
-         s))))
+       ((λ (s)
+           (append∞ (g s)
+             ((apply disj gs) s)))
+        s))))
 \end{minted}
 
-We can replace the calls to \rackinline|append∞| by the definition
+We can replace the call to \rackinline|append∞| by the definition
 of \rackinline|disj₂|.
 
 \begin{minted}[autogobble,stripall]{racket}
@@ -438,11 +423,10 @@ of \rackinline|disj₂|.
     (cond
       ((null? gs) (g s))
       (else
-        ((disj₂ g (apply disj gs))
-         s))))
+       ((disj₂ g (apply disj gs)) s))))
 \end{minted}
 
-And in all cases \rackinline|s| is a curried parameter we can η away.
+Now \rackinline|s| is a curried parameter we can η away.
 We provide the completed functional definition and a comparable to the
 macro-based implementation
 in~\cref{mnt:disj-function-and-macro-derived-definition}.
@@ -457,10 +441,10 @@ in~\cref{mnt:disj-function-and-macro-derived-definition}.
   (define-syntax disj
     (syntax-rules ()
       ((disj g) g)
-      ((disj g gs …) (disj₂ g (disj gs …)))))
+      ((disj g gs ...) (disj₂ g (disj gs ...)))))
 \end{minted}
   \caption{Derived \rackinline|disj₂|-based function and macro.}
-  \label{mnt:disj-function-derived-definition}
+  \label{mnt:disj-function-and-macro-derived-definition}
 \end{listing}
 
 We can demonstrate the correctness of our \rackinline|conj| from
@@ -476,9 +460,9 @@ pieces. This requires abstracting over the \rackinline|λ|.
     (cond
       ((null? gs) (g s))
       (else
-        (C (cdr gs)
-           (λ (s) (append-map∞ (car gs) (g s)))
-           s))))
+       (C (cdr gs)
+          (λ (s) (append-map∞ (car gs) (g s)))
+          s))))
 \end{minted}
 
 This we can collapse into a single recursive function, bringing the
@@ -489,11 +473,11 @@ goal to the front.
     (cond
       ((null? gs) (g s))
       (else
-      ((apply conj
-         (cons
-           (λ (s) (append-map∞ (car gs) (g s)))
-           (cdr gs))
-       s)))))
+       ((apply conj
+          (cons
+            (λ (s) (append-map∞ (car gs) (g s)))
+            (cdr gs))
+        s)))))
 \end{minted}
 
 We can replace the abstraction over \rackinline|append-map∞|, which is
@@ -504,11 +488,11 @@ to say the body of \rackinline|conj₂|, by its definition.
     (cond
       ((null? gs) (g s))
       (else
-      ((apply conj
-         (cons
-           (conj₂ g (car gs))
-           (cdr gs)))
-       s)))))
+       ((apply conj
+          (cons
+            (conj₂ g (car gs))
+            (cdr gs)))
+        s)))))
 \end{minted}
 
 By η reducing over the definition, we produce a simple variadic
@@ -521,10 +505,10 @@ in~\cref{mnt:conj-function-derived-definition}.
     (cond
       ((null? gs) g)
       (else
-        (apply conj
-          (cons
-            (conj₂ g (car gs))
-            (cdr gs))))))
+       (apply conj
+         (cons
+           (conj₂ g (car gs))
+           (cdr gs))))))
 
   (define-syntax conj
     (syntax-rules ()
@@ -587,9 +571,9 @@ waiting.
     (cond
       ((null? gs) (g s))
       (else
-        (append-map-∞
-          (λ (s) (C (car gs) (cdr gs)))
-          (g s)))))
+       (append-map-∞
+         (λ (s) (C (car gs) (cdr gs)))
+         (g s)))))
 \end{minted}
 
 We can still reconstruct the stream argument, and come up with an approximately analogous right-fold version.
@@ -602,9 +586,9 @@ We can still reconstruct the stream argument, and come up with an approximately 
     (cond
       ((null? gs) s∞)
       (else
-        (append-map-∞
-          (λ (s) (C (cdr gs) ((car gs) s)))
-          s∞))))
+       (append-map-∞
+         (λ (s) (C (cdr gs) ((car gs) s)))
+         s∞))))
 \end{minted}
 
 So the equivalent right-fold implementation needs to construct a
@@ -697,9 +681,9 @@ speak.
   \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conda
   (syntax-rules ()
-    ((conda (g₀ g …)) (conj g₀ g …))
-    ((conda (g₀ g …) ln …)
-     (ifte g₀ (conj g …) (conda ln …)))))
+    ((conda (g₀ g ...)) (conj g₀ g ...))
+    ((conda (g₀ g ...) ln ...)
+     (ifte g₀ (conj g ...) (conda ln ...)))))
 
 (define ((ifte g₁ g₂ g₃) s)
   (let loop ((s∞ (g₁ s)))
@@ -744,11 +728,11 @@ that is nearly identical to one used in the below case.
   \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conda
   (syntax-rules ()
-    ((conda (g₀ g …)) (conj g₀ g …))
-    ((conda (g₀) ln …)
-     (ife g₀ (conda ln …)))
-    ((conda (g₀ g …) ln …)
-     (ifte g₀ (conj g …) (conda ln …)))))
+    ((conda (g₀ g ...)) (conj g₀ g ...))
+    ((conda (g₀) ln ...)
+     (ife g₀ (conda ln ...)))
+    ((conda (g₀ g ...) ln ...)
+     (ifte g₀ (conj g ...) (conda ln ...)))))
 
 (define ((ife g₁ g₃) s)
   (let loop ((s∞ (g₁ s)))
@@ -759,7 +743,7 @@ that is nearly identical to one used in the below case.
               (loop (s∞)))))))
 
 (define ((ifte g₁ g₂ g₃) s)
-  …)
+  ...)
   \end{minted}
   \caption{An inauspicious re-implementation of \rackinline|conda|.}
   \label{mnt:conda-bad-re-implementation}
