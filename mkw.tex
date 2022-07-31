@@ -404,16 +404,17 @@ explicitly recursive function.
 We inverse β-substitute in the recursive case, to draw out a
 similarity between the two clauses.
 
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
   (define ((disj g . gs) s)
     (cond
       ((null? gs) (g s))
-      (else
-       ((λ (s)
-           (append∞ (g s)
-             ((apply disj gs) s)))
-        s))))
+      (else ((λ (s)
+               (append∞ (g s)
+                 ((apply disj gs) s)))
+             s))))
 \end{minted}
+\end{listing}
 
 We can replace the call to \rackinline|append∞| by the definition
 of \rackinline|disj₂|.
@@ -422,8 +423,7 @@ of \rackinline|disj₂|.
   (define ((disj g . gs) s)
     (cond
       ((null? gs) (g s))
-      (else
-       ((disj₂ g (apply disj gs)) s))))
+      (else ((disj₂ g (apply disj gs)) s))))
 \end{minted}
 
 Now \rackinline|s| is a curried parameter we can η away.
@@ -450,18 +450,18 @@ in~\cref{mnt:disj-function-and-macro-derived-definition}.
 We can demonstrate the correctness of our \rackinline|conj| from
 \cref{mnt:conj-and-disj-reimplementation} in the same manner. We first
 deconstruct the stream accumulator back into its two constituent
-pieces. This requires abstracting over the \rackinline|λ|.
+pieces.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
-    (C gs g s))
+    (C g gs s))
 
-  (define (C gs g s)
+  (define (C g gs s)
     (cond
       ((null? gs) (g s))
       (else
-       (C (cdr gs)
-          (λ (s) (append-map∞ (car gs) (g s)))
+       (C (λ (s) (append-map∞ (car gs) (g s)))
+          (cdr gs)
           s))))
 \end{minted}
 
@@ -489,9 +489,7 @@ to say the body of \rackinline|conj₂|, by its definition.
       ((null? gs) (g s))
       (else
        ((apply conj
-          (cons
-            (conj₂ g (car gs))
-            (cdr gs)))
+          (cons (conj₂ g (car gs)) (cdr gs)))
         s)))))
 \end{minted}
 
@@ -506,14 +504,13 @@ in~\cref{mnt:conj-function-derived-definition}.
       ((null? gs) g)
       (else
        (apply conj
-         (cons
-           (conj₂ g (car gs))
-           (cdr gs))))))
+         (cons (conj₂ g (car gs)) (cdr gs))))))
 
   (define-syntax conj
     (syntax-rules ()
       ((conj g) g)
-      ((conj g g₁ gs ...) (conj (conj₂ g g₁) gs ...))))
+      ((conj g g₁ gs ...)
+       (conj (conj₂ g g₁) gs ...))))
 \end{minted}
   \caption{Derived \rackinline|conj₂|-based function and macro.}
   \label{mnt:conj-function-derived-definition}
@@ -522,8 +519,8 @@ in~\cref{mnt:conj-function-derived-definition}.
 Both the variadic function based and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
 goals, whereas the versions of \rackinline|disj| use a right fold.
-This is not an accident, and we believe important. It's known
-miniKanren folklore that left associating conjunctions tend to improve
+This is not an accident, and we believe this is important. It is
+miniKanren folklore that left associating conjunctions tends to improve
 miniKanren performance, but we have generally resorted to small step
 visualizations of the search tree to demonstrate why that might be. We
 can make an equally compelling argument for this preference through
