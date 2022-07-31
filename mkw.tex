@@ -97,7 +97,8 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title{Improving microKanren implementations using variadic functions}
+\title{Simplifying and improving microKanren implementations of
+  conjunction and disjunction using variadic functions}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -124,11 +125,13 @@
 %% The abstract is a short summary of the work to be presented in the
 %% article.
 \begin{abstract}
-We describe here how, at the cost of an additional language
-feature---namely variadic and \enquote{rest argument} functions---we
-can implement a slightly higher-level kernel language. This insight
-leads to a shorter overall implementation that is also more performant
-and, perhaps, a bit more elegant.
+  We describe here how, at the cost of an additional language
+  feature---namely variadic and \enquote{rest argument} functions---we
+  can implement a slightly higher-level kernel language. This
+  implementation includes conjunction and disjunction for microKanren
+  without creating superfluous closures. Insights lead to a shorter
+  overall implementation that is also more performant and, perhaps, a
+  bit more elegant.
 \end{abstract}
 
 %%
@@ -167,8 +170,8 @@ programming languages of the world more or less into the expressive
 macro system \enquote{have}s and the macro system-less \enquote{have
   not}s. This note shows how an implementer using a functional
 language with variadic (any number of arguments) functions but without
-a macro system can achieve an intermediate point. We also allow
-ourselves the luxury of some changes to the core language's syntax.
+\rackinline|apply| or a macro system can still achieve an intermediate
+point.
 
 Even implementers using and programmers studying implementations
 written in languages \emph{with} sufficiently expressive macro systems
@@ -180,27 +183,29 @@ in the core implementation, the number of additional lines for their
 and the limited features they required from the host. So replacing
 less powerful language primitives by comparatively short but more
 powerful variants is a win. Beyond that, this more powerful kernel
-language obviates several macros in the desugaring layer.
+language obviates several macros in the desugaring layer, and we
+eventually convince ourselves of the benefit of some changes to the
+core language's syntax.
 
 Beyond being a conceptually simpler foundation for a full Kanren
-language, this implementation is more \emph{efficient}. The source of
-the original inefficiency---the right-association of conjunctions---is
-already known miniKanren implementation folklore. We were pleasantly
-surprised that code improvement \enquote{horse sense} and thinking
-about the expressivity of primitives also gave us improved
-performance. This same horse sense might lead one to suggest these
-improved variants should actually be the programmer's exposed
-constructs.
+language, this implementation is actually more \emph{efficient}. The
+source of the original inefficiency---the right-association of
+conjunctions---is already known miniKanren implementation folklore. We
+were pleasantly surprised that thinking about the expressivity of
+primitives and code improvement \enquote{horse sense} led us to the
+more performant implementations. This same horse sense might lead one
+to suggest these improved variants should actually be the programmer's
+exposed constructs.
 
-In \cref{sec:all-aboard}, we briefly revisit microKanren implementations
-status quo ante and illustrate why surface syntax macros seemed
-practically mandatory. In~\cref{sec:conde}, we discuss the
-re-implementation of conjunction and disjunction, and in
+In \cref{sec:all-aboard}, we briefly revisit microKanren
+implementations status quo ante and illustrate why surface syntax
+macros seemed practically mandatory. In~\cref{sec:conde}, we discuss
+the re-implementation of conjunction and disjunction, and in
 \cref{sec:impure} we discuss the re-implementation of the impure
 operators. We close with a discussion of some performance impacts of
 these implementation choices, and consider how Kanren language
-implementers outside of the Scheme family might benefit from this
-re-implementation
+implementers outside of the Scheme family might benefit from these
+alternative implementations.
 
 \section{All Aboard}\label{sec:all-aboard}
 
@@ -211,7 +216,7 @@ further explanation, or to~\href{minikanren.org}{minikanren.org} for a
 slew of implementations across many host languages.
 
 The shortest subway system in the world is Haifa's Carmelit, with only
-six stations. The system is a line so its trains travel back and
+six stations. The system is a line, so its trains travel back and
 forth. If we wanted to describe the order in which we rode the train
 from the beginning to the end, we could use the
 \rackinline|carmelit-subway| relation in~\cref{mnt:carmelit}. We
@@ -220,7 +225,8 @@ unfolding this relation into binary conjunctions and disjunctions
 would be painful. We certainly \emph{could} write it out by hand---in
 fact, we could write it out many ways. We could nest those
 conjunctions to the left, or to the right, or try and reduce the
-indentation by trying to keep them somewhat balanced.
+indentation by trying to keep them somewhat balanced: the program
+itself does not seem to obviously encourage one particular choice.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
@@ -243,87 +249,83 @@ indentation by trying to keep them somewhat balanced.
   \label{mnt:carmelit}
 \end{listing}
 
-We defer that discussion to~\cref{sec:conde}; for now, take the point
-that those in languages without macros who intended to use this
-language for even fairly trivial tasks could become overwhelmed by the
-low-level details of programming in a microKanren such as binary
-conjunction and disjunction, with all the difficulties of a shallow
-embedding. E.g., a small programming mistake, such as incorrectly
-nesting a conjunct somewhere in a long conjunction chain, can cause
-relatively obscure errors and reading those error messages forces the
-programmer out of the microKanren-DSL thinking, and back into the host
-programming language's debug model.
+We defer further discussion on this point to~\cref{sec:conde}. Here we
+intend just to illustrate that those programming in a microKanren in a
+macro-less host language, for even fairly trivial tasks, could get
+bothered by low-level details of such as binary conjunction and
+disjunction, with all the difficulties of a shallow embedding. E.g., a
+small programming mistake, such as incorrectly nesting a conjunct
+somewhere in a long conjunction chain, can cause relatively obscure
+errors and reading those error messages forces the programmer out of
+the microKanren-DSL thinking, and back into the host programming
+language's debug model.
 
-\section{\rackinline|conde| and logical goal constructors}\label{sec:conde}
+\section{\rackinline|conj| and \rackinline|disj| logical goal
+  constructors}\label{sec:conde}
 
-% Programmers expect better than having to chain their logic together
-% like building circuitry from logic gates. Such
+Programmers rightly expect better than having to chain their logic
+together like building circuitry from logic gates. Such higher-level
+logical operations may or may not be present in the core language, but
+if not the programmer will reasonably expect some syntax sugar to
+provide them. Witness the Scheme's \rackinline|and| and
+\rackinline|or| macros as examples.~\cite{r7rssmall}. In a typical
+miniKanren implementation, the \rackinline|conde| macro is a shallow
+syntactic wrapper for an $n$-way disjunction (\rackinline|disj|) of
+$n$-way conjunctions (\rackinline|conj|).
+~\Cref{mnt:conj-and-disj-reimplementation} shows our
+re-implementation.
 
-Higher-level logical operations may or may not be present in the core
-language, but if not the programmer will reasonably expect some syntax
-sugar to provide them. Witness the Scheme's \rackinline|and| and
-\rackinline|or| macros as examples.
-\Cref{mnt:conde-implementation,mnt:conj-and-disj-implementation}
-contain a typical implementation of miniKanren's \rackinline|conde|
-operator, this one taken from \citetitle{friedman2018reasoned}. As
-advertised, the \rackinline|conde| macro is a shallow syntactic
-wrapper for an $n$-way disjunction (\rackinline|disj|) of $n$-way
-conjunctions (\rackinline|conj|).
+\begin{listing}
+  \begin{minted}[autogobble,stripall,linenos]{racket}
+  (define ((conj g . gs) s)
+    (C gs (g s)))
+
+  (define (C gs s-inf)
+    (cond
+      ((null? gs) s-inf)
+      (else (C (cdr gs) (＄append-map (car gs) s-inf)))))
+
+  (define ((disj g . gs) s)
+    (D-rec g gs s))
+
+  (define (D g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else (＄append (g s) (D (car gs) (cdr gs) s)))))
+  \end{minted}
+  \caption{Re-implementations of \rackinline|conj| and \rackinline|disj|.}
+  \label{mnt:conj-and-disj-reimplementation}
+\end{listing}
+
+These implementations rely on variadic functions, but do not require
+\rackinline|apply|. They no longer rely on binary \rackinline|conj2|
+and \rackinline|disj2|, and they do not build any closures.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
 (define-syntax conde
   (syntax-rules ()
-    ((conde (g ...) ...)
-     (disj (conj g ...) ...))))
+    ((conde (g g1 ...) ...)
+     (disj (conj g g1 ...) ...))))
   \end{minted}
-\caption{A typical implementation of \rackinline|conde|.}
+\caption{A 1+ arity implementation of \rackinline|conde|.}
   \label{mnt:conde-implementation}
 \end{listing}
 
+Compare these to typical macro-based microKanren implementations of
+the underlying conjunction and disjunction operations in
+\cref{mnt:conj-and-disj-implementation}. Here, \rackinline|S| and
+\rackinline|F| represents primitive goals that unconditionally succeed
+and fail, respectively. Those \rackinline|conj| and \rackinline|disj|
+macros are not \emph{quite} defined as simple recursions over their
+binary functional primitives. The definition of 0-way conjunction
+(disjunction) is independent of the unfolding of \rackinline|conj2|
+(\rackinline|disj2|). In a sense the \rackinline|conj| and
+\rackinline|disj| macros confuse and entangle primitive success and
+failure goals with those recursive unfoldings in terms of the binary
+operators.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
-(define-syntax conj
-  (syntax-rules ()
-    ((conj) S)
-    ((conj g) g)
-    ((conj g0 g ...) (conj₂ g0 (conj g ...)))))
-
-(define ((conj₂ g₁ g₂) s)
-  (append-map g₂ (g₁ s)))
-
-(define-syntax disj
-  (syntax-rules ()
-    ((disj) F)
-    ((disj g) g)
-    ((disj g0 g ...) (disj₂ g0 (disj g ...)))))
-
-(define ((disj₂ g₁ g₂) s)
-  (append (g₁ s) (g₂ s)))
-  \end{minted}
-  \caption{Macro based implementations of \rackinline|conj| and \rackinline|disj|.}
-  \label{mnt:conj-and-disj-implementation}
-\end{listing}
-
-\Cref{mnt:conj-and-disj-implementation} contains implementations of
-the underlying conjunction and disjunction operations. Here
-\rackinline|S| (\rackinline|F|) represents a primitive goal that
-unconditionally succeeds (fails). We omit the underlying
-implementations of \rackinline|append| and \rackinline|append-map|, as
-these are standard and remain constant over the course of this
-discussion.
-
-As implemented, \rackinline|conj| and \rackinline|disj| are not
-\emph{quite} defined as simple recursions over their binary functional
-primitives. The definition of 0-way conjunction (disjunction) is
-independent of the unfolding of \rackinline|conj₂|
-(\rackinline|disj₂|). In a sense the \rackinline|conj| and
-\rackinline|disj| macros amalgamate primitive success and failure
-goals with those recursive unfoldings of more-than-binary logical
-connectives that terminate in a one-element base case.
-
-These zero-way logical operation base cases don't add much. The
+Those zero-way logical operation base cases don't add much. The
 programmer who wants to write an elegant, efficient solution to a pure
 relational programming task would not encounter these additional base
 cases in his \rackinline|conde| expressions. The programmer knows
@@ -331,9 +333,32 @@ statically how these goals will behave, so there is no benefit to
 executing them. A conjunction of no goals would simply succeed, and a
 disjunction of no goals would simply fail. Truthfully, only the impure
 \rackinline|conda| operator seemed to require these additional base
-cases (we discuss this further in~\cref{sec:impure}). If we just
-exclude the vestigial runt base case, we could let var args do the
-pattern matching for us.
+cases (we discuss this further in~\cref{sec:impure}).
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall,linenos]{racket}
+(define-syntax conj
+  (syntax-rules ()
+    ((conj) S)
+    ((conj g) g)
+    ((conj g0 g ...) (conj2 g0 (conj g ...)))))
+
+(define ((conj2 g1 g2) s)
+  (append-map g2 (g1 s)))
+
+(define-syntax disj
+  (syntax-rules ()
+    ((disj) F)
+    ((disj g) g)
+    ((disj g0 g ...) (disj2 g0 (disj g ...)))))
+
+(define ((disj2 g1 g2) s)
+  (append (g1 s) (g2 s)))
+  \end{minted}
+  \caption{Macro based implementations of \rackinline|conj| and \rackinline|disj|.}
+  \label{mnt:conj-and-disj-implementation}
+\end{listing}
+
 
 If we mandate that disjunction be a function of one-or-more arguments
 (or, in another parlance, \enquote{polyvariadic}), we can implement
@@ -342,10 +367,15 @@ and to avoid \enquote{namespace collisions}, we use \rackinline|D| for
 our re-implementation of disjunction and we call its internal help
 function \rackinline|D-rec|.
 
+
+If we just exclude the vestigial runt base case, we could let var args
+do the pattern matching for us.
+
+
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
-(define ((D g₁ . gs) s)
-  (D-rec (g₁ s) gs s))
+(define ((D g1 . gs) s)
+  (D-rec (g1 s) gs s))
 
 (define (D-rec s∞ gs s)
   (cond
@@ -359,7 +389,7 @@ function \rackinline|D-rec|.
 
 From the first goal (the host language syntactically guarantees one
 must exist) and a state, \rackinline|D| can produce an answer stream
-\rackinline|(g₁ s)|, which it passes along as the first argument to
+\rackinline|(g1 s)|, which it passes along as the first argument to
 \rackinline|D-rec|. The function \rackinline|D-rec| is merely a fold
 over the list of the remaining goals. Whereas the implementation in
 \cref{mnt:conj-and-disj-implementation} implements general disjunction
@@ -374,7 +404,7 @@ heavily weighted in the search, here the \emph{last} goal is most
 heavily weighted. Because $n$-ary disjunction is now built in to the
 functional definition, this behavior is now transparently visible in
 the implementation of \rackinline|D-rec|. Imagine for a moment that in
-the given state \rackinline|s| each goal in \rackinline|(g₁ . gs)|
+the given state \rackinline|s| each goal in \rackinline|(g1 . gs)|
 produces infinitely many answers. The \rackinline|append| is doing a
 fair interleaving between its two stream arguments: giving one a
 little time to work and then handing off to the other. At each
@@ -393,8 +423,8 @@ list of arguments is an exemplary use of an APS macro.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall,linenos]{racket}
-(define ((C g₁ . gs) s)
-  (C-rec (g₁ s) gs))
+(define ((C g1 . gs) s)
+  (C-rec (g1 s) gs))
 
 (define (C-rec s∞ gs)
   (cond

@@ -1,10 +1,13 @@
 * Point of the derivation in this paper is:
 
-* With the macro based variants, we end up building heavily nested lambdas.
+* With the 2013 microKanren conj macro, we end up building heavily nested lambdas.
 
 The “naturally-recursive” macro-based implementations we came up with
 go the wrong direction. They nest the goals unfortunately, in ways
-that we can see in ~redex~.
+that we can see in e.g. my ~redex~ model, and in Michael’s graffle
+depiction.
+
+I _will_ it turns out need to discuss the difficulty of the conjunction.
 
 ** Show how using var-args for functions points the way to the correct definitions
 
@@ -61,9 +64,9 @@ So, which one is this?---~varargs-2+-left-assoc~
 #+begin_src racket
   #lang racket
   (define ((C g1 g2 . gs) s)
-	(cond
-	  ((null? gs) ((conj2 g1 g2) s))
-	  (else ((apply C (cons (conj2 g1 g2) gs)) s))))
+    (cond
+      ((null? gs) ((conj2 g1 g2) s))
+      (else ((apply C (cons (conj2 g1 g2) gs)) s))))
 #+end_src
 
 We can start by breaking the function up into a recursive variant and
@@ -74,13 +77,13 @@ uses ordinary list recursion.
 #+begin_src racket
   #lang racket
   (define ((C g1 g2 . gs) s)
-	(C-rec g1 g2 gs s))
+    (C-rec g1 g2 gs s))
 
   (define (C-rec g1 g2 gs s)
-	(cond
-	  ((null? gs) ((conj2 g1 g2) s))
-	  (else
-	   (C-rec (conj2 g1 g2) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ((conj2 g1 g2) s))
+      (else
+       (C-rec (conj2 g1 g2) (car gs) (cdr gs) s))))
 #+end_src
 
 If we substitute through in the definition of ~conj2~, we get:
@@ -88,13 +91,13 @@ If we substitute through in the definition of ~conj2~, we get:
 #+begin_src racket
   #lang racket
   (define ((C g1 g2 . gs) s)
-	(C-rec g1 g2 gs s))
+    (C-rec g1 g2 gs s))
 
   (define (C-rec g1 g2 gs s)
-	(cond
-	  ((null? gs) ((lambda (s) ($append-map g2 (g1 s))) s))
-	  (else
-		(C-rec (lambda (s) ($append-map g2 (g1 s))) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ((lambda (s) ($append-map g2 (g1 s))) s))
+      (else
+       (C-rec (lambda (s) ($append-map g2 (g1 s))) (car gs) (cdr gs) s))))
 #+end_src
 
 Here is the important piece; since we only need ~s~ to *build the
@@ -110,12 +113,12 @@ We had to combine and hand substitute through, as in ~((lambda (s)
 #+begin_src racket
   #lang racket
   (define ((C g1 g2 . gs) s)
-	(C-rec g2 gs (g1 s)))
+    (C-rec g2 gs (g1 s)))
 
   (define (C-rec g2 gs s-inf)
-	(cond
-	  ((null? gs) ($append-map g2 s-inf))
-	  (else (C-rec (car gs) (cdr gs) ($append-map g2 s-inf)))))
+    (cond
+      ((null? gs) ($append-map g2 s-inf))
+      (else (C-rec (car gs) (cdr gs) ($append-map g2 s-inf)))))
 #+end_src
 
 The recursion and the base case share a lot in common. We can exploit
@@ -126,12 +129,12 @@ version.
 #+begin_src racket
   #lang racket
   (define ((C g1 . gs) s)
-	(C-rec gs (g1 s)))
+    (C-rec gs (g1 s)))
 
   (define (C-rec gs s-inf)
-	(cond
-	  ((null? gs) s-inf)
-	  (else (C-rec (cdr gs) ($append-map (car gs) s-inf)))))
+    (cond
+      ((null? gs) s-inf)
+      (else (C-rec (cdr gs) ($append-map (car gs) s-inf)))))
 #+end_src
 
 And there you have it. We can derive this answer _from_ the original
@@ -150,13 +153,13 @@ different cases and keep our users from needing to worry adding and
 removing a combinator when moving from one to more than one goal.
 
 #+begin_src racket
-	#lang racket
+  #lang racket
 
-	(define-syntax fresh
-	  (syntax-rules ()
-		[(fresh () g) <do something on this one>]
-		[(fresh () g g1 g* ...) <do something on this one>]
-		[(fresh (x ...) g ...) <recur here down to base case>]))
+  (define-syntax fresh
+    (syntax-rules ()
+      [(fresh () g) <do something on this one>]
+      [(fresh () g g1 g* ...) <do something on this one>]
+      [(fresh (x ...) g ...) <recur here down to base case>]))
 #+end_src
 
 To illustrate just how superfluous the 0-arity version is, see that we
@@ -165,14 +168,14 @@ can add that back in as a separate case of the interface function.
 #+begin_src racket
   #lang racket
   (define ((C . gs) s)
-	(cond
-	  ((null? gs) S)
-	  (else (C-rec (cdr gs) ((car gs) s)))))
+    (cond
+      ((null? gs) S)
+      (else (C-rec (cdr gs) ((car gs) s)))))
 
   (define (C-rec gs s-inf)
-	(cond
-	  ((null? gs) s-inf)
-	  (else (C-rec (cdr gs) ($append-map (car gs) s-inf)))))
+    (cond
+      ((null? gs) s-inf)
+      (else (C-rec (cdr gs) ($append-map (car gs) s-inf)))))
 #+end_src
 
 ** So. Can we do the same thing for *all* of those variants?
@@ -198,11 +201,11 @@ is aces and this is a good paper. If we are stuck with the
 backward-disj, then that’s okay but not great.
 
 #+begin_src racket
-#lang racket
+  #lang racket
   (define ((conj g g1 . gs) s)
-  (cond
-	((null? gs) ((conj2 g g1) s))
-	(else ((conj2 g (apply conj (cons g1 gs))) s))))
+    (cond
+      ((null? gs) ((conj2 g g1) s))
+      (else ((conj2 g (apply conj (cons g1 gs))) s))))
 #+end_src
 
 So, alright. We’ll try it this way. Break it apart into two mutually
@@ -211,12 +214,12 @@ recursive functions.
 #+begin_src racket
   #lang racket
   (define ((conj g g1 . gs) s)
-	(C-rec g g1 gs s))
+    (C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((conj2 g g1) s))
-	  (else ((conj2 g (apply conj (cons g1 gs))) s))))
+    (cond
+      ((null? gs) ((conj2 g g1) s))
+      (else ((conj2 g (apply conj (cons g1 gs))) s))))
 #+end_src
 
 Okay, now this must be where things get different. We cannot (easily)
@@ -227,12 +230,12 @@ abstracting over ~s~ and waiting.
 #+begin_src racket
   #lang racket
   (define ((conj g g1 . gs) s)
-	(C-rec g g1 gs s))
+    (C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((conj2 g g1) s))
-	  (else ((conj2 g (λ (s) (C-rec g1 (car gs) (cdr gs) s))) s))))
+    (cond
+      ((null? gs) ((conj2 g g1) s))
+      (else ((conj2 g (λ (s) (C-rec g1 (car gs) (cdr gs) s))) s))))
 #+end_src
 
 From here we can try and substitute through the definition of ~conj2~.
@@ -240,12 +243,12 @@ From here we can try and substitute through the definition of ~conj2~.
 #+begin_src racket
   #lang racket
   (define ((conj g g1 . gs) s)
-	(C-rec g g1 gs s))
+    (C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((lambda (s) ($append-map g1 (g s))) s))
-	  (else ((lambda (s) ($append-map (λ (s) (C-rec g1 (car gs) (cdr gs) s)) (g s))) s))))
+    (cond
+      ((null? gs) ((lambda (s) ($append-map g1 (g s))) s))
+      (else ((lambda (s) ($append-map (λ (s) (C-rec g1 (car gs) (cdr gs) s)) (g s))) s))))
 #+end_src
 
 In the earlier version, we could construct the stream on the way
@@ -255,12 +258,12 @@ lambdas weren’t doing anything for us.
 #+begin_src racket
   #lang racket
   (define ((conj g g1 . gs) s)
-	(C-rec g g1 gs s))
+    (C-rec g g1 gs s))
 
   (define (C-rec g g1 gs s)
-	(cond
-	  ((null? gs) ($append-map g1 (g s)))
-	  (else ($append-map (λ (s) (C-rec g1 (car gs) (cdr gs) s)) (g s)))))
+    (cond
+      ((null? gs) ($append-map g1 (g s)))
+      (else ($append-map (λ (s) (C-rec g1 (car gs) (cdr gs) s)) (g s)))))
 #+end_src
 
 In the earlier derivation we were able to turn the stream itself into
@@ -271,12 +274,12 @@ pleasant.
 #+begin_src racket
   #lang racket
   (define ((conj g g1 . gs) s)
-	(C-rec g1 gs (g s)))
+    (C-rec g1 gs (g s)))
 
   (define (C-rec g1 gs s-inf)
-	(cond
-	  ((null? gs) ($append-map g1 s-inf))
-	  (else ($append-map (λ (s) (C-rec (car gs) (cdr gs) (g1 s))) s-inf))))
+    (cond
+      ((null? gs) ($append-map g1 s-inf))
+      (else ($append-map (λ (s) (C-rec (car gs) (cdr gs) (g1 s))) s-inf))))
 #+end_src
 
 We can try and loosen the 2+ requirement, a bit at least.
@@ -284,12 +287,12 @@ We can try and loosen the 2+ requirement, a bit at least.
 #+begin_src racket
   #lang racket
   (define ((conj g . gs) s)
-	(C-rec gs (g s)))
+    (C-rec gs (g s)))
 
   (define (C-rec gs s-inf)
-	(cond
-	  ((null? gs) s-inf)
-	  (else ($append-map (λ (s) (C-rec (cdr gs) ((car gs) s))) s-inf))))
+    (cond
+      ((null? gs) s-inf)
+      (else ($append-map (λ (s) (C-rec (cdr gs) ((car gs) s))) s-inf))))
 #+end_src
 
 It’s not /totally/ clear that there’s some optimization we’re
@@ -303,6 +306,9 @@ get us to the clever definition" and that we can see from horse sense.
 
 Maybe the nested lambdas there is it. However.
 
+
+If you treat the list as accumulatively, then you’ll get the result you want.
+
 ** The last case we need to concern ourselves with: ~disj~
 
 ** fold right variant.
@@ -313,9 +319,9 @@ of work to it. Is the alternative nicer?
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(cond
-	  ((null? gs) ((disj2 g g1) s))
-	  (else ((disj2 g (apply disj (cons g1 gs))) s))))
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else ((disj2 g (apply disj (cons g1 gs))) s))))
 
 #+end_src
 
@@ -324,12 +330,12 @@ Mutual recursion
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g g1) s))
-	  (else ((disj2 g (apply disj (cons g1 gs))) s))))
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else ((disj2 g (apply disj (cons g1 gs))) s))))
 #+end_src
 
 But since unlike the earlier version we don’t have all the parts yet,
@@ -340,12 +346,12 @@ we cannot build the recursive function right now. Instead we have to
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g g1) s))
-	  (else ((disj2 g (λ (s) ((apply disj (cons g1 gs)) s))) s))))
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else ((disj2 g (λ (s) ((apply disj (cons g1 gs)) s))) s))))
 #+end_src
 
 ... and then we can build the recursion
@@ -354,12 +360,12 @@ we cannot build the recursive function right now. Instead we have to
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g g1) s))
-	  (else ((disj2 g (λ (s) (D-rec g1 (car gs) (cdr gs) s))) s))))
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else ((disj2 g (λ (s) (D-rec g1 (car gs) (cdr gs) s))) s))))
 #+end_src
 
 Now seems like a nice time to unfold the definitions of ~disj2~.
@@ -368,12 +374,12 @@ Now seems like a nice time to unfold the definitions of ~disj2~.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((λ (s) ($append (g s) (g1 s))) s))
-	  (else ((λ (s) ($append (g s) ((λ (s) (D-rec g1 (car gs) (cdr gs) s)) s))) s))))
+    (cond
+      ((null? gs) ((λ (s) ($append (g s) (g1 s))) s))
+      (else ((λ (s) ($append (g s) ((λ (s) (D-rec g1 (car gs) (cdr gs) s)) s))) s))))
 #+end_src
 
 This makes the β reductions come out very nice.
@@ -381,12 +387,12 @@ This makes the β reductions come out very nice.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ($append (g s) (g1 s)))
-	  (else ($append (g s) (D-rec g1 (car gs) (cdr gs) s)))))
+    (cond
+      ((null? gs) ($append (g s) (g1 s)))
+      (else ($append (g s) (D-rec g1 (car gs) (cdr gs) s)))))
 #+end_src
 
 And this is a nice time to reduce the arity.
@@ -394,12 +400,12 @@ And this is a nice time to reduce the arity.
 #+begin_src racket
   #lang racket
   (define ((disj g . gs) s)
-	(D-rec g gs s))
+    (D-rec g gs s))
 
   (define (D-rec g gs s)
-	(cond
-	  ((null? gs) (g s))
-	  (else ($append (g s) (D-rec (car gs) (cdr gs) s)))))
+    (cond
+      ((null? gs) (g s))
+      (else ($append (g s) (D-rec (car gs) (cdr gs) s)))))
 #+end_src
 
 This approach has to be the right solution. It might be that this
@@ -422,7 +428,7 @@ disjunction it just doesn’t matter? Let’s see anyway.
 #+begin_src racket
   #lang racket
 
-(define ((disj g g1 . gs) s)
+  (define ((disj g g1 . gs) s)
     (cond
       ((null? gs) ((disj2 g g1) s))
       (else (let ((res (apply disj (cons (disj2 g g1) gs))))
@@ -435,12 +441,12 @@ and split
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g g1) s))
-	  (else ((apply disj (cons (disj2 g g1) gs)) s))))
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else ((apply disj (cons (disj2 g g1) gs)) s))))
 
 #+end_src
 
@@ -449,12 +455,12 @@ and apply through
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g g1) s))
-	  (else (D-rec (disj2 g g1) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ((disj2 g g1) s))
+      (else (D-rec (disj2 g g1) (car gs) (cdr gs) s))))
 #+end_src
 
 We have to abstract over ~s~ here, which is probably going to be sub-optimal.
@@ -462,12 +468,12 @@ We have to abstract over ~s~ here, which is probably going to be sub-optimal.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((λ (s) ($append (g s) (g1 s))) s))
-	  (else (D-rec (λ (s) ($append (g s) (g1 s))) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ((λ (s) ($append (g s) (g1 s))) s))
+      (else (D-rec (λ (s) ($append (g s) (g1 s))) (car gs) (cdr gs) s))))
 #+end_src
 
 I guess we can ~β~ in the base case.
@@ -475,12 +481,12 @@ I guess we can ~β~ in the base case.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ($append (g s) (g1 s)))
-	  (else (D-rec (λ (s) ($append (g s) (g1 s))) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ($append (g s) (g1 s)))
+      (else (D-rec (λ (s) ($append (g s) (g1 s))) (car gs) (cdr gs) s))))
 #+end_src
 
 And finish up with the arity reduction again.
@@ -488,12 +494,12 @@ And finish up with the arity reduction again.
 #+begin_src racket
   #lang racket
   (define ((disj g . gs) s)
-	(D-rec g gs s))
+    (D-rec g gs s))
 
   (define (D-rec g gs s)
-	(cond
-	  ((null? gs) (g s))
-	  (else (D-rec (λ (s) ($append (g s) (g1 s))) (cdr gs) s))))
+    (cond
+      ((null? gs) (g s))
+      (else (D-rec (λ (s) ($append (g s) (g1 s))) (cdr gs) s))))
 #+end_src
 
 This variant builds up one giant big honkin’ goal, and then applies
@@ -514,9 +520,9 @@ instead using the left-associated flipped args version.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(cond
-	  ((null? gs) ((disj2 g1 g) s))
-	  (else ((apply disj (cons (disj2 g1 g) gs)) s))))
+    (cond
+      ((null? gs) ((disj2 g1 g) s))
+      (else ((apply disj (cons (disj2 g1 g) gs)) s))))
 #+end_src
 
 So, the by-now standard practice.
@@ -526,12 +532,12 @@ So, the by-now standard practice.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g1 g) s))
-	  (else ((apply disj (cons (disj2 g1 g) gs)) s))))
+    (cond
+      ((null? gs) ((disj2 g1 g) s))
+      (else ((apply disj (cons (disj2 g1 g) gs)) s))))
 #+end_src
 
 We can directly substitute the call ~((apply disj (cons (disj2 g1 g)
@@ -540,12 +546,12 @@ gs)) s)~ through for the recursion.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((disj2 g1 g) s))
-	  (else (D-rec (disj2 g1 g) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ((disj2 g1 g) s))
+      (else (D-rec (disj2 g1 g) (car gs) (cdr gs) s))))
 #+end_src
 
 *** Substitute through for ~disj2~
@@ -553,12 +559,12 @@ gs)) s)~ through for the recursion.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ((lambda (s) ($append (g1 s) (g s))) s))
-	  (else (D-rec (lambda (s) ($append (g1 s) (g s))) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ((lambda (s) ($append (g1 s) (g s))) s))
+      (else (D-rec (lambda (s) ($append (g1 s) (g s))) (car gs) (cdr gs) s))))
 #+end_src
 
 *** ~β~-reduce where we can
@@ -566,12 +572,12 @@ gs)) s)~ through for the recursion.
 #+begin_src racket
   #lang racket
   (define ((disj g g1 . gs) s)
-	(D-rec g g1 gs s))
+    (D-rec g g1 gs s))
 
   (define (D-rec g g1 gs s)
-	(cond
-	  ((null? gs) ($append (g1 s) (g s)))
-	  (else (D-rec (lambda (s) ($append (g1 s) (g s))) (car gs) (cdr gs) s))))
+    (cond
+      ((null? gs) ($append (g1 s) (g s)))
+      (else (D-rec (lambda (s) ($append (g1 s) (g s))) (car gs) (cdr gs) s))))
 #+end_src
 
 *** We cannot really do much to substitute in a stream, but we can reduce the arity
@@ -579,12 +585,12 @@ gs)) s)~ through for the recursion.
 #+begin_src racket
   #lang racket
   (define ((disj g . gs) s)
-	(D-rec g gs s))
+    (D-rec g gs s))
 
   (define (D-rec g gs s)
-	(cond
-	  ((null? gs) (g s))
-	  (else (D-rec (lambda (s) ($append ((car gs) s) (g s))) (cdr gs) s))))
+    (cond
+      ((null? gs) (g s))
+      (else (D-rec (lambda (s) ($append ((car gs) s) (g s))) (cdr gs) s))))
 #+end_src
 
 
@@ -592,100 +598,100 @@ gs)) s)~ through for the recursion.
 
 
 (define ((D . gs) s)
-  ...)
+...)
 
 Since \rackinline|gs| could be empty, as with the macro based
 implementation we introduce a base-case for the zero-length list.
 
 (define ((D . gs) s)
-  (cond
-    ((null? gs) (list))
-    ...))
+(cond
+((null? gs) (list))
+...))
 
 But it's also unfortunate to force an extra failing recursion onto every call,
 so we add the length-one arguments list to short-circuit that.
 
 (define ((D . gs) s)
-  (cond
-    ((null? gs) '())
-    ((null? (cdr gs)) (g s))
-    ...))
+(cond
+((null? gs) '())
+((null? (cdr gs)) (g s))
+...))
 
 ;; These assume 2+ goals; and we don’t write or work w/ “silly conjunctions.”
 
 (define-syntax conj
-  (syntax-rules ()
-    ((conj g0 g1) (conj₂ g0 g1))
-    ((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
+(syntax-rules ()
+((conj g0 g1) (conj₂ g0 g1))
+((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
 
 (define-syntax disj
-  (syntax-rules ()
-    ((disj g0 g1) (disj₂ g0 g1))
-    ((disj g0 g1 g ...) (disj (disj₂ g0 g1) g ...))))
+(syntax-rules ()
+((disj g0 g1) (disj₂ g0 g1))
+((disj g0 g1 g ...) (disj (disj₂ g0 g1) g ...))))
 
 ;; These next two are from the paper, as written.
 ;; As they’re written, they are 0-or-more-ary.
 ;; But they likewise shouldn’t require silly arities.
 
 (define-syntax conj
-  (syntax-rules ()
-    ((conj) S)
-    ((conj g) g)
-    ((conj g0 g ...) (conj₂ g0 (conj g ...)))))
+(syntax-rules ()
+((conj) S)
+((conj g) g)
+((conj g0 g ...) (conj₂ g0 (conj g ...)))))
 
 (define-syntax disj
-  (syntax-rules ()
-    ((disj) F)
-    ((disj g) g)
-    ((disj g0 g ...) (disj₂ g0 (disj g ...)))))
+(syntax-rules ()
+((disj) F)
+((disj g) g)
+((disj g0 g ...) (disj₂ g0 (disj g ...)))))
 
 ;; So we first remove the zero arity, conda be damned.
 
 (define-syntax conj
-  (syntax-rules ()
-    ((conj g) g)
-    ((conj g0 g ...) (conj₂ g0 (conj g ...)))))
+(syntax-rules ()
+((conj g) g)
+((conj g0 g ...) (conj₂ g0 (conj g ...)))))
 
 (define-syntax disj
-  (syntax-rules ()
-    ((disj g) g)
-    ((disj g0 g ...) (disj₂ g0 (disj g ...)))))
+(syntax-rules ()
+((disj g) g)
+((disj g0 g ...) (disj₂ g0 (disj g ...)))))
 
 ;; Then, we try again and unfold the recursion once more
 
 (define-syntax conj
-  (syntax-rules ()
-    ((conj g) g)
-    ((conj g0 g1) (conj₂ g0 (conj g1)))
-    ((conj g0 g1 g ...) (conj₂ g0 (conj g1 g ...)))))
+(syntax-rules ()
+((conj g) g)
+((conj g0 g1) (conj₂ g0 (conj g1)))
+((conj g0 g1 g ...) (conj₂ g0 (conj g1 g ...)))))
 
 (define-syntax disj
-  (syntax-rules ()
-    ((disj g) g)
-    ((disj g0 g1) (disj₂ g0 (disj g1)))
-    ((disj g0 g1 g ...) (disj₂ g0 (disj g1 g ...)))))
+(syntax-rules ()
+((disj g) g)
+((disj g0 g1) (disj₂ g0 (disj g1)))
+((disj g0 g1 g ...) (disj₂ g0 (disj g1 g ...)))))
 
 ;; Then, substitute through, and specialize away
 
 (define-syntax conj
-  (syntax-rules ()
-    ((conj g0 g1) (conj₂ g0 g1))
-    ((conj g0 g1 g ...) (conj₂ g0 (conj g1 g ...)))))
+(syntax-rules ()
+((conj g0 g1) (conj₂ g0 g1))
+((conj g0 g1 g ...) (conj₂ g0 (conj g1 g ...)))))
 
 (define-syntax disj
-  (syntax-rules ()
-    ((disj g0 g1) (disj₂ g0 g1))
-    ((disj g0 g1 g ...) (disj₂ g0 (disj g1 g ...)))))
+(syntax-rules ()
+((disj g0 g1) (disj₂ g0 g1))
+((disj g0 g1 g ...) (disj₂ g0 (disj g1 g ...)))))
 
 (define-syntax conj
-  (syntax-rules ()
-    ((conj g0 g1) (conj₂ g0 g1))
-    ((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
+(syntax-rules ()
+((conj g0 g1) (conj₂ g0 g1))
+((conj g0 g1 g ...) (conj (conj₂ g0 g1) g ...))))
 
 (define-syntax disj
-  (syntax-rules ()
-    ((disj g0 g1) (disj₂ g0 g1))
-    ((disj g0 g1 g ...) (disj (disj₂ g0 g1) g ...))))
+(syntax-rules ()
+((disj g0 g1) (disj₂ g0 g1))
+((disj g0 g1 g ...) (disj (disj₂ g0 g1) g ...))))
 
 ** Then we substitute through the definition of disj2/conj2, and see what happens there.
 
@@ -702,10 +708,10 @@ mechanism. But ~build-list~ is AFAIK Racket only.
   #lang racket
 
   (define (fresh f)
-	(let ((n (procedure-arity f)))
-	  (assert (number? n))
-	  (λ (s/c)
-		(let ((c (cdr s/c)))
-		  ((apply f (build-list n (curry + c)))
-		   (cons (car s/c) (+ n c)))))))
+    (let ((n (procedure-arity f)))
+      (assert (number? n))
+      (λ (s/c)
+        (let ((c (cdr s/c)))
+          ((apply f (build-list n (curry + c)))
+           (cons (car s/c) (+ n c)))))))
 #+end_src
