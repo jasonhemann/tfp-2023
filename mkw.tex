@@ -268,9 +268,9 @@ together like building circuitry from logic gates. Such higher-level
 logical operations may or may not be present in the core language, but
 if not the programmer will reasonably expect some syntax sugar to
 provide them. Witness the Scheme's \rackinline|and| and
-\rackinline|or| macros as examples.~\cite{r7rssmall}. Like in a
-typical miniKanren implementation, the \rackinline|conde| macro is a
-shallow syntactic wrapper for an $n$-way disjunction
+\rackinline|or| macros as examples.~\cite{shinn2013revisedreport} Like
+in a typical miniKanren implementation, the \rackinline|conde| macro
+is a shallow syntactic wrapper for an $n$-way disjunction
 (\rackinline|disj|) of $n$-way conjunctions (\rackinline|conj|).
 ~\Cref{mnt:conj-and-disj-reimplementation} shows our
 re-implementation.
@@ -441,9 +441,6 @@ Or, if we prefer the one-argument version, then the following, as
       ((disj g gs ...) (disj2 g (disj gs ...)))))
 \end{minted}
 
-DAN, ACTUALLY I THINK THIS WORKS OUT EITHER WAY WITH THE TWO ARGUMENT
-VERSIONS OR JUST THE ONE ARGUMENT VERSION.
-
 We can demonstrate the correctness of our \rackinline|conj| in the
 same manner.
 
@@ -454,11 +451,10 @@ same manner.
   (define (C gs s-inf)
     (cond
       ((null? gs) s-inf)
-      (else (C (cdr gs)
-               (append-map-inf (car gs) s-inf)))))
+      (else (C (cdr gs) (append-map-inf (car gs) s-inf)))))
 \end{minted}
 
-We can derive ... STOPPED HERE
+We can derive
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
