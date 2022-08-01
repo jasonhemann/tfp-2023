@@ -2,13 +2,13 @@
 (require (except-in rackunit fail))
 (require "./logical-combinator-function-definitions.rkt")
 
-;; left associative conjunction ((((a & b) & c) & d) & e)
+;; left  associative conjunction ((((a & b) & c) & d) & e)
 ;; right associative conjunction (a & (b & (c & (d & e))))
 ;;
 ;; execute goals from leftmost argument to rightmost argument
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc))
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc))
+(require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
 ;;
 ;; execute goals from rightmost argument to leftmost argument
@@ -18,7 +18,7 @@
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc-flip))
 ;;
 ;; mixed
-(require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
 
 ;; Testing different implementations of underlying logical combinators

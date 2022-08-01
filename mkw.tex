@@ -99,8 +99,6 @@
 %% the next command will enable that style.
 %%\citestyle{acmauthoryear}
 
-
-
 %%
 %% end of the preamble, start of the body of the document source.
 \begin{document}
@@ -108,8 +106,9 @@
 %%
 %% The "title" command has an optional parameter,
 %% allowing the author to define a "short title" to be used in page headers.
-\title[Improving microKanren with Variadics]{Simplifying and improving microKanren implementations of
-  conjunction and disjunction using variadic functions}
+\title[Towards criteria for implementations]{Towards criteria for
+  implementations of variable arity conjunction and disjunction in
+  microKanren}
 
 %%
 %% The "author" command and its associated commands are used to define
@@ -541,9 +540,9 @@ difficult to assert any preference for one over the other. The
   \label{mnt:conj-right-fold-definition}
 \end{listing}
 
-After we η-expand, unfold to a recursive help function, substitute in
-the definition of \rackinline|conj₂| and β-reduce, the choice becomes
-a little more obvious.
+The choice becomes a little more obvious after we η-expand, unfold to
+a recursive help function, substitute in the definition of
+\rackinline|conj₂|, and β-reduce.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -555,25 +554,42 @@ a little more obvious.
       (else (append-map-∞ (apply C gs) (g s)))))
 \end{minted}
 
-Here, we cannot (easily) replace the \rackinline|apply| call by a
-recursive call to \rackinline|C|, because we are still waiting on an
-\rackinline|s|. So the best we can do is abstract over \rackinline|s|,
-waiting.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
-    (C g gs s))
+    (C gs (g s)))
 
   (define (C g gs s)
     (cond
       ((null? gs) (g s))
-      (else
-       (append-map-∞
-         (λ (s) (C (car gs) (cdr gs)))
-         (g s)))))
+      (else (append-map-∞ (apply C gs) (g s)))))
 \end{minted}
 
-We can still reconstruct the stream argument, and come up with an approximately analogous right-fold version.
+
+Here, we cannot (easily) replace the \rackinline|apply| call by a
+recursive call to \rackinline|C|, because we are still waiting for an
+\rackinline|s|. We can only abstract over \rackinline|s| and wait.
+
+\begin{minted}[autogobble,stripall]{racket}
+  (define ((conj g . gs) s)
+    (C gs (g s)))
+
+  (define (C gs s∞)
+    (cond
+      ((null? gs) s∞)
+      (else
+       (append-map∞
+         (λ (s) (let ((t∞ ((car gs) s)))
+                  (C (cdr gs) t∞)))
+         s∞))))
+\end{minted}
+
+Since we know that any call to \rackinline|append-map∞| we construct
+will always yield a result, the other one is tail recursive. This
+version is not, and it builds closures.
+
+We can still reconstruct the stream argument, and come up with an
+approximately analogous right-fold version.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -591,14 +607,14 @@ We can still reconstruct the stream argument, and come up with an approximately 
 So the equivalent right-fold implementation needs to construct a
 closure for every recursive call. If we want to implement a variadic
 version that does not rely on a primitive \rackinline|conj2| and does
-not resort to \rackinline|apply|, we have these two choices. Basic
-programming horse sense suggests the variant from
+not resort to \rackinline|apply|, we have the two aformentioned
+choices. Basic programming horse sense suggests the variant from
 \cref{mnt:conj-and-disj-reimplementation}.
 
-Left associating conjuncts is so important dramatically improves
-miniKanren's search. A full, thorough, explanation of the behavior is
-outside the scope of our work here, but see discussions by Rosenblatt
-and Ballantyne~\cite{here,nowhere}.
+Left associating conjuncts is so important that it dramatically
+improves miniKanren's search. A full, thorough, explanation of the
+behavior is outside the scope of our work here, but see discussions by
+Rosenblatt and Ballantyne~\cite{here,nowhere}.
 
 % The matter is so significant that the community might consider
 % reclassifying left-associative conjunction as a matter of correctness
@@ -614,7 +630,7 @@ implementation, instead of the \emph{first} goal being the most
 heavily weighted in the search, here the \emph{last} goal is most
 heavily weighted. Because $n$-ary disjunction is now built in to the
 functional definition, this behavior is now transparently visible in
-the implementation of \rackinline|D-rec|. Imagine for a moment that in
+the implementation of \rackinline|D|. Imagine for a moment that in
 the given state \rackinline|s| each goal in \rackinline|(g₁ . gs)|
 produces infinitely many answers. The \rackinline|append| is doing a
 fair interleaving between its two stream arguments: giving one a
@@ -757,18 +773,18 @@ implementation.
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
 (define ((conda q a . q-and-a*) s)
-  (A-rec (q s) a q-and-a* s))
+  (A (q s) a q-and-a* s))
 
-(define (A-rec s∞ a q-and-a* s)
+(define (A s∞ a q-and-a* s)
   (cond
     ((null? s∞)
      (cond
        ((null? (cdr q-and-a*)) ((car q-and-a*) s))
-       (else (A-rec ((car q-and-a*) s)
+       (else (A ((car q-and-a*) s)
                     (cadr q-and-a*)
                     (cddr q-and-a*) s))))
     ((pair? s∞) (append-map∞ a s∞))
-    (else (lambda () (A-rec (s∞) a q-and-a* s)))))
+    (else (lambda () (A (s∞) a q-and-a* s)))))
   \end{minted}
   \caption{A functional \rackinline|conda| implementation.}
   \label{mnt:conda-good-re-implementation}
