@@ -338,7 +338,7 @@ definition in terms of \rackinline|append∞| and perform a trivial
 β-reduction. The explicit \rackinline|s| argument suggests removing
 the call to \rackinline|apply| and make \rackinline|D| recur into
 itself. The result is the version of \rackinline|D| in
-\cref{mnt:disj-function-before-derivation}.
+\cref{mnt:disj-substituted-through}.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -350,12 +350,12 @@ itself. The result is the version of \rackinline|D| in
         (D (car gs) (cdr gs) s)))))
 \end{minted}
   \caption{Derivation of \rackinline|disj| function definition.}
-  \label{mnt:disj-function-before-derivation}
+  \label{mnt:disj-substituted-through}
 \end{listing}
 
 \noindent We combine \rackinline|g| and \rackinline|s| in each clause;
 this suggests constructing that stream in \rackinline|disj| and
-passing it along. This final change results in the definition
+passing it along. Making this final change results in the definition
 in~\cref{mnt:disj-reimplementation}.
 
 We can derive the definition of \rackinline|conj| from
@@ -383,6 +383,7 @@ split the definition.
   \label{mnt:conj-function-derived-definition}
 \end{listing}
 
+\begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
     (C g gs s))
@@ -395,14 +396,14 @@ split the definition.
           (cons (conj₂ g (car gs)) (cdr gs)))
         s))))
 \end{minted}
-
+  \caption{Derivation of split \rackinline|conj| function definition.}
+  \label{mnt:conj-substituted-through}
+\end{listing}
 \noindent We will substitute the definitions of \rackinline|conj| and
 \rackinline|conj₂|.
 
+\begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
-  (define ((conj g . gs) s)
-    (C g gs s))
-
   (define (C g gs s)
     (cond
       ((null? gs) (g s))
@@ -411,6 +412,9 @@ split the definition.
           (cdr gs)
           s))))
 \end{minted}
+  \caption{Replacing \rackinline|apply| in \rackinline|C| function definition.}
+  \label{mnt:C-substituted-through}
+\end{listing}
 
 Finally, since \rackinline|C| only needs \rackinline|s| to
 \emph{build} the stream, we can assemble the stream on the way
@@ -606,109 +610,71 @@ The implementation in~\cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade.
 
-\subsection{\rackinline|condu|}
-
-We have not yet addressed~\rackinline|condu|. We could implement this
-for functional programmers with a variant
-of~\cref{mnt:conda-bad-re-implementation}. Instead, we choose to make
-\rackinline|once| a primitive higher-order goal. This relies on a
-local \rackinline|let|-bound named recursive procedure.
-
-\begin{listing}
-  \begin{minted}[autogobble,stripall]
-    {racket}
-(define (once g)
-  (lambda (s)
-    (let loop ((s∞ (g s)))
-      (cond
-        ((null? s∞) '())
-        ((pair? s∞)
-         (cons (car s∞) '()))
-        (else (lambda ()
-                (loop (s∞))))))))
-  \end{minted}
-  \caption{A functional \rackinline|once| implementation.}
-  \label{mnt:condu-bad-re-implementation}
-\end{listing}
-
 \section{Conclusion}\label{sec:conclusion}
 
-narrows the gap between implementations in functional host languages
-with and without macro systems.
-
-More languages than ever before support variable arity
-functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
-including Raku, Java, and Ruby, to name just a few. Many of these
-languages also support polyvariadic functions. The authors hope that
-this document helps implementers build more elegant, expressive and
-efficient Kanrens in their chosen host languages.
-
-Languages with variadic but without polyvariadic (that is to say
-\enquote{at least $k$ arguments}) functions---how do they fare here?
-
-This is closer to the design of Prolog,
-where the user represents conjuction of goals in the body of a clause
-with a comma and disjunction, either implicitly in listing various
-clauses or explicitly with a semicolon.
-
-Languages without expressive macro systems would still have to resort
-to exposing implementations of streams and \emph{some} lower level
-operations like introducing variables one at a time. But!
-
-We take it as granted that conjunction and disjunction themselves are
-sufficiently high-level operators for a surface language and that the
-0-element base cases are at best unnecessary and likely undesireable.
-
-Given the opportunity to define a surface language and its desugaring,
-we really shouldn't tempt the programmer by making undesireable
-programs representable when we can avoid doing so.
-
-Of course, no implementer \emph{needs} a macro system to implement a
-shallow embedding of an LP language. In our implementations, we still
-use macros to implement \rackinline|defrel| and \rackinline|fresh|,
-the former to prevent exposing the implementation of streams and
-delays, and the latter both for the added efficiency and to avoid the
-awkwardness of introducing each variable one at a time.
-
-From time to time we find that the usual miniKanren implementation is
-itself lower-level than we would like to program with relations.
-Expert miniKanren programmers use macros to extend the language yet
-again, as with \rackinline|matche|, and also with wholly more
-expressive and highly optimized language forms, as in the original
-\rackinline|Kanren|. It is nice to find we can spread some of that
-extra expressiveness to the wider Kanren language community.
-
-Even implementers using and programmers studying implementations
-written in languages \emph{with} sufficiently expressive macro systems
-can benefit from these improvements. There are benefits to using a
-limited set of features in a language. Based on an evaluation
-of~\href{minikanren.org}{minikanren.org}, earlier microKanren
-implementers measured their results by the number of lines in the core
-implementation, the number of additional lines for the surface syntax,
-and the limited features they required from the host. So replacing
-
-Early microKanren implementations restrict themselves to
-\rackinline|syntax-rules| macros. Several more powerful syntax
-constructions over miniKanren may rely on more expressive macro
-systems, including Ballantyne's
-\rackinline|minikanren-ee|~\cite{ballantyne2020macros}.
-
-This note shows that at the cost of one additional feature--namely
+This note shows that at the cost of one additional feature---namely
 variadic functions---implementers provide a somewhat more powerful
 core language and significantly reduce the need for macros in
 implementing a language as expressive as the full
-\verb|microKanren + Macros| approach provides.
+\verb|microKanren + Macros| approach provides. Our desugaring macros
+would have worked whether we left or right associated. Removing a
+degree of freedom in the implementation, and forcing ourselves to
+program the solution functionally, led us to what seems like the right
+solution.
 
-Our desugaring macros would have worked whether we left or right
-associated. Removing a degree of freedom in the implementation, and
-forcing ourselves to program the solution functionally, led us to what
-seems like the right solution.
+The result is closer to the design of Prolog, where the user
+represents conjuction of goals in the body of a clause with a comma
+and disjunction, either implicitly in listing various clauses or
+explicitly with a semicolon.
+
+We take it as granted that conjunction and disjunction themselves are
+sufficiently high-level operators for a surface language and that the
+0-element base cases are at best unnecessary and likely undesireable;
+given the opportunity to define a surface language and its desugaring,
+we really shouldn't tempt the programmer by making undesireable
+programs representable when we can avoid doing so.
+
+We take advantage of the fact that our syntax can ensure an
+adequate number of arguments. Languages with variadic but without
+polyvariadic (that is to say \enquote{at least $k$ arguments})
+functions may not see that benefit.
+
+We have not completely obviated the use of macros. Our microKanren
+implementations, still use macros to implement \rackinline|defrel| and
+\rackinline|fresh|, the former to prevent exposing the implementation
+of streams and delays, and the latter both for the added efficiency
+and to avoid the awkwardness of introducing each variable one at a
+time. Languages without expressive macro systems still have to resort
+to exposing implementations of streams and \emph{some} lower level
+operations like introducing variables one at a time.
+
+From time to time we find that the usual miniKanren implementation is
+itself lower-level than we would like to program with relations. Early
+microKanren implementations restrict themselves to
+\rackinline|syntax-rules| macros. Several more powerful syntax
+constructions over miniKanren may rely on more expressive macro
+systems, including Ballantyne's
+\rackinline|minikanren-ee|~\cite{ballantyne2020macros}. Expert
+miniKanren programmers use macros to extend the language further. as
+with \rackinline|matche|~\cite{keep2009pattern}, and also with wholly
+more expressive and highly optimized language forms, as in the
+original \rackinline|Kanren|.
+
+More languages than ever before support variable arity
+functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
+including JavaScript, Raku, Java, and Ruby, to name just a few. Many
+of these languages also support polyvariadic functions. We hope this
+document helps narrow the gap between implementations in functional
+host languages with and without macro systems and helps implementers
+build more elegant, expressive and efficient Kanrens in their chosen
+host languages.
 
 \begin{acks}
 
   Thanks also to Ken Shan and Jeremy Siek, for helpful discussions and
-  debates during design decision deliberations. Greg Rosenblatt for
-  his discussion later
+  debates during design decision deliberations. Thanks also to Greg
+  Rosenblatt and Michael Ballantyne for their insights and
+  suggestions.
 
 \end{acks}
 
