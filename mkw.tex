@@ -120,7 +120,7 @@ implementation appears to be more \emph{efficient}. Right-associative
 conjunction is already conjectured in miniKanren implementation
 folklore to be an inefficient design choice. We were pleasantly
 surprised that thinking about the expressivity of primitives and code
-improvement \enquote{horse sense} led us to the same design choice.
+improvement \enquote{horse sense} led us to the same improved design.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren
 implementations and illustrate why surface syntax macros had seemed
@@ -129,7 +129,7 @@ and disjunction, and in \cref{sec:impure} we discuss the
 re-implementation of the impure operators. We close with a discussion
 of some performance impacts of these implementation choices, and
 consider how Kanren language implementers outside of the Scheme family
-might benefit from these alternative implementations.
+might benefit from these alternatives.
 
 \section{All Aboard!}\label{sec:all-aboard}
 
@@ -172,13 +172,12 @@ itself does not seem to obviously encourage one particular choice.
   \label{mnt:carmelit}
 \end{listing}
 
-In a microKanren in a macro-less host language, a programmer could get
-bothered by low-level details such as stacking binary conjunction and
-disjunction. A small programming mistake, such as incorrectly nesting
-a conjunct somewhere in a long conjunction chain, can cause relatively
-obscure errors and reading those error messages forces the programmer
-away from DSL-level thinking, and back into the host programming
-language's debug model.
+% Without macros, a Kanren programmer could get bothered by such
+% low-level details. A small programming mistake, such as incorrectly
+% nesting a conjunct somewhere in a long conjunction chain, can cause
+% relatively obscure errors and reading those error messages forces the
+% programmer away from DSL-level thinking, and back into the host
+% programming language's debug model.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
