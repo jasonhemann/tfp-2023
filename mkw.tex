@@ -75,7 +75,7 @@ microKanren]{Some criteria for implementations of conjunction and
 
 \begin{abstract}
   We describe here how, at the cost of an additional language
-  feature---namely variadic and \enquote{rest argument} functions---we
+  feature---namely variadic, \enquote{rest argument} functions---we
   can implement a slightly higher-level kernel language. We implement
   conjunction and disjunction functions that preserve search order and
   that do not create superfluous closures. The result is a shorter and
@@ -94,26 +94,25 @@ approach has worked out well as a tool for understanding the guts of a
 relational programming language through studying its implementation.
 The microKanren reimplementation separates surface syntax macros from
 function definitions. In doing so, the authors hoped this separation
-will simultaneously aid future would-be implementers when studying the
-source code, and also that the functional core would make the language
-easier to port to other functional host languages. To support both
+would simultaneously aid future would-be implementers when studying
+the source code, and also that the functional core would make the
+language easier to port to other functional hosts. To support both
 those efforts, they also chose to program in a deliberately small and
 workaday set of Scheme primitives.
 
 This note shows how an implementer using a host language with variadic
 (any number of arguments) functions can build a somewhat more powerful
 kernel language and obviate macros for conjunction and disjunction.
-Until now microKanren implementations have divided the programming
-languages of the world more or less into the expressive macro system
-\enquote{haves} and the macro system-less \enquote{have nots};
-variadic functions permit an intermediate point in the language design
-space. Even implementers in languages \emph{with} sufficiently macro
-systems might choose to replace existing less powerful language
-primitives by our comparatively short but more powerful variants.
-Beyond that, this more powerful kernel language obviates several
-macros in the desugaring layer, and eventually leads us to see merit
-in modifying the core language's syntax. This is, of course,
-subjective.
+Until now there was a large gap between those microKanren
+implementations in languages with expressive macro systems and those
+without; variadic functions permit an intermediate point in the
+language design space. Even implementers in languages \emph{with}
+ macro systems might choose to replace existing less
+powerful language primitives by our comparatively short but more
+powerful variants. Beyond that, this more powerful kernel language
+obviates several macros in the desugaring layer, and eventually leads
+us to see merit in modifying the core language's syntax. This is, of
+course, subjective.
 
 Beyond being a conceptually simpler foundation for a full Kanren
 language at the level of \citetitle{friedman2018reasoned}, this
