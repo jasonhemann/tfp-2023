@@ -222,12 +222,10 @@ alternative implementations.
 
 \section{All Aboard!}\label{sec:all-aboard}
 
-We assume the reader is familiar with the miniKanren language and in
-particular with microKanren implementations. We refer the reader to
-some elementary
-resources~\cite{friedman2018reasoned,hemann2013muKanren,hemann2016small}
-for further explanation, or to~\href{minikanren.org}{minikanren.org}
-for a slew of implementations across many host languages.
+We assume the reader is familiar with the miniKanren language as
+described in \citetitle{friedman2018reasoned} and in particular with
+microKanren implementations. See \href{minikanren.org}{minikanren.org}
+for more implementations across multiple host languages.
 
 The world's shortest subway system is Haifa's Carmelit, with only
 six stations. The system is a line, so its trains travel back and
@@ -383,7 +381,7 @@ cases (discussed further in~\cref{sec:impure}).
   \label{mnt:conj-and-disj-implementation}
 \end{listing}
 
-\subsection{Implementation Correctness}
+\subsection{Implementation correctness}
 
 A developer equipped with variadic functions might discover these
 definitions as follows. We start with the definition of
@@ -400,7 +398,7 @@ explicitly recursive function.
          ((apply disj gs) s)))))
 \end{minted}
 
-We inverse β-substitute in the recursive case, to draw out a
+\noindent We inverse β-substitute in the recursive case, to draw out a
 similarity between the two clauses.
 
 \begin{listing}
@@ -415,7 +413,7 @@ similarity between the two clauses.
 \end{minted}
 \end{listing}
 
-We can replace the call to \rackinline|append∞| by the definition
+\noindent We can replace the call to \rackinline|append∞| by the definition
 of \rackinline|disj₂|.
 
 \begin{minted}[autogobble,stripall]{racket}
@@ -425,8 +423,8 @@ of \rackinline|disj₂|.
       (else ((disj₂ g (apply disj gs)) s))))
 \end{minted}
 
-Now \rackinline|s| is a curried parameter we can η away.
-We provide the completed functional definition and a comparable to the
+\noindent Now \rackinline|s| is a curried parameter we can η away. We
+provide the completed functional definition and a comparable to the
 macro-based implementation
 in~\cref{mnt:disj-function-and-macro-derived-definition}.
 
@@ -464,8 +462,8 @@ pieces.
           s))))
 \end{minted}
 
-This we can collapse into a single recursive function, bringing the
-goal to the front.
+\noindent This we can collapse into a single recursive function,
+bringing the goal to the front.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -479,8 +477,9 @@ goal to the front.
         s)))))
 \end{minted}
 
-We can replace the abstraction over \rackinline|append-map∞|, which is
-to say the body of \rackinline|conj₂|, by its definition.
+\noindent We can replace the abstraction over
+\rackinline|append-map∞|, which is to say the body of
+\rackinline|conj₂|, by its definition.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -492,9 +491,9 @@ to say the body of \rackinline|conj₂|, by its definition.
         s)))))
 \end{minted}
 
-By η reducing over the definition, we produce a simple variadic
-function. We show the result, and a comparable macro-based definition
-in~\cref{mnt:conj-function-derived-definition}.
+\noindent By η reducing over the definition, we produce a simple
+variadic function. We show the result, and a comparable macro-based
+definition in~\cref{mnt:conj-function-derived-definition}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -518,16 +517,24 @@ in~\cref{mnt:conj-function-derived-definition}.
 Both the variadic function based and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
 goals, whereas the versions of \rackinline|disj| use a right fold.
-This is not an accident, and we believe this is important. It is
-miniKanren folklore that left associating conjunctions tends to improve
-miniKanren performance, but we have generally resorted to small step
-visualizations of the search tree to demonstrate why that might be. We
-can make an equally compelling argument for this preference through
-equational reasoning. \Cref{mnt:conj-right-fold-definition} shows a
-right-fold variant of \rackinline|conj|. Looking at either the
-functional or macro definitions built from \rackinline|conj₂|, it's
-difficult to assert any preference for one over the other. The
-\rackinline|apply| primitive and the macros both get in the way.
+This is not an accident, and we believe this is \emph{worth further
+  consideration}. It is miniKanren folklore that left associating
+conjunctions tends to improve miniKanren performance, but we have
+generally resorted to small step visualizations of the search tree to
+demonstrate why that might be. We can make an equally compelling
+argument for this preference through equational reasoning.
+\Cref{mnt:conj-right-fold-definition} shows a right-fold variant of
+\rackinline|conj|. Looking at either the functional or macro
+definitions built from \rackinline|conj₂|, it's difficult to assert
+any preference for one over the other. The \rackinline|apply|
+primitive and the macros both get in the way.
+
+% The matter is so significant that the community might consider
+% reclassifying left-associative conjunction as a matter of correctness
+% rather than an optimization, as in \enquote{tail call optimization}
+% vs. \enquote{Properly Implemented Tail Call
+%   Handling}~\cite{felleisen2014requestions}.
+
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -584,12 +591,11 @@ recursive call to \rackinline|C|, because we are still waiting for an
          s∞))))
 \end{minted}
 
-Since we know that any call to \rackinline|append-map∞| we construct
-will always yield a result, the other one is tail recursive. This
-version is not, and it builds closures.
-
-We can still reconstruct the stream argument, and come up with an
-approximately analogous right-fold version.
+\noindent Since we know that any call to \rackinline|append-map∞| we
+construct will always yield a result, the other one is tail recursive.
+This version is not, and it builds closures. We can still reconstruct
+the stream argument, and come up with an approximately analogous
+right-fold version.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -616,12 +622,6 @@ improves miniKanren's search. A full, thorough, explanation of the
 behavior is outside the scope of our work here, but see discussions by
 Rosenblatt and Ballantyne~\cite{here,nowhere}.
 
-% The matter is so significant that the community might consider
-% reclassifying left-associative conjunction as a matter of correctness
-% rather than an optimization, as in \enquote{tail call optimization}
-% vs. \enquote{Properly Implemented Tail Call
-%   Handling}~\cite{felleisen2014requestions}.
-
 DONE UP UNTIL HERE
 
 miniKanren's biased search heuristic causes some operational
@@ -639,7 +639,7 @@ recursion, approximately half the answers in that stream come from the
 most recently evaluated goal, and so the resources dedicated to all
 the preceding goals is halved, in order to accommodate this new one.
 
-A declarative programmer oughtn't need to concern himself with the
+Declarative programmers oughtn't need concern themselves with the
 operational search behavior, and since miniKanren provides a complete
 search, a query should still return the same bag of answers, so we do
 not see this as a problem; we just consider it an interesting
@@ -681,7 +681,7 @@ just those underlying logical primitives \rackinline|conj| and
 \section{Cleaning up the Impure Operators}\label{sec:impure}
 
 The zero-ary conjunction and disjunction base cases both forced
-primitive goals \rackinline|S| and \rackinline|F| into the language
+primitive goals \rackinline|#s| and \rackinline|#f| into the language
 and also hid the opportunity of functional left-fold implementations
 as helpers to variadic surface functions. The zero-ary conjunction
 case was itself implemented as an answer to an earlier problem in
@@ -724,18 +724,30 @@ clause, the final clause of the \rackinline|conda| definition is the
 one and only place in the implementation that may require a nullary
 conjunction of goals.
 
-There are work-arounds. One could: 1. special case one-goal clauses in
-the last clause of the \rackinline|conda| implementation with a
-special \rackinline|ifte| variant. 2. special case that clause by
-introducing \rackinline|S| as an additional goal 2. mandate that all
-clauses in \rackinline|conda| contain at least two goals. 3. mandate
-that all clauses \emph{except the final default clause} contain at
-least two goals. 4. build a special-case conjunction solely for this
-purpose. In all but the first of these choices, either the
-implementation implicitly or the syntax explicitly can force
-additional unneeded executions of unwanted goals. The first choices
-seems even worse for introducing another complex function definition
-that is nearly identical to one used in the below case.
+There are work-arounds. One could:
+
+\begin{enumerate}
+
+\item Special case one-goal clauses in the last clause of the
+  \rackinline|conda| implementation with a special \rackinline|ifte|
+  variant.
+
+\item Special case that last clause by introducing \rackinline|#s| as
+  an additional goal.
+
+\item Mandate that all clauses in \rackinline|conda| contain at least two goals.
+
+\item Mandate that all clauses \emph{except the final default clause} contain at
+  least two goals.
+
+\item Build a special-case conjunction solely for this purpose.
+\end{enumerate}
+
+In all but the first of these choices, either the implementation
+implicitly or the syntax explicitly can force additional unneeded
+executions of unwanted goals. The first choices seems even worse for
+introducing another complex function definition that is nearly
+identical to one used in the below case.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -798,8 +810,9 @@ the delay-and-restart behavior of \rackinline|ifte| together with
 
 We have not yet addressed~\rackinline|condu|. We could implement this
 for functional programmers with a variant
-of~\cref{mnt:conda-bad-re-implementation}. However, we instead choose
-to make \rackinline|once| a primitive higher-order goal.
+of~\cref{mnt:conda-bad-re-implementation}. Instead, we choose to make
+\rackinline|once| a primitive higher-order goal. This relies on a
+local \rackinline|let|-bound named recursive procedure.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]
@@ -838,9 +851,9 @@ where the user represents conjuction of goals in the body of a clause
 with a comma and disjunction, either implicitly in listing various
 clauses or explicitly with a semicolon.
 
-Macro systemless languages would still have to resort to exposing
-implementations of streams and \emph{some} lower level operations like
-introducing variables one at a time. However....
+Languages without expressive macro systems would still have to resort
+to exposing implementations of streams and \emph{some} lower level
+operations like introducing variables one at a time. But!
 
 We take it as granted that conjunction and disjunction themselves are
 sufficiently high-level operators for a surface language and that the
@@ -863,7 +876,13 @@ Expert miniKanren programmers use macros to extend the language yet
 again, as with \rackinline|matche|, and also with wholly more
 expressive and highly optimized language forms, as in the original
 \rackinline|Kanren|. It is nice to find we can spread some of that
-extra expressiveness to the broader Kanren language community.
+extra expressiveness to the wider Kanren language community.
+
+Early microKanren implementations restrict themselves to
+\rackinline|syntax-rules| macros. Several more powerful syntax
+constructions over miniKanren may rely on more expressive macro
+systems, including Ballantyne's
+\rackinline|minikanren-ee|~\cite{ballantyne2020macros}.
 
 This note shows that at the cost of one additional feature--namely
 variadic functions---implementers provide a somewhat more powerful
@@ -878,8 +897,9 @@ seems like the right solution.
 
 \begin{acks}
 
-Thanks also to Ken Shan and Jeremy Siek, for helpful discussions and
-debates during design decision deliberations.
+  Thanks also to Ken Shan and Jeremy Siek, for helpful discussions and
+  debates during design decision deliberations. Greg Rosenblatt for
+  his discussion later
 
 \end{acks}
 

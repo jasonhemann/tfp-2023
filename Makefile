@@ -21,7 +21,7 @@ squeaky:
 
 mkw.pdf: mkw.tex mkw.bib
 	$(CC) --shell-escape mkw.tex
-	$(BC) --validate_datamodel --isbn-normalise mkw
+    $(BC) --validate_datamodel --isbn-normalise --debug --trace mkw
 	$(CC) --shell-escape mkw.tex
 	$(CC) --shell-escape mkw.tex
 

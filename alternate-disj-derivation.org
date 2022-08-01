@@ -1,0 +1,33 @@
+(define (disj g . gs)
+    (cond
+      ((null? gs) g)
+      (else (apply disj (cons (disj2 g (car gs)) (cdr gs))))))
+
+  (define ((disj g . gs) s)
+    (cond
+      ((null? gs) (g s))
+      (else ((apply disj (cons (disj2 g (car gs)) (cdr gs))) s))))
+
+  (define ((disj g . gs) s)
+    (D g gs s))
+
+  (define (D g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else ((apply disj (cons (disj2 g (car gs)) (cdr gs))) s)))
+
+  (define ((disj g . gs) s)
+    (D g gs s))
+
+  (define (D g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else (D (disj2 g (car gs)) (cdr gs) s))))
+
+  (define ((disj g . gs) s)
+    (D g gs s))
+
+  (define (D g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else (D (lambda (s) (append-inf (g s) ((car gs) s))) (cdr gs) s))))
