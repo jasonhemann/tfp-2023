@@ -247,14 +247,14 @@ closures at runtime is always a bad idea.
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
   (define ((disj g . gs) s)
-    (D g gs s))
+    (D (g s) gs s))
 
-  (define (D g gs s)
+  (define (D s∞ gs s)
     (cond
-      ((null? gs) (g s))
+      ((null? gs) s∞)
       (else
-       (append∞ (g s)
-         (D (car gs) (cdr gs) s)))))
+       (append∞ s∞
+         (D ((car gs) s) (cdr gs) s)))))
   \end{minted}
   \caption{Re-implementation of \rackinline|disj|.}
   \label{mnt:disj-reimplementation}
