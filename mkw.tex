@@ -45,8 +45,8 @@
 \newmintinline{prolog}{}
 
 \setcopyright{acmcopyright}
-\copyrightyear{2018}
-\acmYear{2018}
+\copyrightyear{2022}
+\acmYear{2022}
 \acmDOI{XXXXXXX.XXXXXXX}
 
 
@@ -108,8 +108,8 @@ languages of the world more or less into the expressive macro system
 \enquote{haves} and the macro system-less \enquote{have nots};
 variadic functions permit an intermediate point in the language design
 space. Even implementers in languages \emph{with} sufficiently macro
-systems might choose to replace some existing less powerful language
-primitives by comparatively short but more powerful variants is a win.
+systems might choose to replace existing less powerful language
+primitives by our comparatively short but more powerful variants.
 Beyond that, this more powerful kernel language obviates several
 macros in the desugaring layer, and eventually leads us to see merit
 in modifying the core language's syntax. This is, of course,
@@ -239,19 +239,15 @@ statically how these goals should behave, so there is no benefit to
 executing them. A conjunction of no goals would simply succeed, and a
 disjunction of no goals would simply fail. Truthfully, only the impure
 \rackinline|conda| operator seems to require these additional base
-cases (discussed further in~\cref{sec:impure}).
+cases (discussed further in~\cref{sec:impure}) they are for all
+intents and purposes superfluous.
 
-Mandating one-or-more arguments lets us re-implement these operators
-as shallow wrappers over folds.
-\Cref{mnt:conj-and-disj-reimplementation} shows our new
-implementation. The first step in each is merely to remove the rest
-argument \rackinline|gs| and act as if there were no need for a rest
-argument. That is, all of our focus will be on the \emph{list},
-\rackinline|gs|. These implementations rely on variadic functions, but
-do not require \rackinline|apply|. They no longer rely on binary
-\rackinline|conj₂| and \rackinline|disj₂|, and they do not build any
-extraneous closures. Unnecessarily building closures at runtime is
-always a bad idea.
+Here, we want to implement conjunction and disjunction over
+one-or-more goals as functions. These implementations will rely on
+variadic function syntax, but should not require \rackinline|apply| or
+rely on the binary \rackinline|conj₂| and \rackinline|disj₂|. Further,
+they should not build any extraneous closures: unnecessarily building
+closures at runtime is always a bad idea.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -284,16 +280,22 @@ always a bad idea.
   \label{mnt:conj-and-disj-reimplementation}
 \end{listing}
 
-The function \rackinline|C| does not take in the state \rackinline|s|;
-the help procedure does not need the state for conjunction. In each
-recursive call, we accumulate by mapping (using the special delaying
+\Cref{mnt:conj-and-disj-reimplementation} shows our new
+implementation. Mandating one-or-more arguments lets us re-implement
+these operators as shallow wrappers over simple folds. The first step
+in each is merely to remove the rest argument \rackinline|gs| and act
+as if there were no need for a rest argument. That is, all of our
+focus will be on the \emph{list}, \rackinline|gs|. The function
+\rackinline|C| does not take in the state \rackinline|s|; the help
+procedure does not need the state for conjunction. In each recursive
+call, we accumulate by mapping (using the special delaying
 implementation of append-map for miniKanren streams) the next goal in
 the list. This left-fold implementation of conjunction therefore
 left-associates the conjuncts.
 
 \subsection{Implementation correctness}
 
-A developer equipped with variadic functions might discover these
+Equipped with variadic functions, a developer might discover these
 definitions as follows. We start with the definition of
 \rackinline|disj| from \cref{mnt:conj-and-disj-reimplementation}. At
 the cost of an \rackinline|apply|, we can define this as a single
