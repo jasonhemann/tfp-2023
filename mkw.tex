@@ -292,13 +292,13 @@ implementation of conjunction therefore left-associates the conjuncts.
 \subsection{Implementation correctness}
 
 Equipped with variadic functions, a developer might discover these
-definitions as follows. We start with the definition of the function
-\rackinline|disj| from \cref{mnt:disj-function-before-derivation}. At
-the cost of an \rackinline|apply|, we can define \rackinline|disj| as
-a single explicitly recursive function.
+definitions as follows. We start from the definition of the
+\rackinline|disj| macro in \cref{mnt:disj-function-before-derivation}.
+At the cost of an \rackinline|apply|, we can build the corresponding
+explicitly recursive \rackinline|disj| function.
 
 \begin{listing}[h]
-\begin{minted}[autogobble,stripall,linenos]{racket}
+\begin{minted}[autogobble,stripall]{racket}
 (define-syntax disj
   (syntax-rules ()
     ((disj g) g)
@@ -309,7 +309,18 @@ a single explicitly recursive function.
   (cond
     ((null? gs) g)
     (else (disj₂ g (apply disj gs)))))
+\end{minted}
+  \caption{Derivation of \rackinline|disj| function definition from macro.}
+  \label{mnt:disj-function-before-derivation}
+\end{listing}
 
+\noindent Since \rackinline|disj| produces and consumes goals, we can
+η expand the definition by a curried parameter \rackinline|s|. We then
+split \rackinline|disj| into two mutually-recursive procedures, to
+build the variant in \cref{mnt:disj-function-split}.
+
+\begin{listing}[h]
+\begin{minted}[autogobble,stripall]{racket}
 (define ((disj g . gs) s)
   (D g gs s))
 
@@ -317,10 +328,20 @@ a single explicitly recursive function.
   (cond
     ((null? gs) (g s))
     (else ((disj₂ g (apply disj gs)) s))))
+\end{minted}
+  \caption{An η expanded and split definition of \rackinline|disj|.}
+  \label{mnt:disj-function-split}
+\end{listing}
 
-(define ((disj g . gs) s)
-  (D g gs s))
+\noindent We can replace the call to \rackinline|disj₂| in by its
+definition in terms of \rackinline|append∞| and perform a trivial
+β-reduction. The explicit \rackinline|s| argument suggests removing
+the call to \rackinline|apply| and make \rackinline|D| recur into
+itself. The result is the version of \rackinline|D| in
+\cref{mnt:disj-function-before-derivation}.
 
+\begin{listing}[h]
+\begin{minted}[autogobble,stripall]{racket}
 (define (D g gs s)
   (cond
     ((null? gs) (g s))
@@ -332,19 +353,9 @@ a single explicitly recursive function.
   \label{mnt:disj-function-before-derivation}
 \end{listing}
 
-\noindent Since \rackinline|disj| produces and consumes goals, we can
-η expand the definition by a curried parameter \rackinline|s|. We also
-split \rackinline|disj| into two mutually-recursive procedures.
-
-\noindent We can replace the call to \rackinline|disj₂| by its
-definition in terms of \rackinline|append∞| and perform a trivial
-β-reduction. The explicit \rackinline|s| argument suggests removing
-the call to \rackinline|apply| and making \rackinline|D| recur into
-itself.
-
-\noindent We combine \rackinline|g| and \rackinline|s| in each clause; this
-suggests constructing that stream in \rackinline|disj| and passing it
-along. The result of this final change is the definition
+\noindent We combine \rackinline|g| and \rackinline|s| in each clause;
+this suggests constructing that stream in \rackinline|disj| and
+passing it along. This final change results in the definition
 in~\cref{mnt:disj-reimplementation}.
 
 We can derive the definition of \rackinline|conj| from
