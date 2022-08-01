@@ -276,40 +276,59 @@ closures at runtime is always a bad idea.
   \label{mnt:conj-reimplementation}
 \end{listing}
 
-\Cref{mnt:disj-reimplementation,mnt:conj-reimplementation} show our new
-implementations. Mandating one-or-more arguments lets us re-implement
-these operators as shallow wrappers over simple folds. The first step
-in each is merely to remove the rest argument \rackinline|gs| and act
-as if there were no need for a rest argument. That is, all of our
-focus will be on the \emph{list}, \rackinline|gs|. The function
-\rackinline|C| does not take in the state \rackinline|s|; the help
-procedure does not need the state for conjunction. In each recursive
-call, we accumulate by mapping (using the special delaying
-implementation of append-map for miniKanren streams) the next goal in
-the list. This left-fold implementation of conjunction therefore
-left-associates the conjuncts.
+\Cref{mnt:disj-reimplementation,mnt:conj-reimplementation} show our
+new implementations. Mandating one-or-more arguments lets us
+re-implement these operators as shallow wrappers over simple folds.
+The first step in each is merely to remove the rest argument
+\rackinline|gs| and act as if there were no need for a rest argument.
+That is, all of our focus will be on the \emph{list}, \rackinline|gs|.
+Unlike \rackinline|D|, the function \rackinline|C| does not take in
+the state \rackinline|s|; the help procedure does not need the state
+for conjunction. In each recursive call, we accumulate by mapping
+(using the special delaying implementation of append-map for
+miniKanren streams) the next goal in the list. This left-fold
+implementation of conjunction therefore left-associates the conjuncts.
 
 \subsection{Implementation correctness}
 
 Equipped with variadic functions, a developer might discover these
-definitions as follows. We start with the definition of
+definitions as follows. We start with the definition of the function
 \rackinline|disj| from \cref{mnt:disj-function-before-derivation}. At
 the cost of an \rackinline|apply|, we can define \rackinline|disj| as
 a single explicitly recursive function.
 
 \begin{listing}[h]
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,linenos]{racket}
 (define-syntax disj
   (syntax-rules ()
     ((disj g) g)
-    ((disj g₀ g₁ g ...) (disj₂ g₀ (disj g₁ g ...)))))
+    ((disj g₀ g₁ g ...)
+     (disj₂ g₀ (disj g₁ g ...)))))
 
-  (define (disj g . gs)
-    (cond
-      ((null? gs) g)
-      (else (disj₂ g (apply disj gs)))))
+(define (disj g . gs)
+  (cond
+    ((null? gs) g)
+    (else (disj₂ g (apply disj gs)))))
+
+(define ((disj g . gs) s)
+  (D g gs s))
+
+(define (D g gs s)
+  (cond
+    ((null? gs) (g s))
+    (else ((disj₂ g (apply disj gs)) s))))
+
+(define ((disj g . gs) s)
+  (D g gs s))
+
+(define (D g gs s)
+  (cond
+    ((null? gs) (g s))
+    (else
+      (append∞ (g s)
+        (D (car gs) (cdr gs) s)))))
 \end{minted}
-  \caption{\rackinline|disj₂|-based macro and function definition.}
+  \caption{Derivation of \rackinline|disj| function definition.}
   \label{mnt:disj-function-before-derivation}
 \end{listing}
 
@@ -317,20 +336,15 @@ a single explicitly recursive function.
 η expand the definition by a curried parameter \rackinline|s|. We also
 split \rackinline|disj| into two mutually-recursive procedures.
 
-\begin{minted}[autogobble,stripall]{racket}
-  (define ((disj g . gs) s)
-    (D g gs s))
-
-  (define (D g gs s)
-    (cond
-      ((null? gs) (g s))
-      (else ((disj₂ g (apply disj gs)) s))))
-\end{minted}
-
 \noindent We can replace the call to \rackinline|disj₂| by its
 definition in terms of \rackinline|append∞| and perform a trivial
-β-reduction. The explicit \rackinline|s| argument suggests making
-\rackinline|D| recur into itself. The result is the definition
+β-reduction. The explicit \rackinline|s| argument suggests removing
+the call to \rackinline|apply| and making \rackinline|D| recur into
+itself.
+
+\noindent We combine \rackinline|g| and \rackinline|s| in each clause; this
+suggests constructing that stream in \rackinline|disj| and passing it
+along. The result of this final change is the definition
 in~\cref{mnt:disj-reimplementation}.
 
 We can derive the definition of \rackinline|conj| from
@@ -341,18 +355,18 @@ split the definition.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
-  (define-syntax conj
-    (syntax-rules ()
-      ((conj g) g)
-      ((conj g g₁ gs ...)
-       (conj (conj₂ g g₁) gs ...))))
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g) g)
+    ((conj g g₁ gs ...)
+     (conj (conj₂ g g₁) gs ...))))
 
-  (define (conj g . gs)
-    (cond
-      ((null? gs) g)
-      (else
-       (apply conj
-         (cons (conj₂ g (car gs)) (cdr gs))))))
+(define (conj g . gs)
+  (cond
+    ((null? gs) g)
+    (else
+     (apply conj
+       (cons (conj₂ g (car gs)) (cdr gs))))))
 \end{minted}
   \caption{\rackinline|conj₂|-based \rackinline|conj| function and macro.}
   \label{mnt:conj-function-derived-definition}
