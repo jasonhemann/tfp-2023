@@ -74,12 +74,12 @@ microKanren]{Some criteria for implementations of conjunction and
 \renewcommand{\shortauthors}{Hemann et al.}
 
 \begin{abstract}
-  We describe here how, at the cost of an additional language
-  feature---namely variadic, \enquote{rest argument} functions---we
-  can implement a slightly higher-level kernel language. We implement
-  conjunction and disjunction functions that preserve search order and
-  that do not create superfluous closures. The result is a shorter and
-  simpler overall implementation that is more elegant.
+  We describe how an additional language feature---namely variadic,
+  \enquote{rest argument} functions---can lead to a more powerful
+  kernel language. We implement conjunction and disjunction functions
+  that preserve search order and that do not create superfluous
+  closures. The result is a shorter and simpler overall implementation
+  that is more elegant.
 \end{abstract}
 
 \keywords{}
@@ -497,8 +497,8 @@ just those underlying logical primitives \rackinline|conj| and
 
 \section{Cleaning up the Impure Operators}\label{sec:impure}
 
-Some programmers would be perfectly satisfied to have lived forever
-with \rackinline|ifte| itself. But just as the standard forked
+Some programmers would be perfectly satisfied just using
+\rackinline|ifte| directly. But just as the standard forked
 \rackinline|if| begat McCarthy's \rackinline|if| notation and
 \rackinline|cond|, we can suspect that a programmer would eventually
 feel the need for a nested implementation.
@@ -556,10 +556,10 @@ There are alternative choices one could consider.
 
 \end{enumerate}
 
-All these choices, however, implicitly or explicitly can force
-additional unneeded executions of unwanted goals. Here too, removing
-macros and relying on variable arity function definition provides a
-more elegant solution.
+Each of these choices can, implicitly or explicitly, force additional
+unneeded executions of unwanted goals. Here too, removing macros and
+relying on variable arity function definition provides a more elegant
+solution.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -581,7 +581,7 @@ more elegant solution.
   \label{mnt:conda-good-re-implementation}
 \end{listing}
 
-The implementation in~\cref{mnt:conda-bad-re-implementation} includes
+The implementation in~\cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade.
 
