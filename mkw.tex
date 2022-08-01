@@ -220,7 +220,7 @@ respectively.
 The \rackinline|conj| and \rackinline|disj| macros of
 ~\cref{mnt:conj-and-disj-implementation} are not \emph{quite} defined
 as simple recursions over their binary functional primitives. The
-definition of 0-way conjunction (disjunction) is independent of the
+definition of zero-way conjunction (disjunction) is independent of the
 unfolding of \rackinline|conj₂| (\rackinline|disj₂|). In a sense the
 \rackinline|conj| and \rackinline|disj| macros confuse and entangle
 primitive success and failure goals with those recursive unfoldings in
@@ -229,12 +229,12 @@ terms of the binary operators.
 Those zero-way logical operation base cases don't add much. The
 programmer who tries to write an elegant, efficient solution to a pure
 relational programming task would not encounter these additional base
-cases in his \rackinline|conde| expressions. The programmer knows
+cases in \rackinline|conde| expressions. The programmer knows
 statically how such goals should behave, so there is no benefit to
 executing them. A conjunction of no goals would simply succeed, and a
 disjunction of no goals would simply fail. Truthfully, only the impure
 \rackinline|conda| operator seems to require these additional base
-cases (discussed further in~\cref{sec:impure}) they are for all
+cases (discussed further in~\cref{sec:impure}). They are for all
 intents and purposes superfluous.
 
 Here, we want to implement conjunction and disjunction over
