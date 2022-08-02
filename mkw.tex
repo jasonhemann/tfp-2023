@@ -647,10 +647,13 @@ represents conjuction of goals in the body of a clause with a comma
 and disjunction, either implicitly in listing various clauses or
 explicitly with a semicolon.
 
-We assume it is agreed that our disjunction and conjunction themselves
-are sufficiently high-level operators for a surface language and that
-the zero-element base cases are at best unnecessary and likely
-undesireable.
+We assume it is agreed that our definitions of \rackinline|disj| and
+\rackinline|conj| themselves are sufficiently high-level operators for
+a surface language and that the zero-element base cases are at best
+unnecessary and likely undesireable; given the opportunity to define a
+surface language and its desugaring, we really shouldn't tempt the
+programmer by making undesireable programs representable when we can
+avoid doing so.
 
 We take advantage of the fact that our syntax can ensure an
 adequate number of arguments. Languages with variadic but without
