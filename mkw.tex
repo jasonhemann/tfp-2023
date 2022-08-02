@@ -88,7 +88,10 @@ microKanren]{Some criteria for implementations of disjunction and
 
 \section{Introduction}
 
-microKanren~\cite{hemann2013muKanren} is a compact approach to
+More languages than ever before support variable arity
+functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
+including JavaScript, Raku, Java, Python, and Ruby, to name just a
+few. microKanren~\cite{hemann2013muKanren} is a compact approach to
 implementing a relational programming language. The microKanren
 approach has worked out well as a tool for understanding the guts of a
 relational programming language through studying its implementation.
@@ -605,13 +608,13 @@ The implementation in~\cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade. The \rackinline|s∞| can be
 either empty, non-empty, or a function of no arguments. In the last
-case, we invoke \rackinline|s∞|. Rather than a building largely
+case, we invoke \rackinline|s∞|. Rather than building a largely
 redundant implementation of \rackinline|condu|, we expose the
 higher-order goal \rackinline|once| to the user. The definition of
 \rackinline|once| in \cref{mnt:condu-reimplementation} is taken
-directly from \cite{friedman2018reasoned}. The programmer can
-simulate \rackinline|condu| by wrapping \rackinline|once| around every
-test goal.
+directly from \cite{friedman2018reasoned}. The programmer can simulate
+\rackinline|condu| by wrapping \rackinline|once| around every test
+goal.
 
 
 \begin{listing}
@@ -660,8 +663,7 @@ adequate number of arguments. Languages with variadic but without
 polyvariadic (that is to say \enquote{at least $k$ arguments})
 functions may not see that benefit.
 
-We have not fully
-obviated the use of macros. While neither
+We have not fully obviated the use of macros. While neither
 \rackinline|run| nor \rackinline|run*| have to be macros, for now we
 still want to implement \rackinline|defrel| and \rackinline|fresh|
 with macros. The former to prevent exposing the implementation of
@@ -679,13 +681,12 @@ miniKanren, such as
 more expressive macro systems like
 \rackinline|syntax-parse|~\cite{culpepper2012fortifying}.
 
-More languages than ever before support variable arity
-functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
-including JavaScript, Raku, Java, Python, and Ruby, to name just a
-few. We hope this document helps narrow the gap between
-implementations in functional host languages with and without macro
-systems and helps implementers build more elegant, expressive and
-efficient Kanrens in their chosen host languages.
+We would still like to know: are our design goals here also causally
+related to good miniKanren performance? Regardless, we hope this
+document helps narrow the gap between implementations in functional
+host languages with and without macro systems and helps implementers
+build more elegant, expressive and efficient Kanrens in their chosen
+host languages.
 
 \begin{acks}
 
