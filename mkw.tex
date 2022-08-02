@@ -518,7 +518,7 @@ just those underlying logical primitives \rackinline|disj|  and \rackinline|conj
   \label{mnt:new-carmelit}
 \end{listing}
 
-\section{Cleaning up the Impure Operators}\label{sec:impure}
+\section{Tidying up the Impure Operators}\label{sec:impure}
 
 The operators \rackinline|conda| and \rackinline|conde| look
 superficially similar, syntactically. Semantically though,
@@ -527,10 +527,10 @@ different, and implementing the desired behavior for
 \rackinline|conda| from existing pieces points to some strangeness.
 The definition of \rackinline|conda| (see
 \cref{mnt:conda-implementation}) requires one or more conjuncts per
-clause and one or more clause. The consequent of each
+clause and one or more clauses. The consequent of each
 \rackinline|conda| clause is the one and only place in the whole
-language implementation that permits nullary conjunction of goals. So
-this soft-cut operator seems to force both nullary conjunction and
+language implementation that permits nullary conjunctions of goals.
+This soft-cut operator seems to force both nullary conjunction and
 those primitive goals \rackinline|#s| and \rackinline|#u| into the
 language.
 
@@ -564,9 +564,6 @@ implementation choices one could consider.
 
 \begin{enumerate}
 
-\item Syntactically mandate that all clauses in \rackinline|conda|
-  contain at least two goals.
-
 \item Syntactically mandate that all clauses \emph{except the final
     default clause} contain at least two goals.
 
@@ -579,9 +576,9 @@ implementation choices one could consider.
 \end{enumerate}
 
 Each of these choices can, implicitly or explicitly, force additional
-unneeded executions of unwanted goals. Here too, removing macros and
-relying on variable arity function definition provides a more elegant
-solution.
+unneeded executions of unwanted goals. Working with variable arity
+function syntax also suggests a more elegant solution for
+\rackinline|conda|.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -605,7 +602,8 @@ solution.
 
 The implementation in~\cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
-\rackinline|conda|'s logical cascade.
+\rackinline|conda|'s logical cascade. The \rackinline|s∞| can be
+either empty, non-empty, or a function of no arguments.
 
 \section{Conclusion}\label{sec:conclusion}
 
