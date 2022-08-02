@@ -647,12 +647,10 @@ represents conjuction of goals in the body of a clause with a comma
 and disjunction, either implicitly in listing various clauses or
 explicitly with a semicolon.
 
-We take it as granted that disjunction and conjunction themselves are
-sufficiently high-level operators for a surface language and that the
-0-element base cases are at best unnecessary and likely undesireable;
-given the opportunity to define a surface language and its desugaring,
-we really shouldn't tempt the programmer by making undesireable
-programs representable when we can avoid doing so.
+We assume it is agreed that our disjunction and conjunction themselves
+are sufficiently high-level operators for a surface language and that
+the zero-element base cases are at best unnecessary and likely
+undesireable.
 
 We take advantage of the fact that our syntax can ensure an
 adequate number of arguments. Languages with variadic but without
@@ -680,12 +678,11 @@ more expressive macro systems like
 
 More languages than ever before support variable arity
 functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
-including JavaScript, Raku, Java, and Ruby, to name just a few. Many
-of these languages also support polyvariadic functions. We hope this
-document helps narrow the gap between implementations in functional
-host languages with and without macro systems and helps implementers
-build more elegant, expressive and efficient Kanrens in their chosen
-host languages.
+including JavaScript, Raku, Java, Python, and Ruby, to name just a
+few. We hope this document helps narrow the gap between
+implementations in functional host languages with and without macro
+systems and helps implementers build more elegant, expressive and
+efficient Kanrens in their chosen host languages.
 
 \begin{acks}
 
