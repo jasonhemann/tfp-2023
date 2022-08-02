@@ -603,7 +603,30 @@ function syntax also suggests a more elegant solution for
 The implementation in~\cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade. The \rackinline|s∞| can be
-either empty, non-empty, or a function of no arguments.
+either empty, non-empty, or a function of no arguments. Rather than
+repeating this exercise for \rackinline|condu|, we expose the
+higher-order goal \rackinline|once|, of
+\cref{mnt:condu-reimplementation}, to the user. The programmer can
+simulate \rackinline|condu| by wrapping \rackinline|once| around every
+test goal.
+
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall,linenos]{racket}
+(define (once g)
+  (lambda (s)
+    (let loop ((s-inf (g s)))
+      (cond
+        ((null? s-inf) '())
+        ((pair? s-inf)
+         (cons (car s-inf) '()))
+        (else (lambda ()
+                (loop (s-inf))))))))
+  \end{minted}
+  \caption{The \rackinline|once| function.}
+  \label{mnt:condu-reimplementation}
+\end{listing}
+
 
 \section{Conclusion}\label{sec:conclusion}
 
