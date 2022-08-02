@@ -179,15 +179,6 @@ itself does not seem to obviously encourage one particular choice.
     ((conde (g ...) ...)
      (disj (conj g ...) ...))))
 
-(define-syntax conj
-  (syntax-rules ()
-    ((conj) #s)
-    ((conj g) g)
-    ((conj g₀ g ...) (conj₂ g₀ (conj g ...)))))
-
-(define ((conj₂ g₁ g₂) s)
-  (append-map∞ g₂ (g₁ s)))
-
 (define-syntax disj
   (syntax-rules ()
     ((disj) #u)
@@ -196,8 +187,17 @@ itself does not seem to obviously encourage one particular choice.
 
 (define ((disj₂ g₁ g₂) s)
   (append∞ (g₁ s) (g₂ s)))
+
+(define-syntax conj
+  (syntax-rules ()
+    ((conj) #s)
+    ((conj g) g)
+    ((conj g₀ g ...) (conj₂ g₀ (conj g ...)))))
+
+(define ((conj₂ g₁ g₂) s)
+  (append-map∞ g₂ (g₁ s)))
   \end{minted}
-  \caption{Macro based implementations of \rackinline|conj| and \rackinline|disj|.}
+  \caption{Macro based implementations of  \rackinline|disj| and \rackinline|conj|.}
   \label{mnt:conj-and-disj-implementation}
 \end{listing}
 
