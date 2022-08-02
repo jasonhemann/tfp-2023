@@ -429,18 +429,17 @@ Both the variadic function based and the macro based versions of
 goals, whereas the versions of \rackinline|disj| use a right fold.
 This is not an accident. It is miniKanren folklore that left
 associating conjunctions tends to improve miniKanren performance. A
-full, thorough, explanation of what we know about this behavior is
-outside the scope of our work here, but see discussions by
-Rosenblatt~\cite{nowhere} and Ballantyne~\cite{nowhere}. The matter
-seems so significant that the community might consider reclassifying
-left-associative conjunction as a matter of correctness rather than an
-optimization, as in \enquote{tail call optimization} vs.
-\enquote{Properly Implemented Tail Call
+full, thorough, explanation of everything known about this behavior is
+outside the scope of our work here, but see discussions by Rosenblatt
+and Ballantyne. The matter seems so significant that the community
+might consider reclassifying left-associative conjunction as a matter
+of correctness rather than an optimization, as in \enquote{tail call
+  optimization} vs. \enquote{Properly Implemented Tail Call
   Handling}~\cite{felleisen2014requestions}. However, we have
 generally resorted to small step visualizations of the search tree to
-demonstrate why that might be. The authors believe it is \emph{worth
-  further consideration} if we can make an equally compelling argument
-for this preference through equational reasoning.
+demonstrate why that might be. The authors believe it is worth
+considering if we can make an equally compelling argument for this
+preference through equational reasoning.
 \Cref{mnt:conj-right-fold-definition} shows a right-fold variant of
 \rackinline|conj|. The choice to fold left becomes a little more
 obvious after we η-expand, unfold to a recursive help function,
@@ -522,17 +521,11 @@ just those underlying logical primitives \rackinline|conj| and
 
 \section{Cleaning up the Impure Operators}\label{sec:impure}
 
-Some programmers would be perfectly satisfied just using
-\rackinline|ifte| directly. But just as the standard forked
-\rackinline|if| begat McCarthy's \rackinline|if| notation and
-\rackinline|cond|, we can suspect that a programmer would eventually
-feel the need for a nested implementation.
-
 The operators \rackinline|conda| and \rackinline|conde| look
-superficially similar, syntactically. Semantically though, the
-disjunction and nested \enquote{if-then-else} behaviors are quite
+superficially similar, syntactically. Semantically though,
+\rackinline|conda|'s nested \enquote{if-then-else} behavior is quite
 different, and implementing the desired behavior for this
-\rackinline|conda| from existing pieces raises some oddities. The
+\rackinline|conda| from existing pieces points to some oddities. The
 definition of \rackinline|conda| (see \cref{mnt:conda-implementation})
 rules out zero-way conjunctions of goals in the clause body as well as
 zero-way disjunctions of such clauses. A \rackinline|conda| that
@@ -563,7 +556,12 @@ nullary conjunction and those primitive goals \rackinline|#s| and
   \label{mnt:conda-implementation}
 \end{listing}
 
-There are alternative choices one could consider.
+Some programmers would be perfectly satisfied just using
+\rackinline|ifte| directly. But just as the standard forked
+\rackinline|if| begat McCarthy's \rackinline|if| notation and
+\rackinline|cond|, we can suspect that a programmer would eventually
+feel the need for a nested implementation. There are other alternative
+implementation choices one could consider.
 
 \begin{enumerate}
 
@@ -639,14 +637,14 @@ adequate number of arguments. Languages with variadic but without
 polyvariadic (that is to say \enquote{at least $k$ arguments})
 functions may not see that benefit.
 
-We have not completely obviated the use of macros. Our microKanren
-implementations, still use macros to implement \rackinline|defrel| and
-\rackinline|fresh|, the former to prevent exposing the implementation
-of streams and delays, and the latter both for the added efficiency
-and to avoid the awkwardness of introducing each variable one at a
-time. Languages without expressive macro systems still have to resort
-to exposing implementations of streams and \emph{some} lower level
-operations like introducing variables one at a time.
+We have not completely obviated the use of macros. We still implement
+\rackinline|defrel| and \rackinline|fresh| with macros, the former to
+prevent exposing the implementation of streams and delays, and the
+latter both for the added efficiency and to avoid the awkwardness of
+introducing each variable one at a time. Languages without expressive
+macro systems still have to resort to exposing implementations of
+streams and lower level operations like introducing
+variables one at a time.
 
 From time to time we find that the usual miniKanren implementation is
 itself lower-level than we would like to program with relations. Early
