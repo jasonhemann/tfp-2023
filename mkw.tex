@@ -607,11 +607,11 @@ the delay-and-restart behavior of \rackinline|ifte| together with
 either empty, non-empty, or a function of no arguments. In the last
 case, we invoke \rackinline|s∞|. Rather than a building largely
 redundant implementation of \rackinline|condu|, we expose the
-higher-order goal \rackinline|once| to the user. The definition in
-\cref{mnt:condu-reimplementation} is taken directly from
-\citetitle{friedman2018reasoned}. The programmer can simulate
-\rackinline|condu| by wrapping \rackinline|once| around every test
-goal.
+higher-order goal \rackinline|once| to the user. The definition of
+\rackinline|once| in \cref{mnt:condu-reimplementation} is taken
+directly from \cite{friedman2018reasoned}. The programmer can
+simulate \rackinline|condu| by wrapping \rackinline|once| around every
+test goal.
 
 
 \begin{listing}
