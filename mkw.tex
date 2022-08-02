@@ -210,7 +210,7 @@ respectively.
 \section{\rackinline|disj| and \rackinline|conj| logical goal
   constructors}\label{sec:conde}
 
-The \rackinline|conj| and \rackinline|disj| macros of
+The  \rackinline|disj| and \rackinline|conj| macros of
 ~\cref{mnt:conj-and-disj-implementation} are not \emph{quite} defined
 as simple recursions over their binary functional primitives. The
 definition of zero-way conjunction (disjunction) is independent of the
@@ -427,11 +427,12 @@ goals, whereas the versions of \rackinline|disj| use a right fold.
 This is not an accident. It is miniKanren folklore that left
 associating conjunctions tends to improve miniKanren performance. A
 full, thorough, explanation of everything known about this behavior is
-outside the scope of our work here, but see discussions by Rosenblatt
-and Ballantyne. The matter seems so significant that the community
-might consider reclassifying left-associative conjunction as a matter
-of correctness rather than an optimization, as in \enquote{tail call
-  optimization} vs. \enquote{Properly Implemented Tail Call
+outside the scope of our work here, but see discussions and
+implementation of \cite{rosenblatt2019first}. The matter seems so
+significant that the community might consider reclassifying
+left-associative conjunction as a matter of correctness rather than an
+optimization, as in \enquote{tail call optimization} vs.
+\enquote{Properly Implemented Tail Call
   Handling}~\cite{felleisen2014requestions}. However, we have
 generally resorted to small step visualizations of the search tree to
 demonstrate why that might be. The authors believe it is worth
@@ -492,8 +493,8 @@ Though this note mainly concerns the choice to implement surface
 language behavior as functions, it may also point to these as more
 natural user-level primitives than \rackinline|conde|. An
 implementation could choose to forego \rackinline|conde| and provide
-just those underlying logical primitives \rackinline|conj| and
-\rackinline|disj| to the user, as in the new definition of Carmelit in
+just those underlying logical primitives \rackinline|disj|  and \rackinline|conj|
+ to the user, as in the new definition of Carmelit in
 \cref{mnt:new-carmelit}.
 
 \begin{listing}
