@@ -523,16 +523,16 @@ just those underlying logical primitives \rackinline|disj|  and \rackinline|conj
 The operators \rackinline|conda| and \rackinline|conde| look
 superficially similar, syntactically. Semantically though,
 \rackinline|conda|'s nested \enquote{if-then-else} behavior is quite
-different, and implementing the desired behavior for this
-\rackinline|conda| from existing pieces points to some oddities. The
-definition of \rackinline|conda| (see \cref{mnt:conda-implementation})
-rules out zero-way conjunctions of goals in the clause body as well as
-zero-way disjunctions of such clauses. A \rackinline|conda| that
-permits one-or-more-goals in each clause is the one and only place in
-the whole language implementation that may require a nullary
-conjunction of goals. So this soft-cut operator seems to force both
-nullary conjunction and those primitive goals \rackinline|#s| and
-\rackinline|#u| into the language.
+different, and implementing the desired behavior for
+\rackinline|conda| from existing pieces points to some strangeness.
+The definition of \rackinline|conda| (see
+\cref{mnt:conda-implementation}) requires one or more conjuncts per
+clause and one or more clause. The consequent of each
+\rackinline|conda| clause is the one and only place in the whole
+language implementation that permits nullary conjunction of goals. So
+this soft-cut operator seems to force both nullary conjunction and
+those primitive goals \rackinline|#s| and \rackinline|#u| into the
+language.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
