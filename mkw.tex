@@ -61,8 +61,8 @@
 \begin{document}
 
 \title[Some criteria for implementations of conj and disj in
-microKanren]{Some criteria for implementations of conjunction and
-  disjunction in microKanren}
+microKanren]{Some criteria for implementations of disjunction and
+  conjunction in microKanren}
 
 \author{Jason Hemann}
 \email{jhemann@northeastern.edu}
@@ -76,7 +76,7 @@ microKanren]{Some criteria for implementations of conjunction and
 \begin{abstract}
   We describe how an additional language feature---namely variadic,
   \enquote{rest argument} functions---can lead to a more powerful
-  kernel language. We implement conjunction and disjunction functions
+  kernel language. We implement disjunction and conjunction functions
   that preserve search order and that do not create superfluous
   closures. The result is a shorter and simpler overall implementation
   that is more elegant.
@@ -102,17 +102,17 @@ workaday set of Scheme primitives.
 
 This note shows how an implementer using a host language with variadic
 (any number of arguments) functions can build a somewhat more powerful
-kernel language and obviate macros for conjunction and disjunction.
+kernel language and obviate macros for disjunction and conjunction.
 Until now there was a large gap between those microKanren
 implementations in languages with expressive macro systems and those
 without; variadic functions permit an intermediate point in the
 language design space. Even implementers in languages \emph{with}
- macro systems might choose to replace existing less
-powerful language primitives by our comparatively short but more
-powerful variants. Beyond that, this more powerful kernel language
-obviates several macros in the desugaring layer, and eventually leads
-us to see merit in modifying the core language's syntax. This is, of
-course, subjective.
+macro systems might choose to replace existing less powerful language
+primitives by our comparatively short but more powerful variants.
+Beyond that, this more powerful kernel language obviates several
+macros in the desugaring layer, and eventually leads us to see merit
+in modifying the core language's syntax. This is, of course,
+subjective.
 
 Beyond being a conceptually simpler foundation for a full Kanren
 language at the level of \citetitle{friedman2018reasoned}, this
@@ -207,7 +207,7 @@ and disjunction operations. Here, \rackinline|#s| and \rackinline|#u|
 represent primitive goals that unconditionally succeed and fail,
 respectively.
 
-\section{\rackinline|conj| and \rackinline|disj| logical goal
+\section{\rackinline|disj| and \rackinline|conj| logical goal
   constructors}\label{sec:conde}
 
 The \rackinline|conj| and \rackinline|disj| macros of
@@ -215,7 +215,7 @@ The \rackinline|conj| and \rackinline|disj| macros of
 as simple recursions over their binary functional primitives. The
 definition of zero-way conjunction (disjunction) is independent of the
 unfolding of \rackinline|conj₂| (\rackinline|disj₂|). In a sense the
-\rackinline|conj| and \rackinline|disj| macros confuse and entangle
+\rackinline|disj| and \rackinline|conj| macros confuse and entangle
 primitive success and failure goals with those recursive unfoldings in
 terms of the binary operators.
 
@@ -230,10 +230,10 @@ disjunction of no goals would simply fail. Truthfully, only the impure
 cases (discussed further in~\cref{sec:impure}). They are for all
 intents and purposes superfluous.
 
-Here, we want to implement conjunction and disjunction over
+Here, we want to implement disjunction and conjunction over
 one-or-more goals as functions. These implementations will rely on
 variadic function syntax, but should not require \rackinline|apply| or
-rely on the binary \rackinline|conj₂| and \rackinline|disj₂|. Further,
+rely on the binary \rackinline|disj₂| and \rackinline|conj₂|. Further,
 they should not build any extraneous closures: unnecessarily building
 closures at runtime is always a bad idea.
 
@@ -528,7 +528,7 @@ definition of \rackinline|conda| (see \cref{mnt:conda-implementation})
 rules out zero-way conjunctions of goals in the clause body as well as
 zero-way disjunctions of such clauses. A \rackinline|conda| that
 permits one-or-more-goals in each clause is the one and only place in
-the whole langauge implementation that may require a nullary
+the whole language implementation that may require a nullary
 conjunction of goals. So this soft-cut operator seems to force both
 nullary conjunction and those primitive goals \rackinline|#s| and
 \rackinline|#u| into the language.
@@ -623,7 +623,7 @@ represents conjuction of goals in the body of a clause with a comma
 and disjunction, either implicitly in listing various clauses or
 explicitly with a semicolon.
 
-We take it as granted that conjunction and disjunction themselves are
+We take it as granted that disjunction and conjunction themselves are
 sufficiently high-level operators for a surface language and that the
 0-element base cases are at best unnecessary and likely undesireable;
 given the opportunity to define a surface language and its desugaring,
