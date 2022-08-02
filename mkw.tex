@@ -496,9 +496,11 @@ Though this note mainly concerns the choice to implement surface
 language behavior as functions, it may also point to these as more
 natural user-level primitives than \rackinline|conde|. An
 implementation could choose to forego \rackinline|conde| and provide
-just those underlying logical primitives \rackinline|disj|  and \rackinline|conj|
- to the user, as in the new definition of Carmelit in
-\cref{mnt:new-carmelit}.
+just those underlying logical primitives \rackinline|disj| and
+\rackinline|conj| to the user, as in the new definition of Carmelit in
+\cref{mnt:new-carmelit}. Moreover, reintroducing the nullary case only
+requires a simple wrapper macro, or otherwise, a run-time
+\rackinline|null?| check for a very slight cost.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
