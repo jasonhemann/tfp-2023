@@ -168,16 +168,9 @@ itself does not seem to obviously encourage one particular choice.
      (== e 'golomb)
      (== f 'carmel-center))))
   \end{minted}
-  \caption{A miniKanren implementation of the Carmelit subway.}
+  \caption{A miniKanren version of the Carmelit subway.}
   \label{mnt:carmelit}
 \end{listing}
-
-% Without macros, a Kanren programmer could get bothered by such
-% low-level details. A small programming mistake, such as incorrectly
-% nesting a conjunct somewhere in a long conjunction chain, can cause
-% relatively obscure errors and reading those error messages forces the
-% programmer away from DSL-level thinking, and back into the host
-% programming language's debug model.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -310,14 +303,15 @@ explicitly recursive \rackinline|disj| function.
     ((null? gs) g)
     (else (disj₂ g (apply disj gs)))))
 \end{minted}
-  \caption{Derivation of \rackinline|disj| function definition from macro.}
+  \caption{Deriving \rackinline|disj| function from macro.}
   \label{mnt:disj-function-before-derivation}
 \end{listing}
 
 \noindent Since \rackinline|disj| produces and consumes goals, we can
-η expand the definition by a curried parameter \rackinline|s|. We then
-split \rackinline|disj| into two mutually-recursive procedures, to
-build the variant in \cref{mnt:disj-function-split}.
+η expand the definition in \cref{mnt:disj-function-before-derivation}
+by a curried parameter \rackinline|s|. We then split \rackinline|disj|
+into two mutually-recursive procedures, to build the variant in
+\cref{mnt:disj-function-split}.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -333,12 +327,14 @@ build the variant in \cref{mnt:disj-function-split}.
   \label{mnt:disj-function-split}
 \end{listing}
 
-\noindent We can replace the call to \rackinline|disj₂| in by its
-definition in terms of \rackinline|append∞| and perform a trivial
-β-reduction. The explicit \rackinline|s| argument suggests removing
-the call to \rackinline|apply| and make \rackinline|D| recur into
-itself. The result is the version of \rackinline|D| in
-\cref{mnt:disj-substituted-through}.
+\noindent We can replace the call to \rackinline|disj₂| in
+\cref{mnt:disj-function-split} by its definition in terms of
+\rackinline|append∞| and perform a trivial β-reduction. The explicit
+\rackinline|s| argument suggests removing the call to
+\rackinline|apply| and making \rackinline|D| recursive. The result is
+the version of \rackinline|D| in \cref{mnt:disj-substituted-through}.
+The definition of \rackinline|disj| in remains unchanged from
+\cref{mnt:disj-function-split}.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -515,7 +511,7 @@ just those underlying logical primitives \rackinline|conj| and
          (== e 'golomb)
          (== f 'carmel-center))))
   \end{minted}
-  \caption{A reimplemented Carmelit subway without \rackinline|conde|.}
+  \caption{A new Carmelit subway without \rackinline|conde|.}
   \label{mnt:new-carmelit}
 \end{listing}
 
