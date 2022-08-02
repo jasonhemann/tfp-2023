@@ -354,13 +354,8 @@ this suggests constructing that stream in \rackinline|disj| and
 passing it along. Making this final change results in the definition
 in~\cref{mnt:disj-reimplementation}.
 
-We can derive the definition of \rackinline|conj| from
-\cref{mnt:conj-reimplementation} via a similar process. Starting with
-the variadic function definition
-of~\cref{mnt:conj-function-derived-definition}, we first η-expand and
-split the definition.
 
-\begin{listing}
+\begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conj
   (syntax-rules ()
@@ -378,6 +373,12 @@ split the definition.
   \caption{\rackinline|conj₂|-based \rackinline|conj| function and macro.}
   \label{mnt:conj-function-derived-definition}
 \end{listing}
+
+We can derive the definition of \rackinline|conj| from
+\cref{mnt:conj-reimplementation} via a similar process. Starting with
+the variadic function definition
+of~\cref{mnt:conj-function-derived-definition}, we first η-expand and
+split the definition.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
