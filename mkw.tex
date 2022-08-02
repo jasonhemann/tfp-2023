@@ -604,13 +604,14 @@ function syntax also suggests a more elegant solution for
 The implementation in~\cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade. The \rackinline|s∞| can be
-either empty, non-empty, or a function of no arguments. Rather than
-repeating this exercise for \rackinline|condu|, we expose the
-higher-order goal \rackinline|once| to the user. The definition in
-\cref{mnt:condu-reimplementation} is taken directly from
-\citetitle{friedman2018reasoned}. The programmer can simulate
-\rackinline|condu| by wrapping \rackinline|once| around every test
-goal.
+either empty, non-empty, or a function of no arguments. In the last
+case, we invoke \rackinline|(s∞)| as a function of no arguments.
+Rather than a building largely redundant implementation of
+\rackinline|condu|, we expose the higher-order goal \rackinline|once|
+to the user. The definition in \cref{mnt:condu-reimplementation} is
+taken directly from \citetitle{friedman2018reasoned}. The programmer
+can simulate \rackinline|condu| by wrapping \rackinline|once| around
+every test goal.
 
 
 \begin{listing}
