@@ -633,7 +633,7 @@ test goal.
 
 \section{Conclusion}\label{sec:conclusion}
 
-This note shows that at the cost of one additional feature---namely
+This note shows that at the cost of one additional feature---namely,
 variadic functions---implementers provide a somewhat more powerful
 core language and significantly reduce the need for macros in
 implementing a language as expressive as the full \enquote{microKanren
@@ -659,26 +659,24 @@ adequate number of arguments. Languages with variadic but without
 polyvariadic (that is to say \enquote{at least $k$ arguments})
 functions may not see that benefit.
 
-We have not completely obviated the use of macros. We still implement
-\rackinline|defrel| and \rackinline|fresh| with macros, the former to
-prevent exposing the implementation of streams and delays, and the
-latter both for the added efficiency and to avoid the awkwardness of
-introducing each variable one at a time. Languages without expressive
-macro systems still have to resort to exposing implementations of
-streams and lower level operations like introducing
-variables one at a time.
+We have not fully
+obviated the use of macros. While neither
+\rackinline|run| nor \rackinline|run*| have to be macros, for now we
+still want to implement \rackinline|defrel| and \rackinline|fresh|
+with macros. The former to prevent exposing the implementation of
+streams and delays, and the latter to avoid the inefficiency and
+clumsiness of introducing variables one at a time.
 
 From time to time we find that the usual miniKanren implementation is
 itself lower-level than we would like to program with relations. Early
 microKanren implementations restrict themselves to
-\rackinline|syntax-rules| macros. Several more powerful syntax
-constructions over miniKanren may rely on more expressive macro
-systems, including Ballantyne's
-\rackinline|minikanren-ee|~\cite{ballantyne2020macros}. Expert
-miniKanren programmers use macros to extend the language further. as
-with \rackinline|matche|~\cite{keep2009pattern}, and also with wholly
-more expressive and highly optimized language forms, as in the
-original \rackinline|Kanren|.
+\rackinline|syntax-rules| macros. Some programmers use macros to
+extend the language further as with
+\rackinline|matche|~\cite{keep2009pattern}. Some constructions over
+miniKanren, such as
+\rackinline|minikanren-ee|~\cite{ballantyne2020macros}, may rely on
+more expressive macro systems like
+\rackinline|syntax-parse|~\cite{culpepper2012fortifying}.
 
 More languages than ever before support variable arity
 functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
