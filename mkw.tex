@@ -591,8 +591,9 @@ function syntax also suggests a more elegant solution for
      (cond
        ((null? (cdr q-and-a*)) ((car q-and-a*) s))
        (else (A ((car q-and-a*) s)
-                    (cadr q-and-a*)
-                    (cddr q-and-a*) s))))
+                (cadr q-and-a*)
+                (cddr q-and-a*)
+                s))))
     ((pair? s∞) (append-map∞ a s∞))
     (else (lambda () (A (s∞) a q-and-a* s)))))
   \end{minted}
@@ -605,14 +606,15 @@ the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade. The \rackinline|s∞| can be
 either empty, non-empty, or a function of no arguments. Rather than
 repeating this exercise for \rackinline|condu|, we expose the
-higher-order goal \rackinline|once|, of
-\cref{mnt:condu-reimplementation}, to the user. The programmer can
-simulate \rackinline|condu| by wrapping \rackinline|once| around every
-test goal.
+higher-order goal \rackinline|once| to the user. The definition in
+\cref{mnt:condu-reimplementation} is taken directly from
+\citetitle{friedman2018reasoned}. The programmer can simulate
+\rackinline|condu| by wrapping \rackinline|once| around every test
+goal.
 
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall,linenos]{racket}
+  \begin{minted}[autogobble,stripall]{racket}
 (define (once g)
   (lambda (s)
     (let loop ((s-inf (g s)))
@@ -633,12 +635,11 @@ test goal.
 This note shows that at the cost of one additional feature---namely
 variadic functions---implementers provide a somewhat more powerful
 core language and significantly reduce the need for macros in
-implementing a language as expressive as the full
-\verb|microKanren + Macros| approach provides. Our desugaring macros
-would have worked whether we left or right associated. Removing a
-degree of freedom in the implementation, and forcing ourselves to
-program the solution functionally, led us to what seems like the right
-solution.
+implementing a language as expressive as the full \enquote{microKanren
+  + macros} approach provides. Our desugaring macros would have worked
+whether we left or right associated. Removing a degree of freedom in
+the implementation, and forcing ourselves to program the solution
+functionally, led us to what seems like the right solution.
 
 The result is closer to the design of Prolog, where the user
 represents conjuction of goals in the body of a clause with a comma
