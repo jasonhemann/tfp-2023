@@ -506,18 +506,18 @@ requires a simple wrapper macro, or otherwise, a run-time
   \begin{minted}[autogobble,stripall]{racket}
 (defrel (carmelit-subway a b c d e f)
   (disj
-   (conj (== a 'carmel-center)
-         (== b 'golomb)
-         (== c 'masada)
-         (== d 'haneviim)
-         (== e 'hadar-city-hall)
-         (== f 'downtown))
-   (conj (== a 'downtown)
-         (== b 'hadar-city-hall)
-         (== c 'haneviim)
-         (== d 'masada)
-         (== e 'golomb)
-         (== f 'carmel-center))))
+    (conj (== a 'carmel-center)
+          (== b 'golomb)
+          (== c 'masada)
+          (== d 'haneviim)
+          (== e 'hadar-city-hall)
+          (== f 'downtown))
+    (conj (== a 'downtown)
+          (== b 'hadar-city-hall)
+          (== c 'haneviim)
+          (== d 'masada)
+          (== e 'golomb)
+          (== f 'carmel-center))))
   \end{minted}
   \caption{A new Carmelit subway without \rackinline|conde|.}
   \label{mnt:new-carmelit}
