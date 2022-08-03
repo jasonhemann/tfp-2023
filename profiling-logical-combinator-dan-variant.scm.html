@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=Content-Type content="text/html;charset=utf-8">
+<title>profiling-logical-combinator-dan-variant.scm</title>
+<style type="text/css">
+* { border: 0; margin: 0; outline: 0; padding: 0; vertical-align: baseline; }
+code, kbd, pre, samp { font-family: monospace, monospace; font-size: 1rem; }
+html { -moz-osx-font-smoothing: grayscale; -webkit-font-smoothing: antialiased; }
+table { border-collapse: collapse; border-spacing: 0; }
+body { padding: 1rem; }
+h1, h2, h3, h4 { line-height: 1.25; margin-bottom: 0.5rem; }
+h1 { font-size: 1.296rem; }
+h2 { font-size: 1.215rem; }
+h3 { font-size: 1.138rem; }
+h4 { font-size: 1.067rem; }
+html { font-family: monospace, monospace; font-size: 1rem; }
+p { margin-bottom: 1.25rem; }
+.pc0 { background-color: #111111; color: white; white-space: nowrap; }
+.pc1 { background-color: #607D8B; color: white; white-space: nowrap; }
+.pc2 { background-color: #9C27B0; color: black; white-space: nowrap; }
+.pc3 { background-color: #673AB7; color: white; white-space: nowrap; }
+.pc4 { background-color: #3F51B5; color: white; white-space: nowrap; }
+.pc5 { background-color: #2196F3; color: black; white-space: nowrap; }
+.pc6 { background-color: #00BCD4; color: black; white-space: nowrap; }
+.pc7 { background-color: #4CAF50; color: black; white-space: nowrap; }
+.pc8 { background-color: #CDDC39; color: black; white-space: nowrap; }
+.pc9 { background-color: #FFEB3B; color: black; white-space: nowrap; }
+.pc10 { background-color: #FFC107; color: black; white-space: nowrap; }
+.pc11 { background-color: #FF9800; color: black; white-space: nowrap; }
+.pc12 { background-color: #F44336; color: white; white-space: nowrap; }
+</style>
+</head>
+<body class=pc0>
+<h1 style="margin-bottom: 1rem">profiling-logical-combinator-dan-variant.scm<span style="opacity: 0.5"> on Tue Aug  2 19:19:03 2022</span></h1>
+<table><tr><td style="color: #666666; font-weight: bold; padding-right: 1rem; text-align: right"><pre>
+<span id=line1>1
+</span><span id=line2>2
+</span><span id=line3>3
+</span><span id=line4>4
+</span><span id=line5>5
+</span><span id=line6>6
+</span><span id=line7>7
+</span><span id=line8>8
+</span><span id=line9>9
+</span><span id=line10>10
+</span><span id=line11>11
+</span><span id=line12>12
+</span><span id=line13>13
+</span><span id=line14>14
+</span><span id=line15>15
+</span><span id=line16>16
+</span><span id=line17>17
+</span><span id=line18>18
+</span><span id=line19>19
+</span><span id=line20>20
+</span><span id=line21>21
+</span><span id=line22>22
+</span><span id=line23>23
+</span><span id=line24>24
+</span><span id=line25>25
+</span><span id=line26>26
+</span><span id=line27>27
+</span><span id=line28>28
+</span><span id=line29>29
+</span><span id=line30>30
+</span><span id=line31>31
+</span><span id=line32>32
+</span><span id=line33>33
+</span><span id=line34>34
+</span><span id=line35>35
+</span><span id=line36>36
+</span><span id=line37>37
+</span><span id=line38>38
+</span><span id=line39>39
+</span><span id=line40>40
+</span><span id=line41>41
+</span><span id=line42>42
+</span><span id=line43>43
+</span><span id=line44>44
+</span><span id=line45>45
+</span></pre></td><td><pre>
+;; Chez Scheme file.
+;;
+;; I know how to use the hotspot profiler for Chez, so that’s what I’m
+;; doing.
+;;
+;; This file attempts to show the additional cost of a null? test to
+;; check for no goals.
+
+<span class=pc11 title="line 9 char 1 count 1">(define ($append $1 $2)</span>
+  <span class=pc1 title="line 10 char 3 count 0">(cond</span>
+   <span class=pc1 title="line 10 char 3 count 0">(</span><span class=pc1 title="line 11 char 5 count 0">(</span><span class=pc1 title="line 11 char 6 count 0">null?</span><span class=pc1 title="line 11 char 5 count 0"> </span><span class=pc1 title="line 11 char 12 count 0">$1</span><span class=pc1 title="line 11 char 5 count 0">)</span><span class=pc1 title="line 10 char 3 count 0"> </span><span class=pc1 title="line 11 char 16 count 0">$2</span><span class=pc1 title="line 10 char 3 count 0">)</span>
+   <span class=pc1 title="line 10 char 3 count 0">(</span><span class=pc1 title="line 12 char 5 count 0">(</span><span class=pc1 title="line 12 char 6 count 0">procedure?</span><span class=pc1 title="line 12 char 5 count 0"> </span><span class=pc1 title="line 12 char 17 count 0">$1</span><span class=pc1 title="line 12 char 5 count 0">)</span><span class=pc1 title="line 10 char 3 count 0"> </span><span class=pc1 title="line 12 char 21 count 0">(lambda () </span><span class=pc1 title="line 12 char 32 count 0">(</span><span class=pc1 title="line 12 char 33 count 0">$append</span><span class=pc1 title="line 12 char 32 count 0"> </span><span class=pc1 title="line 12 char 41 count 0">$2</span><span class=pc1 title="line 12 char 32 count 0"> </span><span class=pc1 title="line 12 char 44 count 0">(</span><span class=pc1 title="line 12 char 45 count 0">force</span><span class=pc1 title="line 12 char 44 count 0"> </span><span class=pc1 title="line 12 char 51 count 0">$1</span><span class=pc1 title="line 12 char 44 count 0">)</span><span class=pc1 title="line 12 char 32 count 0">)</span><span class=pc1 title="line 12 char 21 count 0">)</span><span class=pc1 title="line 10 char 3 count 0">)</span>
+   <span class=pc1 title="line 10 char 3 count 0">(else </span><span class=pc1 title="line 13 char 10 count 0">(</span><span class=pc1 title="line 13 char 11 count 0">cons</span><span class=pc1 title="line 13 char 10 count 0"> </span><span class=pc1 title="line 13 char 16 count 0">(</span><span class=pc1 title="line 13 char 17 count 0">car</span><span class=pc1 title="line 13 char 16 count 0"> </span><span class=pc1 title="line 13 char 21 count 0">$1</span><span class=pc1 title="line 13 char 16 count 0">)</span><span class=pc1 title="line 13 char 10 count 0"> </span><span class=pc1 title="line 13 char 25 count 0">(</span><span class=pc1 title="line 13 char 26 count 0">$append</span><span class=pc1 title="line 13 char 25 count 0"> </span><span class=pc1 title="line 13 char 34 count 0">(</span><span class=pc1 title="line 13 char 35 count 0">cdr</span><span class=pc1 title="line 13 char 34 count 0"> </span><span class=pc1 title="line 13 char 39 count 0">$1</span><span class=pc1 title="line 13 char 34 count 0">)</span><span class=pc1 title="line 13 char 25 count 0"> </span><span class=pc1 title="line 13 char 43 count 0">$2</span><span class=pc1 title="line 13 char 25 count 0">)</span><span class=pc1 title="line 13 char 10 count 0">)</span><span class=pc1 title="line 10 char 3 count 0">))</span><span class=pc11 title="line 9 char 1 count 1">)</span>
+
+(define-syntax define-relation
+  (syntax-rules ()
+	[(_ (defname . args) g)
+	 (define (defname . args) (lambda (s/c) (lambda () (g <span class=pc12 title="line 18 char 56 count 24,999,892">s/c</span>))))]))
+
+<span class=pc11 title="line 20 char 1 count 1">(define (pull $) </span><span class=pc12 title="line 20 char 18 count 24,999,893">(if </span><span class=pc12 title="line 20 char 22 count 24,999,893">(</span><span class=pc12 title="line 20 char 23 count 24,999,893">procedure?</span><span class=pc12 title="line 20 char 22 count 24,999,893"> </span><span class=pc12 title="line 20 char 34 count 24,999,893">$</span><span class=pc12 title="line 20 char 22 count 24,999,893">)</span><span class=pc12 title="line 20 char 18 count 24,999,893"> </span><span class=pc12 title="line 20 char 37 count 24,999,893">(</span><span class=pc12 title="line 20 char 38 count 24,999,893">pull</span><span class=pc12 title="line 20 char 37 count 24,999,893"> </span><span class=pc12 title="line 20 char 43 count 24,999,893">(</span><span class=pc12 title="line 20 char 44 count 24,999,893">force</span><span class=pc12 title="line 20 char 43 count 24,999,893"> </span><span class=pc12 title="line 20 char 50 count 24,999,893">$</span><span class=pc12 title="line 20 char 43 count 24,999,893">)</span><span class=pc12 title="line 20 char 37 count 24,999,893">)</span><span class=pc12 title="line 20 char 18 count 24,999,893"> </span><span class=pc1 title="line 20 char 54 count 0">$</span><span class=pc12 title="line 20 char 18 count 24,999,893">)</span><span class=pc11 title="line 20 char 1 count 1">)</span>
+
+<span class=pc11 title="line 22 char 1 count 1">(define-relation (unpro2)</span>
+  <span class=pc12 title="line 23 char 3 count 24,999,892">(</span><span class=pc12 title="line 23 char 4 count 24,999,892">disj-variant-2</span><span class=pc12 title="line 23 char 3 count 24,999,892"> </span><span class=pc12 title="line 23 char 19 count 24,999,892">(</span><span class=pc12 title="line 23 char 20 count 24,999,892">unpro2</span><span class=pc12 title="line 23 char 19 count 24,999,892">)</span><span class=pc12 title="line 23 char 3 count 24,999,892">)</span><span class=pc11 title="line 22 char 1 count 1">)</span>
+
+<span class=pc11 title="line 25 char 1 count 1">(define success </span><span class=pc11 title="line 25 char 17 count 1">(lambda (s) </span><span class=pc1 title="line 25 char 29 count 0">(</span><span class=pc1 title="line 25 char 30 count 0">list</span><span class=pc1 title="line 25 char 29 count 0"> </span><span class=pc1 title="line 25 char 35 count 0">s</span><span class=pc1 title="line 25 char 29 count 0">)</span><span class=pc11 title="line 25 char 17 count 1">)</span><span class=pc11 title="line 25 char 1 count 1">)</span>
+
+<span class=pc11 title="line 27 char 1 count 1">(define (disj-variant-2 . gs)</span>
+  <span class=pc12 title="line 28 char 3 count 24,999,892">(lambda (s)</span>
+	<span class=pc12 title="line 29 char 2 count 24,999,892">(cond</span>
+     <span class=pc12 title="line 29 char 2 count 24,999,892">(</span><span class=pc12 title="line 30 char 7 count 24,999,892">(</span><span class=pc12 title="line 30 char 8 count 24,999,892">null?</span><span class=pc12 title="line 30 char 7 count 24,999,892"> </span><span class=pc12 title="line 30 char 14 count 24,999,892">gs</span><span class=pc12 title="line 30 char 7 count 24,999,892">)</span><span class=pc12 title="line 29 char 2 count 24,999,892"> </span><span class=pc1 title="line 30 char 18 count 0">(</span><span class=pc1 title="line 30 char 19 count 0">success</span><span class=pc1 title="line 30 char 18 count 0"> </span><span class=pc1 title="line 30 char 27 count 0">s</span><span class=pc1 title="line 30 char 18 count 0">)</span><span class=pc12 title="line 29 char 2 count 24,999,892">)</span>
+     <span class=pc12 title="line 29 char 2 count 24,999,892">(else </span><span class=pc12 title="line 31 char 12 count 24,999,892">(</span><span class=pc12 title="line 31 char 13 count 24,999,892">D</span><span class=pc12 title="line 31 char 12 count 24,999,892"> </span><span class=pc12 title="line 31 char 15 count 24,999,892">(</span><span class=pc12 title="line 31 char 16 count 24,999,892">(</span><span class=pc12 title="line 31 char 17 count 24,999,892">car</span><span class=pc12 title="line 31 char 16 count 24,999,892"> </span><span class=pc12 title="line 31 char 21 count 24,999,892">gs</span><span class=pc12 title="line 31 char 16 count 24,999,892">)</span><span class=pc12 title="line 31 char 15 count 24,999,892"> </span><span class=pc12 title="line 31 char 25 count 24,999,892">s</span><span class=pc12 title="line 31 char 15 count 24,999,892">)</span><span class=pc12 title="line 31 char 12 count 24,999,892"> </span><span class=pc12 title="line 31 char 28 count 24,999,892">(</span><span class=pc12 title="line 31 char 29 count 24,999,892">cdr</span><span class=pc12 title="line 31 char 28 count 24,999,892"> </span><span class=pc12 title="line 31 char 33 count 24,999,892">gs</span><span class=pc12 title="line 31 char 28 count 24,999,892">)</span><span class=pc12 title="line 31 char 12 count 24,999,892"> </span><span class=pc12 title="line 31 char 37 count 24,999,892">s</span><span class=pc12 title="line 31 char 12 count 24,999,892">)</span><span class=pc12 title="line 29 char 2 count 24,999,892">))</span><span class=pc12 title="line 28 char 3 count 24,999,892">)</span><span class=pc11 title="line 27 char 1 count 1">)</span>
+
+<span class=pc11 title="line 33 char 1 count 1">(define (D s-inf gs s)</span>
+  <span class=pc12 title="line 34 char 3 count 24,999,892">(cond</span>
+   <span class=pc12 title="line 34 char 3 count 24,999,892">(</span><span class=pc12 title="line 35 char 5 count 24,999,892">(</span><span class=pc12 title="line 35 char 6 count 24,999,892">null?</span><span class=pc12 title="line 35 char 5 count 24,999,892"> </span><span class=pc12 title="line 35 char 12 count 24,999,892">gs</span><span class=pc12 title="line 35 char 5 count 24,999,892">)</span><span class=pc12 title="line 34 char 3 count 24,999,892"> </span><span class=pc12 title="line 35 char 16 count 24,999,892">s-inf</span><span class=pc12 title="line 34 char 3 count 24,999,892">)</span>
+   <span class=pc12 title="line 34 char 3 count 24,999,892">(else</span>
+    <span class=pc1 title="line 37 char 5 count 0">(</span><span class=pc1 title="line 37 char 6 count 0">$append</span><span class=pc1 title="line 37 char 5 count 0"> </span><span class=pc1 title="line 37 char 14 count 0">s-inf</span>
+			 <span class=pc1 title="line 38 char 5 count 0">(</span><span class=pc1 title="line 38 char 6 count 0">D</span><span class=pc1 title="line 38 char 5 count 0"> </span><span class=pc1 title="line 38 char 8 count 0">(</span><span class=pc1 title="line 38 char 9 count 0">(</span><span class=pc1 title="line 38 char 10 count 0">car</span><span class=pc1 title="line 38 char 9 count 0"> </span><span class=pc1 title="line 38 char 14 count 0">gs</span><span class=pc1 title="line 38 char 9 count 0">)</span><span class=pc1 title="line 38 char 8 count 0"> </span><span class=pc1 title="line 38 char 18 count 0">s</span><span class=pc1 title="line 38 char 8 count 0">)</span><span class=pc1 title="line 38 char 5 count 0"> </span><span class=pc1 title="line 38 char 21 count 0">(</span><span class=pc1 title="line 38 char 22 count 0">cdr</span><span class=pc1 title="line 38 char 21 count 0"> </span><span class=pc1 title="line 38 char 26 count 0">gs</span><span class=pc1 title="line 38 char 21 count 0">)</span><span class=pc1 title="line 38 char 5 count 0"> </span><span class=pc1 title="line 38 char 30 count 0">s</span><span class=pc1 title="line 38 char 5 count 0">)</span><span class=pc1 title="line 37 char 5 count 0">)</span><span class=pc12 title="line 34 char 3 count 24,999,892">))</span><span class=pc11 title="line 33 char 1 count 1">)</span>
+
+<span class=pc11 title="line 40 char 1 count 1">(define e2 </span><span class=pc11 title="line 40 char 12 count 1">(</span><span class=pc11 title="line 40 char 13 count 1">make-engine</span><span class=pc11 title="line 40 char 12 count 1"> </span><span class=pc11 title="line 40 char 25 count 1">(lambda () </span><span class=pc11 title="line 40 char 36 count 1">(</span><span class=pc11 title="line 40 char 37 count 1">pull</span><span class=pc11 title="line 40 char 36 count 1"> </span><span class=pc11 title="line 40 char 42 count 1">(</span><span class=pc11 title="line 40 char 43 count 1">(</span><span class=pc11 title="line 40 char 44 count 1">unpro2</span><span class=pc11 title="line 40 char 43 count 1">)</span><span class=pc11 title="line 40 char 42 count 1"> </span><span class=pc11 title="line 40 char 52 count 1">'(() . 0)</span><span class=pc11 title="line 40 char 42 count 1">)</span><span class=pc11 title="line 40 char 36 count 1">)</span><span class=pc11 title="line 40 char 25 count 1">)</span><span class=pc11 title="line 40 char 12 count 1">)</span><span class=pc11 title="line 40 char 1 count 1">)</span>
+
+;; (parameterize ([compile-profile 'source])
+;;   (load "profiling-logical-combinator-dan-variant.scm"))
+;; (e2 100000000 (lambda (_) (error 'disj-test "you finished an infinite loop")) (lambda (_) #t))
+;; (profile-dump-html)
+</pre></td></tr></table>
+</body>
+</html>
