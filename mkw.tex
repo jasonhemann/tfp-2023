@@ -285,7 +285,7 @@ for conjunction. In each recursive call, we accumulate by mapping
 miniKanren streams) the next goal in the list. This left-fold
 implementation of conjunction therefore left-associates the conjuncts.
 
-\subsection{Implementation correctness}
+\subsection{Semantic equivalence}
 
 Equipped with variadic functions, a developer might discover these
 definitions as follows. We start from the definition of the
@@ -660,10 +660,12 @@ surface language and its desugaring, we really shouldn't tempt the
 programmer by making undesireable programs representable when we can
 avoid it.
 
-We take advantage of the fact that our syntax can ensure an
-adequate number of arguments. Languages with variadic but without
-polyvariadic (that is to say \enquote{at least $k$ arguments})
-functions may not see that benefit.
+Scheme's polyvariadic function syntax (that is to say \enquote{at
+  least $k$ arguments}, for some positive integer $k$) ensures at a
+host-language level that the microKanren programmer provides at least
+one parameter to \rackinline|conj| and \rackinline|disj|. Embeddings
+in languages with variadic but without polyvariadic function syntax
+would have to implement that check.
 
 We have not fully obviated the use of macros. While neither
 \rackinline|run| nor \rackinline|run*| have to be macros, for now we
