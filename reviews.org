@@ -1,0 +1,50 @@
+✓ >> I don’t understand the paragraph at p. 5, l. 522-525 “We take
+advantage of the fact …” Look @
+
+✓ >> Section 3.1 seems to me more about “Semantic equivalence” than
+“Implementation correctness”.
+
+✓ >> Register to mKW conf.
+
+>> Kanae. Neither will be there to present. How shall we Zoom.
+Prerecorded. We found that you should use periods in captions.
+
+>> The authors emphasize the variadic functions.
+
+(That said, in the abstract I would stress that you refer to the host
+language: “We describe how an additional feature of the host language
+…”)
+
+>> The title of the paper, however, is more in line with its content.
+
+It is true that without variadic functions it wouldn’t be possible to
+define an “ergonomic” version of the conj and disj operators.
+
+However, this is just surface syntax, after all: the difference
+between a variadic function and a function taking a list as an
+argument.
+
+We are talking about implementing a shallow embedded dsl in a
+functional host; and an ergonomic embedding is a matter of issue.
+
+>> When making considerations about performance, I think it is
+important to support them with some empirical evidence to make them
+stronger.
+>> For instance, if I correctly understand, there is a difference
+between left-associative and right-associative implementations of
+conjunction, so it would be nice to have an empirical comparison of
+these two alternatives.
+>> Authors claim that they can avoid extraneous closure allocation:
+This fact should be carefully measured and the fact that lesser
+closure allocations improve performance should be empirically proved.
+(I believe that that proposition is indeed true)
+>> It should be carefully measured how another implementation of
+conjunction/disjunction/conde will affect the order of the search.
+There is a chance that for a specific set of benchmarks the new
+implementation will be faster in small, but in large will lead search
+engine to less useful branches more often, and overall performance of
+the search may be worse than before. I believe that careful
+benchmarking will make the paper much better.
+
+>> The paper is very technical and hard to follow for a
+non-superexpert reader as I am.

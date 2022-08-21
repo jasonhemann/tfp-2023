@@ -1,4 +1,4 @@
-\documentclass[sigplan,natbib=false]{acmart}
+\documentclass[sigplan,draft,natbib=false]{acmart}
 %% ∞
 %% …
 %% ₀
@@ -634,31 +634,31 @@ goal.
   \label{mnt:condu-reimplementation}
 \end{listing}
 
-% \section{A functional \rackinline|run|}\label{sec:run}
+\section{A functional \rackinline|run|}\label{sec:run}
 
-% When you do a \rackinline|call/fresh| there must be some mechanism to
-% find the next fresh variable. For example we use the natural numbers
-% and \rackinline|add1| for the set of variables and the operation to
-% produce a new variable we merely need to add 1 to the natural number
-% representing the most recent variable. For another example, we could
-% represent each variable using a unique memory location and the
-% operation to produce a new variable requires introducing an unused
-% memory location. One of them of course requires memory allocation and
-% the other does not.
+When you do a \rackinline|call/fresh| there must be some mechanism to
+find the next fresh variable. For example we use the natural numbers
+and \rackinline|add1| for the set of variables and the operation to
+produce a new variable we merely need to add 1 to the natural number
+representing the most recent variable. For another example, we could
+represent each variable using a unique memory location and the
+operation to produce a new variable requires introducing an unused
+memory location. One of them of course requires memory allocation and
+the other does not.
 
-% Depending on the implementation of variables, you may also need
-% additional functions to support your category of variables. If
-% variables are not from an indexed set, you may also need an operation
-% to specifically (re)construct the first element of the set, or
-% otherwise store that value for later re-use.
+Depending on the implementation of variables, you may also need
+additional functions to support your category of variables. If
+variables are not from an indexed set, you may also need an operation
+to specifically (re)construct the first element of the set, or
+otherwise store that value for later re-use.
 
-% For the reader interested in removing macros, we note that
-% we can also implement \rackinline|run| without using
-% macros~\cite{hemann2013muKanren}. It is relatively
-% straightforward to rewrite the definitions of
-% \rackinline|run| and \rackinline|run*| so that the argument to
-% \rackinline|call/inital-state| is itself a goal that introduces the
-% first logic variable \rackinline|q|.
+For the reader interested in removing macros, we note that
+we can also implement \rackinline|run| without using
+macros~\cite{hemann2013muKanren}. It is relatively
+straightforward to rewrite the definitions of
+\rackinline|run| and \rackinline|run*| so that the argument to
+\rackinline|call/initial-state| is itself a goal that introduces the
+first logic variable \rackinline|q|.
 
 \section{Conclusion}\label{sec:conclusion}
 
