@@ -1,4 +1,4 @@
-\documentclass[sigplan,screen,draft,anonymous,review,natbib=false]{acmart}
+\documentclass[sigplan,natbib=false]{acmart}
 %% ∞
 %% …
 %% ₀
@@ -48,7 +48,6 @@
 \copyrightyear{2022}
 \acmYear{2022}
 \acmDOI{XXXXXXX.XXXXXXX}
-
 
 \acmConference[mKW '22]{miniKanren Workshop}{September 15,
   2022}{Ljubljana, Slovenia}
@@ -171,7 +170,7 @@ itself does not seem to obviously encourage one particular choice.
      (== e 'golomb)
      (== f 'carmel-center))))
   \end{minted}
-  \caption{A miniKanren version of the Carmelit subway.}
+  \caption{A miniKanren version of the Carmelit subway}
   \label{mnt:carmelit}
 \end{listing}
 
@@ -200,7 +199,7 @@ itself does not seem to obviously encourage one particular choice.
 (define ((conj₂ g₁ g₂) s)
   (append-map∞ g₂ (g₁ s)))
   \end{minted}
-  \caption{Macro based implementations of  \rackinline|disj| and \rackinline|conj|.}
+  \caption{Macro based implementations of  \rackinline|disj| and \rackinline|conj|}
   \label{mnt:conj-and-disj-implementation}
 \end{listing}
 
@@ -252,7 +251,7 @@ closures at runtime is always a bad idea.
        (append∞ s∞
          (D ((car gs) s) (cdr gs) s)))))
   \end{minted}
-  \caption{Re-implementation of \rackinline|disj|.}
+  \caption{Eventual redefinition of \rackinline|disj|}
   \label{mnt:disj-reimplementation}
 \end{listing}
 
@@ -268,7 +267,7 @@ closures at runtime is always a bad idea.
        (C (cdr gs)
           (append-map∞ (car gs) s∞)))))
   \end{minted}
-  \caption{Re-implementation of \rackinline|conj|.}
+  \caption{Eventual redefinition of \rackinline|conj|}
   \label{mnt:conj-reimplementation}
 \end{listing}
 
@@ -306,7 +305,7 @@ explicitly recursive \rackinline|disj| function.
     ((null? gs) g)
     (else (disj₂ g (apply disj gs)))))
 \end{minted}
-  \caption{Deriving \rackinline|disj| function from macro.}
+  \caption{Deriving \rackinline|disj| function from macro}
   \label{mnt:disj-function-before-derivation}
 \end{listing}
 
@@ -326,7 +325,7 @@ into two mutually-recursive procedures, to build the variant in
     ((null? gs) (g s))
     (else ((disj₂ g (apply disj gs)) s))))
 \end{minted}
-  \caption{An η expanded and split definition of \rackinline|disj|.}
+  \caption{An η expanded and split definition of \rackinline|disj|}
   \label{mnt:disj-function-split}
 \end{listing}
 
@@ -348,7 +347,7 @@ The definition of \rackinline|disj| remains unchanged from
       (append∞ (g s)
         (D (car gs) (cdr gs) s)))))
 \end{minted}
-  \caption{Derivation of \rackinline|disj| function definition.}
+  \caption{Derivation of \rackinline|disj| function definition}
   \label{mnt:disj-substituted-through}
 \end{listing}
 
@@ -373,7 +372,7 @@ in~\cref{mnt:disj-reimplementation}.
      (apply conj
        (cons (conj₂ g (car gs)) (cdr gs))))))
 \end{minted}
-  \caption{\rackinline|conj₂|-based \rackinline|conj| function and macro.}
+  \caption{\rackinline|conj₂|-based \rackinline|conj| function and macro}
   \label{mnt:conj-function-derived-definition}
 \end{listing}
 
@@ -396,7 +395,7 @@ split the definition.
           (cons (conj₂ g (car gs)) (cdr gs)))
         s))))
 \end{minted}
-  \caption{Derivation of split \rackinline|conj| function definition.}
+  \caption{Derivation of split \rackinline|conj| function definition}
   \label{mnt:conj-substituted-through}
 \end{listing}
 \noindent We next substitute for the definitions of \rackinline|conj| and
@@ -412,7 +411,7 @@ split the definition.
           (cdr gs)
           s))))
 \end{minted}
-  \caption{Replacing \rackinline|apply| in \rackinline|C| function definition.}
+  \caption{Replacing \rackinline|apply| in \rackinline|C| function definition}
   \label{mnt:C-substituted-through}
 \end{listing}
 
@@ -453,7 +452,7 @@ substitute in the definition of \rackinline|conj₂|, and β-reduce.
       ((null? gs) g)
       (else (conj₂ g (apply conj gs)))))
 \end{minted}
-  \caption{A right-fold variant of \rackinline|conj|.}
+  \caption{A right-fold variant of \rackinline|conj|}
   \label{mnt:conj-right-fold-definition}
 \end{listing}
 
@@ -519,7 +518,7 @@ requires a simple wrapper macro, or otherwise, a run-time
           (== e 'golomb)
           (== f 'carmel-center))))
   \end{minted}
-  \caption{A new Carmelit subway without \rackinline|conde|.}
+  \caption{A new Carmelit subway without \rackinline|conde|}
   \label{mnt:new-carmelit}
 \end{listing}
 
@@ -556,7 +555,7 @@ language.
       (else (lambda ()
               (loop (s∞)))))))
   \end{minted}
-  \caption{A typical implementation of \rackinline|conda|.}
+  \caption{A typical implementation of \rackinline|conda|}
   \label{mnt:conda-implementation}
 \end{listing}
 
@@ -602,7 +601,7 @@ function syntax also suggests a more elegant solution for
     ((pair? s∞) (append-map∞ a s∞))
     (else (lambda () (A (s∞) a q-and-a* s)))))
   \end{minted}
-  \caption{A functional \rackinline|conda| implementation.}
+  \caption{A functional \rackinline|conda| implementation}
   \label{mnt:conda-good-re-implementation}
 \end{listing}
 
@@ -631,10 +630,35 @@ goal.
         (else (lambda ()
                 (loop (s-inf))))))))
   \end{minted}
-  \caption{The \rackinline|once| function.}
+  \caption{The \rackinline|once| function}
   \label{mnt:condu-reimplementation}
 \end{listing}
 
+% \section{A functional \rackinline|run|}\label{sec:run}
+
+% When you do a \rackinline|call/fresh| there must be some mechanism to
+% find the next fresh variable. For example we use the natural numbers
+% and \rackinline|add1| for the set of variables and the operation to
+% produce a new variable we merely need to add 1 to the natural number
+% representing the most recent variable. For another example, we could
+% represent each variable using a unique memory location and the
+% operation to produce a new variable requires introducing an unused
+% memory location. One of them of course requires memory allocation and
+% the other does not.
+
+% Depending on the implementation of variables, you may also need
+% additional functions to support your category of variables. If
+% variables are not from an indexed set, you may also need an operation
+% to specifically (re)construct the first element of the set, or
+% otherwise store that value for later re-use.
+
+% For the reader interested in removing macros, we note that
+% we can also implement \rackinline|run| without using
+% macros~\cite{hemann2013muKanren}. It is relatively
+% straightforward to rewrite the definitions of
+% \rackinline|run| and \rackinline|run*| so that the argument to
+% \rackinline|call/inital-state| is itself a goal that introduces the
+% first logic variable \rackinline|q|.
 
 \section{Conclusion}\label{sec:conclusion}
 
