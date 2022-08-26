@@ -55,8 +55,6 @@
 \acmPrice{15.00}
 \acmISBN{978-1-4503-XXXX-X/18/06}
 
-
-
 \begin{document}
 
 \title[Some criteria for implementations of conj and disj in
@@ -73,15 +71,36 @@ microKanren]{Some criteria for implementations of disjunction and
 \renewcommand{\shortauthors}{Hemann et al.}
 
 \begin{abstract}
-  We describe how an additional language feature---namely variadic,
-  \enquote{rest argument} functions---can lead to a more powerful
-  kernel language. We implement disjunction and conjunction functions
-  that preserve search order and that do not create superfluous
-  closures. The result is a shorter and simpler overall implementation
-  that is more elegant.
+  We describe how an extra host language feature---namely
+  variadic, \enquote{rest argument} functions---can lead to a more
+  powerful kernel language. We implement disjunction and conjunction
+  functions that preserve search order and that do not create
+  superfluous closures. The result is a shorter and simpler overall
+  implementation that is more elegant.
 \end{abstract}
 
-\keywords{}
+\begin{CCSXML}
+<ccs2012>
+   <concept>
+       <concept_id>10011007.10011006.10011008.10011009.10011015</concept_id>
+       <concept_desc>Software and its engineering~Constraint and logic languages</concept_desc>
+       <concept_significance>500</concept_significance>
+   </concept>
+   <concept>
+       <concept_id>10003752.10003790.10003795</concept_id>
+       <concept_desc>Theory of computation~Constraint and logic programming</concept_desc>
+       <concept_significance>300</concept_significance>
+   </concept>
+ </ccs2012>
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Constraint and logic languages}
+\ccsdesc[500]{Software and its engineering~Automatic programming}
+
+%%
+ %% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{logic programming, miniKanren, DSLs, embedding, macros}
 
 \maketitle
 
@@ -126,7 +145,8 @@ improvement \enquote{horse sense} led us to the same improved design.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren
 implementations and illustrate why surface syntax macros had seemed
-practically mandatory. In~\cref{sec:conde}, we implement conjunction
+practically mandatory. In
+\cref{sec:conde}, we implement conjunction
 and disjunction, and in \cref{sec:impure} we discuss the
 re-implementation of the impure operators. We close with a discussion
 of some performance impacts of these implementation choices, and
@@ -144,7 +164,7 @@ The world's shortest subway system is Haifa's Carmelit, with only
 six stations. The system is a line, so its trains travel back and
 forth. If we wanted to describe the order in which we rode the train
 from the beginning to the end, we could use the
-\rackinline|carmelit-subway| relation in~\cref{mnt:carmelit}. We
+\rackinline|carmelit-subway| relation in \cref{mnt:carmelit}. We
 express this relation using the more compact miniKanren syntax because
 unfolding this relation into binary conjunctions and disjunctions
 would be painful. We certainly \emph{could} write it out by hand---in
@@ -213,7 +233,7 @@ respectively.
   constructors}\label{sec:conde}
 
 The  \rackinline|disj| and \rackinline|conj| macros of
-~\cref{mnt:conj-and-disj-implementation} are not \emph{quite} defined
+\cref{mnt:conj-and-disj-implementation} are not \emph{quite} defined
 as simple recursions over their binary functional primitives. The
 definition of zero-way conjunction (disjunction) is independent of the
 unfolding of \rackinline|conj₂| (\rackinline|disj₂|). In a sense the
@@ -229,7 +249,7 @@ statically how such goals should behave, so there is no benefit to
 executing them. A conjunction of no goals would simply succeed, and a
 disjunction of no goals would simply fail. Truthfully, only the impure
 \rackinline|conda| operator seems to require these additional base
-cases (discussed further in~\cref{sec:impure}). They are for all
+cases (discussed further in \cref{sec:impure}). They are for all
 intents and purposes superfluous.
 
 Here, we want to implement disjunction and conjunction over
@@ -379,7 +399,7 @@ in~\cref{mnt:disj-reimplementation}.
 We can derive the definition of \rackinline|conj| from
 \cref{mnt:conj-reimplementation} via a similar process. Starting with
 the variadic function based on the macro in
-~\cref{mnt:conj-function-derived-definition}, we first η-expand and
+\cref{mnt:conj-function-derived-definition}, we first η-expand and
 split the definition.
 
 \begin{listing}[h]
@@ -421,7 +441,7 @@ in---instead of passing in \rackinline|g| and \rackinline|s|
 separately, we pass in their combination as a stream. The function is
 tail recursive, we can change the signature in the one and only
 external call and the recursive call. We show the result
-in~\cref{mnt:conj-reimplementation}.
+in \cref{mnt:conj-reimplementation}.
 
 Both the variadic function based and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
@@ -605,7 +625,7 @@ function syntax also suggests a more elegant solution for
   \label{mnt:conda-good-re-implementation}
 \end{listing}
 
-The implementation in~\cref{mnt:conda-good-re-implementation} includes
+The implementation in \cref{mnt:conda-good-re-implementation} includes
 the delay-and-restart behavior of \rackinline|ifte| together with
 \rackinline|conda|'s logical cascade. The \rackinline|s∞| can be
 either empty, non-empty, or a function of no arguments. In the last
@@ -634,31 +654,92 @@ goal.
   \label{mnt:condu-reimplementation}
 \end{listing}
 
-\section{A functional \rackinline|run|}\label{sec:run}
 
-When you do a \rackinline|call/fresh| there must be some mechanism to
-find the next fresh variable. For example we use the natural numbers
-and \rackinline|add1| for the set of variables and the operation to
-produce a new variable we merely need to add 1 to the natural number
-representing the most recent variable. For another example, we could
-represent each variable using a unique memory location and the
-operation to produce a new variable requires introducing an unused
-memory location. One of them of course requires memory allocation and
-the other does not.
+\section{Macro-free microKanren}\label{sec:functional}
 
+In this section we collect together advice on building macro-free
+variants of some other language features. With these, a programmer in
+a pedestrian functional language should be able to directly translate
+the implementation and our test programs.
+
+\paragraph{\rackinline|define|} The microKanren programmer can just
+use the host language's \rackinline|define| feature to construct
+relations as host-language functions, and manually introduce the delay
+and interleave. This may be a larger concession than it looks, since
+it exposes the stream implementation to the user, and both correct
+interleaving and even the termination of relation \emph{definitions}
+rely on a whole-program correctness property of relation definitions
+having a delay. This approach---akin to some earlier
+implementations~\cite{hemann2013muKanren}---can work, however.
+\Cref{mnt:subtleo} shows an example.
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall]{racket}
+(define (subtleo x)
+  (lambda (s/c)
+    (lambda ()
+      ((disj
+         (subtleo x)
+         (== x 'cat))
+       s/c))))
+  \end{minted}
+  \caption{Omitting the delay is a subtle bug}
+  \label{mnt:subtleo}
+\end{listing}
+
+\paragraph{\rackinline|fresh|} In any implementation there must be
+some mechanism to produce the next fresh variable. For example, we
+treat the natural numbers as an indexed set of variables, and we
+thread the current index through the computation. We use
+\rackinline|add1| get the next index; to go from index to variable is
+the identity function. For another example, we could represent each
+variable using a unique memory location,
+sokuza-kanren~\cite{kiselyov2006taste} style, and the operation to
+produce a new variable requires introducing an unused memory location.
 Depending on the implementation of variables, you may also need
-additional functions to support your category of variables. If
+additional functions to support your implementation of variables. If
 variables are not from an indexed set, you may also need an operation
-to specifically (re)construct the first element of the set, or
+to (re)construct specifically the first element of the set, or
 otherwise store that value for later re-use.
 
-For the reader interested in removing macros, we note that
-we can also implement \rackinline|run| without using
-macros~\cite{hemann2013muKanren}. It is relatively
-straightforward to rewrite the definitions of
-\rackinline|run| and \rackinline|run*| so that the argument to
-\rackinline|call/initial-state| is itself a goal that introduces the
-first logic variable \rackinline|q|.
+Of course, one of these approaches requires memory allocation and
+external global state, while the other does not. Furthermore, the
+latter approach models logic variables as coming from a single global
+pool rather than reusing them separately across each disjunct, and so
+requires some global store and strictly more logic variables overall.
+
+With this latter approach, however, we can expose \rackinline|var|
+directly to the programmer and the programmer can use \rackinline|let|
+bindings introduce several logic variables simultaneously.
+
+\paragraph{\rackinline|run|}
+
+For the reader interested in removing macros, we note that we can also
+implement \rackinline|run| without using macros. Using the
+purely-functional implementation of logic variables, the definitions
+of \rackinline|run| and \rackinline|run*| easily translate to
+functions like
+\rackinline|call/initial-state|~\cite{hemann2013muKanren}. The query
+is itself expressed as a goal that introduces the first logic variable
+\rackinline|q|. The pointer-based logic variable approach forces the
+programmer to explicitly invoke \rackinline|reify| as though it were a
+goal as the last step of executing the query, as in
+\cref{mnt:run-query}.
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall]{racket}
+(call/initial-state 1
+  (let ((q (var 'q)))
+    (conj
+      (let ((x (var 'x)))
+        (== q x))
+      (reify q))))
+  \end{minted}
+  \caption{Queries as expressed with global-state variables}
+  \label{mnt:run-query}
+\end{listing}
+
+These are the wages of sin.
 
 \section{Conclusion}\label{sec:conclusion}
 
@@ -726,6 +807,7 @@ host languages.
 \end{acks}
 
 \printbibliography{}
+%% \enlargethispage{\baselineskip}
 
 \end{document}
 
