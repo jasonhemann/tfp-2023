@@ -57,9 +57,9 @@
 
 \begin{document}
 
-\title[Some criteria for implementations of conj and disj in
-microKanren]{Some criteria for implementations of disjunction and
-  conjunction in microKanren}
+\title[Some Criteria for Implementations of conj and disj in
+microKanren]{Some Criteria for Implementations of Disjunction and
+  Conjunction in microKanren}
 
 \author{Jason Hemann}
 \email{jhemann@northeastern.edu}
@@ -657,31 +657,30 @@ goal.
 
 \section{Macro-free microKanren}\label{sec:functional}
 
-In this section we collect together advice on building macro-free
-variants of some other language features. With these, a programmer in
-a pedestrian functional language should be able to directly translate
+In this section we collect together some workarounds to obviate macros
+in some other language features. With these, a programmer in a
+pedestrian functional language should be able to directly translate
 the implementation and our test programs.
 
 \paragraph{\rackinline|define|} The microKanren programmer can just
-use the host language's \rackinline|define| feature to construct
-relations as host-language functions, and manually introduce the delay
-and interleave. This may be a larger concession than it looks, since
-it exposes the stream implementation to the user, and both correct
-interleaving and even the termination of relation \emph{definitions}
-rely on a whole-program correctness property of relation definitions
-having a delay. This approach---akin to some earlier
-implementations~\cite{hemann2013muKanren}---can work, however.
-\Cref{mnt:subtleo} shows an example.
+use their host language's \rackinline|define| feature to construct
+relations as host-language functions, and manually introduce the
+delays in relations. This may be a larger concession than it looks,
+since it exposes the delay and interleave mechanism to the user, and
+both correct interleaving and even the termination of relation
+\emph{definitions} rely on a whole-program correctness property of
+relation definitions having a delay. \Cref{mnt:subtleo} relies on a
+help function \rackinline|Zzz| to introduce delays, akin to some
+earlier implementations~\cite{hemann2013muKanren}.
+
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
 (define (subtleo x)
-  (lambda (s/c)
-    (lambda ()
-      ((disj
-         (subtleo x)
-         (== x 'cat))
-       s/c))))
+  (Zzz
+    (disj
+      (subtleo x)
+      (== x 'cat))))
   \end{minted}
   \caption{Omitting the delay is a subtle bug}
   \label{mnt:subtleo}
@@ -691,8 +690,8 @@ implementations~\cite{hemann2013muKanren}---can work, however.
 some mechanism to produce the next fresh variable. For example, we
 treat the natural numbers as an indexed set of variables, and we
 thread the current index through the computation. We use
-\rackinline|add1| get the next index; to go from index to variable is
-the identity function. For another example, we could represent each
+\rackinline|add1| to get the next index; to go from index to variable
+is the identity function. For another example, we could represent each
 variable using a unique memory location,
 sokuza-kanren~\cite{kiselyov2006taste} style, and the operation to
 produce a new variable requires introducing an unused memory location.
@@ -710,7 +709,7 @@ requires some global store and strictly more logic variables overall.
 
 With this latter approach, however, we can expose \rackinline|var|
 directly to the programmer and the programmer can use \rackinline|let|
-bindings introduce several logic variables simultaneously.
+bindings to introduce several logic variables simultaneously.
 
 \paragraph{\rackinline|run|}
 
@@ -748,21 +747,21 @@ variadic functions---implementers provide a somewhat more powerful
 core language and significantly reduce the need for macros in
 implementing a language as expressive as the full \enquote{microKanren
   + macros} approach provides. Our desugaring macros would have worked
-whether we left or right associated. Removing a degree of freedom in
+whether we left or right associate. Removing a degree of freedom in
 the implementation, and forcing ourselves to program the solution
 functionally, led us to what seems like the right solution.
 
 The result is closer to the design of Prolog, where the user
-represents conjuction of goals in the body of a clause with a comma
+represents conjunction of goals in the body of a clause with a comma
 and disjunction, either implicitly in listing various clauses or
 explicitly with a semicolon.
 
 We assume it is agreed that our definitions of \rackinline|disj| and
 \rackinline|conj| themselves are sufficiently high-level operators for
 a surface language and that the zero-element base cases are at best
-unnecessary and likely undesireable; given the opportunity to define a
+unnecessary and likely undesirable; given the opportunity to define a
 surface language and its desugaring, we really shouldn't tempt the
-programmer by making undesireable programs representable when we can
+programmer by making undesirable programs representable when we can
 avoid it.
 
 Scheme's polyvariadic function syntax (that is to say \enquote{at
