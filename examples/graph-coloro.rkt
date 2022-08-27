@@ -1,6 +1,6 @@
 #lang racket
-(require minikanren (only-in racket [define define-relation]))
-;; (require "../interface-definitions.rkt")
+;; (require minikanren (only-in racket [define define-relation]))
+(require "../interface-definitions.rkt")
 (require "./functional-graph-split.rkt")
 (require (prefix-in australia: "./australia.rkt"))
 (require (prefix-in america: "./america.rkt"))
@@ -10,6 +10,7 @@
 (require (prefix-in iberia: "./iberia.rkt"))
 (require (prefix-in south-america: "./south-america.rkt"))
 (require (prefix-in kazakhstan: "./kazakhstan.rkt"))
+(require (prefix-in ireland: "./ireland.rkt"))
 
 (define-relation (membero x l)
   (fresh (car cdr)
@@ -153,6 +154,11 @@
     (display nodes)(newline)
     (run 1 (q) (color nodes kazakhstan:edges q))))
 
+(define (do-ireland)
+  (let ((nodes (graph-good-ordering ireland:nodes ireland:edges)))
+    (display nodes)(newline)
+    (run 1 (q) (color nodes ireland:edges q))))
+
 (define (do-mexico)
   (let ((nodes (graph-good-ordering mexico:nodes mexico:edges)))
     (display nodes)(newline)
@@ -188,15 +194,15 @@
  ;; (time (test-loop (do-canada)))
  ;; (time (test-loop (do-america)))
 
- (time (do-iberia))
- (time (do-australia))
- (time (do-canada))
- (time (do-middle-earth))
- (time (do-south-america))
- (time (do-kazakhstan))
- (time (do-mexico))
- (time (do-america))
-
+ (time (void (do-iberia)))
+ (time (void (do-australia)))
+ (time (void (do-canada)))
+ (time (void (do-middle-earth)))
+ (time (void (do-south-america)))
+ (time (void (do-kazakhstan)))
+ (time (void (do-ireland)))
+ ;; (time (do-mexico))
+ ;; (time (do-america))
 
 ;; the bad one not on zoom
 ;; cpu time: 22 real time: 22 gc time: 7
@@ -220,6 +226,34 @@
 ;; cpu time: 161 real time: 164 gc time: 8
 ;; cpu time: 212884 real time: 222584 gc time: 149
 
+
+;; the bad one augmented w/more tests
+;; (spain portugal cerdagne andorra gibraltar)
+;; cpu time: 4 real time: 4 gc time: 0
+;; (south-australia western-australia northern-territory queensland new-south-wales victoria tasmania)
+;; cpu time: 47 real time: 48 gc time: 10
+;; (northwest-territories quebec ontario british-columbia manitoba alberta saskatchewan yukon nunavut newfoundland-and-labrador new-brunswick nova-scotia prince-edward-island)
+;; cpu time: 3940 real time: 3992 gc time: 127
+;; (rhun eriador rhovanion rohan mordor khand lindon forodwaith enedwaith gondor harad)
+;; cpu time: 1354 real time: 1373 gc time: 23
+;; (brazil argentina bolivia peru colombia chile paraguay uruguay venezuela guyana surinam french-guiana ecuador)
+;; cpu time: 4228 real time: 4318 gc time: 66
+;; (karaganda ulytau kostanay pavlodar aktobe akmola jambyl abai mangystau jetisu east-kazakhstan kyzylorda almaty west-kazakhstan north-kazakhstan turkistan atyrau)
+;; cpu time: 51264 real time: 52201 gc time: 1883
+
+;; the good one augmented w/more tests
+;; (spain portugal cerdagne andorra gibraltar)
+;; cpu time: 16 real time: 16 gc time: 11
+;; (south-australia western-australia northern-territory queensland new-south-wales victoria tasmania)
+;; cpu time: 58 real time: 58 gc time: 5
+;; (northwest-territories quebec ontario british-columbia manitoba alberta saskatchewan yukon nunavut newfoundland-and-labrador new-brunswick nova-scotia prince-edward-island)
+;; cpu time: 6768 real time: 6871 gc time: 159
+;; (rhun eriador rhovanion rohan mordor khand lindon forodwaith enedwaith gondor harad)
+;; cpu time: 2499 real time: 2563 gc time: 32
+;; (brazil argentina bolivia peru colombia chile paraguay uruguay venezuela guyana surinam french-guiana ecuador)
+;; cpu time: 8508 real time: 8725 gc time: 97
+;; (karaganda ulytau kostanay pavlodar aktobe akmola jambyl abai mangystau jetisu east-kazakhstan kyzylorda almaty west-kazakhstan north-kazakhstan turkistan atyrau)
+;; cpu time: 91346 real time: 93564 gc time: 1400
 
 
 )
