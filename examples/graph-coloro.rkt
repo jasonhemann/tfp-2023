@@ -1,5 +1,6 @@
 #lang racket
-(require "../interface-definitions.rkt")
+(require minikanren (only-in racket [define define-relation]))
+;; (require "../interface-definitions.rkt")
 (require "./functional-graph-split.rkt")
 (require (prefix-in australia: "./australia.rkt"))
 (require (prefix-in america: "./america.rkt"))
@@ -51,6 +52,16 @@
 			      acc
 			      (p car))))]))
 
+(define-relation (mapo2 p t l acc)
+  (conde
+   [(== l '())
+    acc]
+   [(fresh (car cdr)
+	   (== l `(,car . ,cdr))
+	   (mapo2 p t cdr (fresh ()
+			      acc
+			      (p t car))))]))
+
 (define-relation (assoco key table value)
   (fresh (car table-cdr)
     (== table `(,car . ,table-cdr))
@@ -75,17 +86,13 @@
 (define-relation (coloro x)
   (membero x '(red green blue yellow)))
 
-;; a higher-order goal, not my doing
-(define (different-colors table)
-  (lambda (constraint)
-    (λ (s/c)
-      (delay/name
-       ((fresh (x y x-color y-color)
-               (== constraint `(,x ,y))
-               (assoco x table x-color)
-               (assoco y table y-color)
-               (=/= x-color y-color))
-        s/c)))))
+;; JBH: a higher-order goal, not my doing
+(define-relation (different-colors table constraint)
+  (fresh (x y x-color y-color)
+    (== constraint `(,x ,y))
+    (assoco x table x-color)
+    (assoco y table y-color)
+    (=/= x-color y-color)))
 
 ;; (define (my-mapo p l i)
 ;;   ;; This has to be done in a depth first search!
@@ -105,7 +112,7 @@
     (make-assoc-tableo states colors table)
 
     ;; make sure each color is different to neighbours
-    (mapo (different-colors table) edges (== 0 0))
+    (mapo2 different-colors table edges (== 0 0))
 
     ;; brute force search for a valid coloring
     (mapo coloro colors (== 0 0))))
@@ -149,14 +156,29 @@
  (time (void (do-canada)))
  (time (void (do-america)))
 
-;; the bad one
+;; the bad one not on zoom
 ;; cpu time: 22 real time: 22 gc time: 7
 ;; cpu time: 82 real time: 83 gc time: 4
 ;; cpu time: 108114 real time: 110293 gc time: 81
 
-;; the good one
+;; the good one not on zoom
 ;; cpu time: 18 real time: 19 gc time: 7
 ;; cpu time: 68 real time: 69 gc time: 2
 ;; cpu time: 101372 real time: 103464 gc time: 64
+
+
+
+;; SUSPICIOUS
+;; the bad one on zoom
+;; cpu time: 36 real time: 37 gc time: 7
+;; cpu time: 174 real time: 179 gc time: 24
+;; cpu time: 193304 real time: 202160 gc time: 161
+
+;; the good one on zoom
+;; cpu time: 31 real time: 31 gc time: 5
+;; cpu time: 161 real time: 164 gc time: 8
+;; cpu time: 212884 real time: 222584 gc time: 149
+
+
 
 )

@@ -10,7 +10,7 @@
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc))
 ;; THE BAD ONE
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
+(require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
 ;;
 ;; execute goals from rightmost argument to leftmost argument
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc-flip))
@@ -20,7 +20,7 @@
 ;;
 ;; mixed
 ;; THE GOOD ONE
-(require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
 
 (define-syntax-rule (run n (q) g0 g ...)
@@ -34,18 +34,26 @@
     (conj gn0 gn1 ...)
     ...))
 
+;; (define-syntax fresh
+;;   (λ (stx)
+;;     (syntax-parse stx
+;;       [(_ (x ...) g0 g ...)
+;;        (let ((n (length (syntax->list #'(x ...)))))
+;;          #`(λ (st)
+;;              (let* ((c (state->ct st))
+;;                     (nc (+ #,n c)))
+;;                ((apply
+;;                  (λ (x ...) (conj g0 g ...))
+;;                  (range c nc))
+;;                 (state (state->σ st) (state->≠ st) nc)))))])))
+
 (define-syntax fresh
-  (λ (stx)
-    (syntax-parse stx
-      [(_ (x ...) g0 g ...)
-       (let ((n (length (syntax->list #'(x ...)))))
-         #`(λ (st)
-             (let* ((c (state->ct st))
-                    (nc (+ #,n c)))
-               ((apply
-                 (λ (x ...) (conj g0 g ...))
-                 (range c nc))
-                (state (state->σ st) (state->≠ st) nc)))))])))
+  (syntax-rules ()
+    [(_ () g0 g ...) (conj g0 g ...)]
+    [(_ (x0 x ...) g0 g ...)
+     (call/fresh
+      (λ (x0)
+        (fresh (x ...) g0 g ...)))]))
 
 (module+ test
   (require (except-in rackunit fail))
