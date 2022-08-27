@@ -1,0 +1,4 @@
+
+1661572069scheme@(guile-user)> (- 1661572069 1661572037)
+$4 = 32
+scheme@(guile-user)>

@@ -1,7 +1,7 @@
 #lang racket
 (require "./logical-combinator-function-definitions.rkt")
 (require (for-syntax syntax/parse))
-(provide run conde fresh == =/= define-relation)
+(provide run* run conde fresh == =/= define-relation)
 ;; left  associative conjunction ((((a & b) & c) & d) & e)
 ;; right associative conjunction (a & (b & (c & (d & e))))
 ;;
@@ -22,6 +22,11 @@
 ;; THE GOOD ONE
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
+
+(define-syntax-rule (run* (q) g0 g ...)
+  (call/initial-state
+   -1
+   (fresh (q) g0 g ...)))
 
 (define-syntax-rule (run n (q) g0 g ...)
   (call/initial-state
