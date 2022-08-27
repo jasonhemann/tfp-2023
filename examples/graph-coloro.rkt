@@ -141,12 +141,22 @@
  (define-syntax test-loop
    (syntax-rules () [(_ e) (test-loop-f (lambda () e))]))
 
-
  ;; (time (test-loop (do-australia)))
  ;; (time (test-loop (do-canada)))
  ;; (time (test-loop (do-america)))
 
- (time (do-america))
+ (time (void (do-australia)))
+ (time (void (do-canada)))
+ (time (void (do-america)))
 
+;; the bad one
+;; cpu time: 22 real time: 22 gc time: 7
+;; cpu time: 82 real time: 83 gc time: 4
+;; cpu time: 108114 real time: 110293 gc time: 81
+
+;; the good one
+;; cpu time: 18 real time: 19 gc time: 7
+;; cpu time: 68 real time: 69 gc time: 2
+;; cpu time: 101372 real time: 103464 gc time: 64
 
 )
