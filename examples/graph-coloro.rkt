@@ -5,6 +5,10 @@
 (require (prefix-in australia: "./australia.rkt"))
 (require (prefix-in america: "./america.rkt"))
 (require (prefix-in canada: "./canada.rkt"))
+(require (prefix-in middle-earth: "./middle-earth.rkt"))
+(require (prefix-in mexico: "./mexico.rkt"))
+(require (prefix-in iberia: "./iberia.rkt"))
+(require (prefix-in south-america: "./south-america.rkt"))
 
 (define-relation (membero x l)
   (fresh (car cdr)
@@ -126,17 +130,37 @@
 
 (define (do-australia)
   (let ((nodes (graph-good-ordering australia:nodes australia:edges)))
-    ;;(display nodes)(newline)
+    (display nodes)(newline)
     (run 1 (q) (color nodes australia:edges q))))
 
 (define (do-canada)
   (let ((nodes (graph-good-ordering canada:nodes canada:edges)))
-    ;;(display nodes)(newline)
+    (display nodes)(newline)
     (run 1 (q) (color nodes canada:edges q))))
+
+(define (do-iberia)
+  (let ((nodes (graph-good-ordering iberia:nodes iberia:edges)))
+    (display nodes)(newline)
+    (run 1 (q) (color nodes iberia:edges q))))
+
+(define (do-south-america)
+  (let ((nodes (graph-good-ordering south-america:nodes south-america:edges)))
+    (display nodes)(newline)
+    (run 1 (q) (color nodes south-america:edges q))))
+
+(define (do-mexico)
+  (let ((nodes (graph-good-ordering mexico:nodes mexico:edges)))
+    (display nodes)(newline)
+    (run 1 (q) (color nodes mexico:edges q))))
+
+(define (do-middle-earth)
+  (let ((nodes (graph-good-ordering middle-earth:nodes middle-earth:edges)))
+    (display nodes)(newline)
+    (run 1 (q) (color nodes middle-earth:edges q))))
 
 (define (do-america)
   (let ((nodes (graph-good-ordering america:nodes america:edges)))
-    ;;(display nodes)(newline)
+    (display nodes)(newline)
     (run 1 (q) (color nodes america:edges q))))
 
 
@@ -159,9 +183,14 @@
  ;; (time (test-loop (do-canada)))
  ;; (time (test-loop (do-america)))
 
- (time (void (do-australia)))
- (time (void (do-canada)))
- (time (void (do-america)))
+ (time (do-iberia))
+ (time (do-australia))
+ (time (do-canada))
+ (time (do-middle-earth))
+ (time (do-south-america))
+;; (time (void (do-mexico)))
+;; (time (void (do-america)))
+
 
 ;; the bad one not on zoom
 ;; cpu time: 22 real time: 22 gc time: 7
