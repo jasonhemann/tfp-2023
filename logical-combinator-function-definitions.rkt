@@ -204,13 +204,26 @@
        (and s (unify (find (cdr u) s) (find (cdr v) s) s))))
     (else #f)))
 
-(define ((== u v) s/c)
-  (let ((s (car s/c)))
+(define ((== u v) st)
+  (let ((s (state->σ st)))
     (let ((s (unify (find u s) (find v s) s)))
-      (if s (list `(,s . ,(cdr s/c))) `()))))
+      (if s (list (state s (state->≠ st) (state->ct st)))
+          `()))))
+
+;; Dumb but type correct
+(define ((=/= u v) st)
+  (let ((s (state->σ st)))
+    (let ((s (unify (find u s) (find v s) s)))
+      (if s (list (state s (state->≠ st) (state->ct st)))
+          `()))))
+
+(struct state (>σ >≠ >ct) #:transparent)
+
+(define empty-state
+  (state '() '() 0))
 
 (define (call/initial-state n g)
-  (take n (pull (g '(() . 0)))))
+  (take n (pull (g empty-state))))
 
 (define ((disj2 g1 g2) s/c)
   ($append (g1 s/c) (g2 s/c)))
@@ -218,8 +231,8 @@
 (define ((conj2 g1 g2) s/c)
   ($append-map g2 (g1 s/c)))
 
-(define succeed (λ (s/c) (list s/c)))
-(define fail (λ (s/c) (list)))
+(define succeed (λ (st) (list st)))
+(define fail (λ (st) (list)))
 
 (define ($append $1 $2)
   (cond
@@ -234,7 +247,7 @@
     (else ($append (g (car $)) ($append-map g (cdr $))))))
 
 (define-syntax-rule (define-relation (defname . args) g)
-  (define ((defname . args) s/c) (delay/name (g s/c))))
+  (define ((defname . args) st) (delay/name (g st))))
 
 (define (take n $)
   (cond
@@ -245,19 +258,21 @@
 
 (define (pull $) (if (promise? $) (pull (force $)) $))
 
-(define ((call/fresh f) s/c)
-  (let ((c (cdr s/c)))
-    ((f (var c)) `(,(car s/c) . ,(+ c 1)))))
+(define ((call/fresh f) st)
+  (let ((c (state->ct st)))
+    ((f (var c)) (state (state->σ st)
+                        (state->≠ st)
+                        (+ c 1)))))
 
-(define ((ifte g0 g1 g2) s/c)
-  (let loop (($ (g0 s/c)))
+(define ((ifte g0 g1 g2) st)
+  (let loop (($ (g0 st)))
     (cond
-      ((null? $) (g2 s/c))
+      ((null? $) (g2 st))
       ((promise? $) (delay/name (loop (force $))))
       (else ($append-map g1 $)))))
 
-(define ((once g) s/c)
-  (let loop (($ (g s/c)))
+(define ((once g) st)
+  (let loop (($ (g st)))
     (cond
       ((null? $) '())
       ((promise? $) (delay/name (loop (force $))))
