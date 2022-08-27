@@ -1,5 +1,6 @@
 #lang racket
-(require minikanren (only-in racket [define define-relation]))
+(require minikanren)
+(require (only-in racket [define define-relation]))
 ;; (require "../interface-definitions.rkt")
 (require "./functional-graph-split.rkt")
 (require (prefix-in australia: "./australia.rkt"))
@@ -97,7 +98,6 @@
 (define-relation (coloro x)
   (membero x '(red green blue yellow)))
 
-;; JBH: a higher-order goal, not my doing
 (define-relation (different-colors table constraint)
   (fresh (x y x-color y-color)
     (== constraint `(,x ,y))
