@@ -1,6 +1,5 @@
 #lang racket
-(require minikanren)
-(require (only-in racket [define define-relation]))
+(require minikanren (only-in racket [define define-relation]))
 ;; (require "../interface-definitions.rkt")
 (require "./functional-graph-split.rkt")
 (require (prefix-in australia: "./australia.rkt"))
@@ -10,6 +9,7 @@
 (require (prefix-in mexico: "./mexico.rkt"))
 (require (prefix-in iberia: "./iberia.rkt"))
 (require (prefix-in south-america: "./south-america.rkt"))
+(require (prefix-in kazakhstan: "./kazakhstan.rkt"))
 
 (define-relation (membero x l)
   (fresh (car cdr)
@@ -47,7 +47,7 @@
 	    (p car)
 	    (mapo p cdr)))))
 
-;; (define-relation (mapo p l acc)
+;; (define-relation (mapo p l [acc (== 'cat 'cat)])
 ;;   (conde
 ;;    [(== l '())
 ;;     acc]
@@ -64,7 +64,7 @@
 	    (p t car)
 	    (mapo2 p t cdr)))))
 
-;; (define-relation (mapo2 p t l acc)
+;; (define-relation (mapo2 p t l [acc (== 'cat 'cat)])
 ;;   (conde
 ;;    [(== l '())
 ;;     acc]
@@ -123,10 +123,10 @@
     (make-assoc-tableo states colors table)
 
     ;; make sure each color is different to neighbours
-    (mapo2 different-colors table edges #;(== 0 0))
+    (mapo2 different-colors table edges)
 
     ;; brute force search for a valid coloring
-    (mapo coloro colors #;(== 0 0))))
+    (mapo coloro colors)))
 
 (define (do-australia)
   (let ((nodes (graph-good-ordering australia:nodes australia:edges)))
@@ -147,6 +147,11 @@
   (let ((nodes (graph-good-ordering south-america:nodes south-america:edges)))
     (display nodes)(newline)
     (run 1 (q) (color nodes south-america:edges q))))
+
+(define (do-kazakhstan)
+  (let ((nodes (graph-good-ordering kazakhstan:nodes kazakhstan:edges)))
+    (display nodes)(newline)
+    (run 1 (q) (color nodes kazakhstan:edges q))))
 
 (define (do-mexico)
   (let ((nodes (graph-good-ordering mexico:nodes mexico:edges)))
@@ -188,8 +193,9 @@
  (time (do-canada))
  (time (do-middle-earth))
  (time (do-south-america))
-;; (time (void (do-mexico)))
-;; (time (void (do-america)))
+ (time (do-kazakhstan))
+ (time (do-mexico))
+ (time (do-america))
 
 
 ;; the bad one not on zoom
@@ -201,7 +207,6 @@
 ;; cpu time: 18 real time: 19 gc time: 7
 ;; cpu time: 68 real time: 69 gc time: 2
 ;; cpu time: 101372 real time: 103464 gc time: 64
-
 
 
 ;; SUSPICIOUS
