@@ -934,8 +934,20 @@
  ((#f #t #t) (#f #t) (#f #f #f #f #f #t))
  ((#t #t #t) (#f #t) (#t #t #f #f #t)))))
 
+;; the good one
+;; cpu time: 14772 real time: 14877 gc time: 955
+
+;; the bad one
+;; cpu time: 10669 real time: 10965 gc time: 895
+
 (time
  (test-compare-unreified "testc21.tex-28"
    (run* (t)
      (expo '(#t #t) '(#t #f #t) t))
    (list `(#t #t #f #f #t #t #t #t))))
+
+;; the good one
+;; cpu time: 17361 real time: 17704 gc time: 1572
+
+;; the bad one
+;; cpu time: 17929 real time: 18080 gc time: 660

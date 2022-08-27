@@ -35,32 +35,39 @@
 	      (== l-x `(,car . ,cdr-x))
 	      (selecto x cdr cdr-x))))))
 
-;; (define-relation (mapo p l)
-;;   (conde ((== l '()))
-;; 	 ((fresh (car cdr)
-;; 	    (== l `(,car . ,cdr))
-;; 	    (p car)
-;; 	    (mapo p cdr)))))
+(define-relation (mapo p l)
+  (conde ((== l '()))
+	 ((fresh (car cdr)
+	    (== l `(,car . ,cdr))
+	    (p car)
+	    (mapo p cdr)))))
 
-(define-relation (mapo p l acc)
-  (conde
-   [(== l '())
-    acc]
-   [(fresh (car cdr)
-	   (== l `(,car . ,cdr))
-	   (mapo p cdr (fresh ()
-			      acc
-			      (p car))))]))
+;; (define-relation (mapo p l acc)
+;;   (conde
+;;    [(== l '())
+;;     acc]
+;;    [(fresh (car cdr)
+;; 	   (== l `(,car . ,cdr))
+;; 	   (mapo p cdr (fresh ()
+;; 			      acc
+;; 			      (p car))))]))
 
-(define-relation (mapo2 p t l acc)
-  (conde
-   [(== l '())
-    acc]
-   [(fresh (car cdr)
-	   (== l `(,car . ,cdr))
-	   (mapo2 p t cdr (fresh ()
-			      acc
-			      (p t car))))]))
+(define-relation (mapo2 p t l)
+  (conde ((== l '()))
+	 ((fresh (car cdr)
+	    (== l `(,car . ,cdr))
+	    (p t car)
+	    (mapo2 p t cdr)))))
+
+;; (define-relation (mapo2 p t l acc)
+;;   (conde
+;;    [(== l '())
+;;     acc]
+;;    [(fresh (car cdr)
+;; 	   (== l `(,car . ,cdr))
+;; 	   (mapo2 p t cdr (fresh ()
+;; 			      acc
+;; 			      (p t car))))]))
 
 (define-relation (assoco key table value)
   (fresh (car table-cdr)
@@ -112,10 +119,10 @@
     (make-assoc-tableo states colors table)
 
     ;; make sure each color is different to neighbours
-    (mapo2 different-colors table edges (== 0 0))
+    (mapo2 different-colors table edges #;(== 0 0))
 
     ;; brute force search for a valid coloring
-    (mapo coloro colors (== 0 0))))
+    (mapo coloro colors #;(== 0 0))))
 
 (define (do-australia)
   (let ((nodes (graph-good-ordering australia:nodes australia:edges)))
