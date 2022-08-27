@@ -204,18 +204,21 @@
        (and s (unify (find (cdr u) s) (find (cdr v) s) s))))
     (else #f)))
 
-(define ((== u v) st)
-  (let ((s (state->σ st)))
-    (let ((s (unify (find u s) (find v s) s)))
-      (if s (list (state s (state->≠ st) (state->ct st)))
-          `()))))
+(define (== u v)
+  (lambda (st)
+    (let ((s (state->σ st)))
+      (let ((s (unify (find u s) (find v s) s)))
+        (if s (return s (state->≠ st) (state->ct st))
+            '())))))
 
-;; Dumb but type correct
-(define ((=/= u v) st)
-  (let ((s (state->σ st)))
-    (let ((s (unify (find u s) (find v s) s)))
-      (if s (list (state s (state->≠ st) (state->ct st)))
-          `()))))
+(define (invalid? s d)
+  (ormap (lambda (pr) (equal? (unify (find (car pr) s) (find (cdr pr) s) s) s)) d)) ;; type kludge
+
+(define (return s d c) (if (invalid? s d) '() (list (state s d c))))
+
+(define (=/= u v)
+  (lambda (st)
+    (return (state->σ st) (cons `(,u . ,v) (state->≠ st)) (state->ct st))))
 
 (struct state (>σ >≠ >ct) #:transparent)
 

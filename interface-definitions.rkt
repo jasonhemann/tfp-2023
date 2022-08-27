@@ -51,4 +51,7 @@
   (require (except-in rackunit fail))
   (run 1 (q) (== q 'cat))
   (run 1 (q) (fresh (x y z) (== q (list 'x y z))))
-  (run 2 (q) (conde ((== q 'cat)) ((== q 'dog)))))
+  (run 2 (q) (conde ((== q 'cat)) ((== q 'dog))))
+  (run 1 (q) (=/= q 'cat))
+  (run 1 (q) (=/= q 'cat) (== q 'cat))
+  (run 1 (q) (== q 'cat) (=/= q 'cat)))
