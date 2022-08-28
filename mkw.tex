@@ -71,12 +71,12 @@ microKanren]{Some Criteria for Implementations of Disjunction and
 \renewcommand{\shortauthors}{Hemann et al.}
 
 \begin{abstract}
-  We describe how an extra host language feature---namely
-  variadic, \enquote{rest argument} functions---can lead to a more
-  powerful kernel language. We implement disjunction and conjunction
-  functions that preserve search order and that do not create
-  superfluous closures. The result is a shorter and simpler overall
-  implementation that is more elegant.
+  We describe how an extra host language feature---namely variadic,
+  \enquote{rest argument} functions---permit the shallow embedding of
+  a more powerful but still ergonomic kernel language. We implement
+  disjunction and conjunction functions that preserve search order and
+  that do not create superfluous closures. The result is a shorter and
+  simpler overall implementation that is more elegant.
 \end{abstract}
 
 \begin{CCSXML}
@@ -106,10 +106,7 @@ microKanren]{Some Criteria for Implementations of Disjunction and
 
 \section{Introduction}
 
-More languages than ever before support variable arity
-functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
-including JavaScript, Raku, Java, Python, and Ruby, to name just a
-few. microKanren~\cite{hemann2013muKanren} is a compact approach to
+microKanren~\cite{hemann2013muKanren} is a compact approach to
 implementing a relational programming language. The microKanren
 approach has worked out well as a tool for understanding the guts of a
 relational programming language through studying its implementation.
@@ -121,27 +118,27 @@ language easier to port to other functional hosts. To support both
 those efforts, they also chose to program in a deliberately small and
 workaday set of Scheme primitives.
 
-This note shows how an implementer using a host language with variadic
-(any number of arguments) functions can build a somewhat more powerful
-kernel language and obviate macros for disjunction and conjunction.
-Until now there was a large gap between those microKanren
-implementations in languages with expressive macro systems and those
-without; variadic functions permit an intermediate point in the
-language design space. Even implementers in languages \emph{with}
-macro systems might choose to replace existing less powerful language
-primitives by our comparatively short but more powerful variants.
-Beyond that, this more powerful kernel language obviates several
-macros in the desugaring layer, and eventually leads us to see merit
-in modifying the core language's syntax. This is, of course,
-subjective.
+More languages than ever before support variable arity
+functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
+including JavaScript, Raku, Java, Python, and Ruby, to name just a
+few. This note shows how an implementer in a host language with
+variadic (any number of arguments) functions can build a somewhat more
+powerful kernel language and obviate some macros, including those for
+disjunction and conjunction. Until now there was a large gap between
+those microKanren implementations in languages with expressive macro
+systems and those without; variadic functions permit an intermediate
+point in the language design space. Implementers in languages
+\emph{with} macro systems may even choose to replace existing less
+powerful language primitives by our comparatively short but more
+powerful variants.
 
 Beyond being a conceptually simpler foundation for a full Kanren
 language at the level of \citetitle{friedman2018reasoned}, this
-implementation appears to be more \emph{efficient}. Right-associative
-conjunction is already conjectured in miniKanren implementation
-folklore to be an inefficient design choice. We were pleasantly
-surprised that thinking about the expressivity of primitives and code
-improvement \enquote{horse sense} led us to the same improved design.
+implementation may even be more efficient.\ miniKanren folklore
+conjectures that right-associative conjunction is an inefficient
+design choice. We were pleasantly surprised that thinking about the
+expressivity of primitives and code improvement \enquote{horse sense}
+led us to the same improved design.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren
 implementations and illustrate why surface syntax macros had seemed
