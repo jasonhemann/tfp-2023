@@ -62,8 +62,8 @@ microKanren]{Some Criteria for Implementations of Disjunction and
   Conjunction in microKanren}
 
 \author{Jason Hemann}
-\email{jhemann@northeastern.edu}
-\orcid{1234-5678-9012}
+\email{jason.hemann@shu.edu}
+\orcid{0000-0002-5405-2936}
 \author{Daniel P. Friedman}
 \email{dfried@cs.indiana.edu}
 \orcid{1234-5678-9012}
@@ -136,19 +136,19 @@ Beyond being a conceptually simpler foundation for a full Kanren
 language at the level of \citetitle{friedman2018reasoned}, this
 implementation may even be more efficient.\ miniKanren folklore
 conjectures that right-associative conjunction is an inefficient
-design choice. We were pleasantly surprised that thinking about the
-expressivity of primitives and code improvement \enquote{horse sense}
-led us to the same improved design.
+design choice for implementing the miniKanren search strategy.
+Thinking about the expressivity of these primitives and code
+improvement \enquote{horse sense} led us to left-associate conjuncts.
 
 In \cref{sec:all-aboard}, we briefly revisit microKanren
 implementations and illustrate why surface syntax macros had seemed
-practically mandatory. In
-\cref{sec:conde}, we implement conjunction
+practically mandatory. In \cref{sec:conde}, we implement conjunction
 and disjunction, and in \cref{sec:impure} we discuss the
-re-implementation of the impure operators. We close with a discussion
-of some performance impacts of these implementation choices, and
-consider how Kanren language implementers outside of the Scheme family
-might benefit from these alternatives.
+re-implementation of the impure operators. We discuss the remaining
+macros in \cref{sec:functional}. We close some outstanding questions
+on performance impacts of these implementation choices, and consider
+how Kanren language implementers outside of the Scheme family might
+benefit from these alternatives.
 
 \section{All Aboard!}\label{sec:all-aboard}
 
@@ -249,12 +249,12 @@ disjunction of no goals would simply fail. Truthfully, only the impure
 cases (discussed further in \cref{sec:impure}). They are for all
 intents and purposes superfluous.
 
-Here, we want to implement disjunction and conjunction over
-one-or-more goals as functions. These implementations will rely on
-variadic function syntax, but should not require \rackinline|apply| or
-rely on the binary \rackinline|disj₂| and \rackinline|conj₂|. Further,
-they should not build any extraneous closures: unnecessarily building
-closures at runtime is always a bad idea.
+To reduce the reliance on macros, we want to implement disjunction and
+conjunction over one-or-more goals as functions. These implementations
+should not require \rackinline|apply| or rely on the binary
+\rackinline|disj₂| and \rackinline|conj₂|. Further, they should not
+build any extraneous closures: unnecessarily building closures at
+runtime is always a bad idea.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -291,23 +291,24 @@ closures at runtime is always a bad idea.
 \Cref{mnt:disj-reimplementation,mnt:conj-reimplementation} show our
 new implementations. Mandating one-or-more arguments lets us
 re-implement these operators as shallow wrappers over simple folds.
-The first step in each is merely to remove the rest argument
-\rackinline|gs| and act as if there were no need for a rest argument.
-That is, all of our focus will be on the \emph{list}, \rackinline|gs|.
-Unlike \rackinline|D|, the function \rackinline|C| does not take in
-the state \rackinline|s|; the help procedure does not need the state
-for conjunction. In each recursive call, we accumulate by mapping
-(using the special delaying implementation of append-map for
-miniKanren streams) the next goal in the list. This left-fold
+Variadic functions make these operators make the operators more
+ergonomic. The first step in each is merely to remove the rest
+argument \rackinline|gs| and act as if there were no need for a rest
+argument. That is, all of our focus will be on the \emph{list},
+\rackinline|gs|. Unlike \rackinline|D|, the function \rackinline|C|
+does not take in the state \rackinline|s|; the help procedure does not
+need the state for conjunction. In each recursive call, we accumulate
+by mapping (using the special delaying implementation of append-map
+for miniKanren streams) the next goal in the list. This left-fold
 implementation of conjunction therefore left-associates the conjuncts.
 
 \subsection{Semantic equivalence}
 
-Equipped with variadic functions, a developer might discover these
-definitions as follows. We start from the definition of the
-\rackinline|disj| macro in \cref{mnt:disj-function-before-derivation}.
-At the cost of an \rackinline|apply|, we can build the corresponding
-explicitly recursive \rackinline|disj| function.
+A developer might derive these definitions as follows. We start from
+the definition of the \rackinline|disj| macro in
+\cref{mnt:disj-function-before-derivation}. At the cost of an
+\rackinline|apply|, we can build the corresponding explicitly
+recursive \rackinline|disj| function.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -440,27 +441,19 @@ tail recursive, we can change the signature in the one and only
 external call and the recursive call. We show the result
 in \cref{mnt:conj-reimplementation}.
 
-Both the variadic function based and the macro based versions of
+Both the functional and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
 goals, whereas the versions of \rackinline|disj| use a right fold.
-This is not an accident. It is miniKanren folklore that left
-associating conjunctions tends to improve miniKanren performance. A
-full, thorough, explanation of everything known about this behavior is
-outside the scope of our work here, but see discussions and
-implementation of \cite{rosenblatt2019first}. The matter seems so
-significant that the community might consider reclassifying
-left-associative conjunction as a matter of correctness rather than an
-optimization, as in \enquote{tail call optimization} vs.
-\enquote{Properly Implemented Tail Call
-  Handling}~\cite{felleisen2014requestions}. However, we have
-generally resorted to small step visualizations of the search tree to
-demonstrate why that might be. The authors believe it is worth
-considering if we can make an equally compelling argument for this
-preference through equational reasoning.
-\Cref{mnt:conj-right-fold-definition} shows a right-fold variant of
-\rackinline|conj|. The choice to fold left becomes a little more
-obvious after we η-expand, unfold to a recursive help function,
-substitute in the definition of \rackinline|conj₂|, and β-reduce.
+This is not an accident.\ Folklore suggests left associating
+conjunctions tends to improve the performance of miniKanren's
+interleaving search. The authors know of no thorough algorithmic proof
+of such claims, but see for instance discussions and implementation in
+\cite{rosenblatt2019first} for some of the related work so far.
+However, we have generally resorted to small step visualizations of
+the search tree to explain the performance impact. The authors believe
+it is worth considering if we can make an equally compelling argument
+for this preference through equational reasoning and comparing the
+implementations of functions.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -472,6 +465,11 @@ substitute in the definition of \rackinline|conj₂|, and β-reduce.
   \caption{A right-fold variant of \rackinline|conj|}
   \label{mnt:conj-right-fold-definition}
 \end{listing}
+
+\Cref{mnt:conj-right-fold-definition} shows a right-fold variant of
+\rackinline|conj|. The choice to fold left becomes a little more
+obvious after we η-expand, unfold to a recursive help function,
+substitute in the definition of \rackinline|conj₂|, and β-reduce.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -486,7 +484,12 @@ substitute in the definition of \rackinline|conj₂|, and β-reduce.
 \noindent Here, we cannot (easily) replace the \rackinline|apply| call
 by a recursive call to \rackinline|C|, because we are still waiting
 for an \rackinline|s|. We can only abstract over \rackinline|s| and
-wait.
+wait. Since we know that any call to \rackinline|append-map∞| we
+construct will always yield a result, the version in
+\cref{mnt:conj-reimplementation} is tail recursive. The equivalent
+right-fold implementation needs either to construct a closure for
+every recursive call, or otherwise demands a help function mutually
+recursive with \rackinline|C|.
 
 \begin{minted}[autogobble,stripall]{racket}
   (define (C gs s∞)
@@ -498,14 +501,10 @@ wait.
          s∞))))
 \end{minted}
 
-Since we know that any call to \rackinline|append-map∞| we construct
-will always yield a result, the version in
-\cref{mnt:conj-reimplementation} is tail recursive. The equivalent
-right-fold implementation needs to construct a closure for every
-recursive call. If we want to implement a variadic version that does
-not rely on a primitive \rackinline|conj2| and does not resort to
-\rackinline|apply|, we have the two aformentioned choices. Basic
-programming horse sense suggests the variant from
+If we want to implement a variadic version that does not rely on a
+primitive \rackinline|conj2| and does not resort to
+\rackinline|apply|, we have the two aforementioned choices. Basic
+programming horse sense suggests the more elegant variant from
 \cref{mnt:conj-reimplementation}.
 
 Though this note mainly concerns the choice to implement surface
@@ -545,15 +544,14 @@ The operators \rackinline|conda| and \rackinline|conde| look
 superficially similar, syntactically. Semantically though,
 \rackinline|conda|'s nested \enquote{if-then-else} behavior is quite
 different, and implementing the desired behavior for
-\rackinline|conda| from existing pieces points to some strangeness.
-The definition of \rackinline|conda| (see
-\cref{mnt:conda-implementation}) requires one or more conjuncts per
-clause and one or more clauses. The consequent of each
-\rackinline|conda| clause is the one and only place in the whole
-language implementation that permits nullary conjunctions of goals.
-This soft-cut operator seems to force both nullary conjunction and
-those primitive goals \rackinline|#s| and \rackinline|#u| into the
-language.
+\rackinline|conda| from existing pieces exposes some strangeness. The
+definition of \rackinline|conda| (see \cref{mnt:conda-implementation})
+requires one or more conjuncts per clause and one or more clauses. The
+consequent of each \rackinline|conda| clause is the one and only place
+in the whole language implementation that permits nullary conjunctions
+of goals. This soft-cut operator seems to force both nullary
+conjunction and those primitive goals \rackinline|#s| and
+\rackinline|#u| into the language.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -579,9 +577,9 @@ language.
 Some programmers would be perfectly satisfied just using
 \rackinline|ifte| directly. But just as the standard forked
 \rackinline|if| begat McCarthy's \rackinline|if| notation and
-\rackinline|cond|, we can suspect that a programmer would eventually
-feel the need for a nested implementation. There are other alternative
-implementation choices one could consider.
+\rackinline|cond|, a programmer may eventually feel the need for a
+nested implementation. Here are other (alternative) implementation
+choices one could consider.
 
 \begin{enumerate}
 
@@ -630,10 +628,9 @@ case, we invoke \rackinline|s∞|. Rather than building a largely
 redundant implementation of \rackinline|condu|, we expose the
 higher-order goal \rackinline|once| to the user. The definition of
 \rackinline|once| in \cref{mnt:condu-reimplementation} is taken
-directly from \cite{friedman2018reasoned}. The programmer can simulate
+directly from~\cite{friedman2018reasoned}. The programmer can simulate
 \rackinline|condu| by wrapping \rackinline|once| around every test
 goal.
-
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -655,9 +652,10 @@ goal.
 \section{Macro-free microKanren}\label{sec:functional}
 
 In this section we collect together some workarounds to obviate macros
-in some other language features. With these, a programmer in a
-pedestrian functional language should be able to directly translate
-the implementation and our test programs.
+in the rest of the implementation. Some of these come with significant
+drawbacks. With these, however, a programmer in even a pedestrian
+functional language should be able to directly translate the
+implementation and our test programs.
 
 \paragraph{\rackinline|define|} The microKanren programmer can just
 use their host language's \rackinline|define| feature to construct
@@ -735,49 +733,48 @@ goal as the last step of executing the query, as in
   \label{mnt:run-query}
 \end{listing}
 
-These are the wages of sin.
-
 \section{Conclusion}\label{sec:conclusion}
 
-This note shows that at the cost of one additional feature---namely,
-variadic functions---implementers provide a somewhat more powerful
-core language and significantly reduce the need for macros in
-implementing a language as expressive as the full \enquote{microKanren
-  + macros} approach provides. Our desugaring macros would have worked
-whether we left or right associate. Removing a degree of freedom in
-the implementation, and forcing ourselves to program the solution
-functionally, led us to what seems like the right solution.
+This note shows how to provide a somewhat more powerful core language
+that significantly reduces the need for macros. The result comes much
+closer to the expressivity of the full \enquote{microKanren + macros}
+approach. Variadic functions make this implementation much more
+convenient for the end programmer, and Scheme's polyvariadic function
+syntax (that is to say \enquote{at least $k$ arguments}, for some
+positive integer $k$) ensures at a host-language level that the
+microKanren programmer provides at least one parameter to
+\rackinline|conj| and \rackinline|disj|. Embeddings in languages with
+variadic but without polyvariadic function syntax would have to
+implement that check.
+
+The old desugaring macros do not seem to suggest how to associate the
+calls to the binary primitives---both left and right look equally
+nice. Forcing ourselves to program the solution functionally, and the
+restrictions we placed on ourselves in this reimplementation, removed
+a degree of implementation freedom and led us to what seems like the
+right solution.
 
 The result is closer to the design of Prolog, where the user
 represents conjunction of goals in the body of a clause with a comma
 and disjunction, either implicitly in listing various clauses or
-explicitly with a semicolon.
+explicitly with a semicolon. We assume it is agreed that our
+definitions of \rackinline|disj| and \rackinline|conj| themselves are
+sufficiently high-level operators for a surface language and that the
+zero-element base cases are at best unnecessary and likely
+undesirable; given the opportunity to define a surface language and
+its desugaring, we really shouldn't tempt the programmer by making
+undesirable programs representable when we can avoid it.
 
-We assume it is agreed that our definitions of \rackinline|disj| and
-\rackinline|conj| themselves are sufficiently high-level operators for
-a surface language and that the zero-element base cases are at best
-unnecessary and likely undesirable; given the opportunity to define a
-surface language and its desugaring, we really shouldn't tempt the
-programmer by making undesirable programs representable when we can
-avoid it.
-
-Scheme's polyvariadic function syntax (that is to say \enquote{at
-  least $k$ arguments}, for some positive integer $k$) ensures at a
-host-language level that the microKanren programmer provides at least
-one parameter to \rackinline|conj| and \rackinline|disj|. Embeddings
-in languages with variadic but without polyvariadic function syntax
-would have to implement that check.
-
-We have not fully obviated the use of macros. While neither
-\rackinline|run| nor \rackinline|run*| have to be macros, for now we
-still want to implement \rackinline|defrel| and \rackinline|fresh|
-with macros. The former to prevent exposing the implementation of
-streams and delays, and the latter to avoid the inefficiency and
-clumsiness of introducing variables one at a time.
+We have not fully obviated the use of macros. Techniques for
+implementing \rackinline|defrel|, \rackinline|fresh| and
+\rackinline|run| (and \rackinline|run*|) without macros come with
+serious drawbacks. These include exposing the implementation of
+streams and delays, and the inefficiency and clumsiness of introducing
+variables one at a time, or the need to reason with global state.
 
 From time to time we find that the usual miniKanren implementation is
-itself lower-level than we would like to program with relations. Early
-microKanren implementations restrict themselves to
+\emph{itself} lower-level than we would like to program with
+relations. Early microKanren implementations restrict themselves to
 \rackinline|syntax-rules| macros. Some programmers use macros to
 extend the language further as with
 \rackinline|matche|~\cite{keep2009pattern}. Some constructions over
@@ -786,8 +783,15 @@ miniKanren, such as
 more expressive macro systems like
 \rackinline|syntax-parse|~\cite{culpepper2012fortifying}.
 
-We would still like to know: are our design goals here also causally
-related to good miniKanren performance? Regardless, we hope this
+We would still like to know if our desiderata here are \emph{causally}
+related to good miniKanren performance. Can we reason at the
+implementation level and peer through to the implications for
+performance? If left associating \rackinline|conj| is indeed uniformly
+a dramatic improvement, the community might consider reclassifying
+left-associative conjunction as a matter of correctness rather than an
+optimization, as in \enquote{tail call optimization} vs.
+\enquote{Properly Implemented Tail Call
+  Handling}~\cite{felleisen2014requestions}. Regardless, we hope this
 document helps narrow the gap between implementations in functional
 host languages with and without macro systems and helps implementers
 build more elegant, expressive and efficient Kanrens in their chosen
