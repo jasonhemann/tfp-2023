@@ -298,9 +298,10 @@ argument. That is, all of our focus will be on the \emph{list},
 \rackinline|gs|. Unlike \rackinline|D|, the function \rackinline|C|
 does not take in the state \rackinline|s|; the help procedure does not
 need the state for conjunction. In each recursive call, we accumulate
-by mapping (using the special delaying implementation of append-map
-for miniKanren streams) the next goal in the list. This left-fold
-implementation of conjunction therefore left-associates the conjuncts.
+by mapping (using the special delaying implementation of
+\rackinline|append-map∞| for miniKanren streams) the next goal in the
+list. This left-fold implementation of conjunction therefore
+left-associates the conjuncts.
 
 \subsection{Semantic equivalence}
 
@@ -478,7 +479,7 @@ substitute in the definition of \rackinline|conj₂|, and β-reduce.
   (define (C g gs s)
     (cond
       ((null? gs) (g s))
-      (else (append-map-∞ (apply C gs) (g s)))))
+      (else (append-map∞ (apply C gs) (g s)))))
 \end{minted}
 
 \noindent Here, we cannot (easily) replace the \rackinline|apply| call
@@ -566,7 +567,7 @@ conjunction and those primitive goals \rackinline|#s| and
     (cond
       ((null? s∞) (g₃ s))
       ((pair? s∞)
-       (append-map g₂ s∞))
+       (append-map∞ g₂ s∞))
       (else (lambda ()
               (loop (s∞)))))))
   \end{minted}
