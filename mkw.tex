@@ -1,4 +1,4 @@
-\documentclass[sigplan,draft,natbib=false]{acmart}
+\documentclass[sigplan,draft,balance,pbalance,natbib=false]{acmart}
 %% ∞
 %% …
 %% ₀
@@ -9,6 +9,8 @@
 \usepackage{hyphenat} %% electromagnetic\hyp{}endioscopy
 \usepackage[shortcuts]{extdash}
 \usepackage{microtype} %% provides tighter text formatting
+\usepackage{flushend}
+\usepackage{balance}
 \usepackage{polyglossia} %% for xelatex use polyglossia, needed for csquotes
 \setdefaultlanguage[variant=american]{english}
 
@@ -590,7 +592,7 @@ choices one could consider.
 \item Introduce a special clause of the \rackinline|conda| macro
   specifically for \enquote{if then} clauses with a single goal.
 
-\item Unconditionally add an a \rackinline|#s| goal to each clause
+\item Unconditionally add a \rackinline|#s| goal to each clause
   during macro expansion.
 
 \end{enumerate}
@@ -808,7 +810,6 @@ host languages.
 \end{acks}
 
 \printbibliography{}
-%% \enlargethispage{\baselineskip}
 
 \end{document}
 
