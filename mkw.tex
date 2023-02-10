@@ -25,13 +25,15 @@
 
 \RequirePackage[
   datamodel=acmdatamodel,
-  style=acmnumeric,
+%%  style=acmnumeric,
   ]{biblatex}
 
 %% Declare bibliography sources (one \addbibresource command per source)
 \addbibresource{mkw.bib}
 
-\usepackage{nag} %% should complain about old and outdated commands
+\overfullrule=0pt
+
+%\usepackage{nag} %% should complain about old and outdated commands
 \usepackage{minted}
 \usepackage[strict,autostyle]{csquotes} %% enquote &c that doesn't interfere w/cdlatex usage
 %% http://ftp.lyx.org/pub/tex-archive/macros/latex/contrib/csquotes/csquotes.pdf
@@ -47,21 +49,21 @@
 \newmintinline{prolog}{}
 
 \setcopyright{acmcopyright}
-\copyrightyear{2022}
-\acmYear{2022}
+\copyrightyear{2023}
+\acmYear{2023}
 \acmDOI{XXXXXXX.XXXXXXX}
 
-\acmConference[mKW '22]{miniKanren Workshop}{September 15,
-  2022}{Ljubljana, Slovenia}
+\acmConference[TFP '23]{Symposium on Trends in Functional
+  Programming}{January 13-15, 2023}{Boston, Massachusetts}
 
 \acmPrice{15.00}
 \acmISBN{978-1-4503-XXXX-X/18/06}
 
 \begin{document}
 
-\title[Some Criteria for Implementations of conj and disj in
-microKanren]{Some Criteria for Implementations of Disjunction and
-  Conjunction in microKanren}
+\title[Some Criteria for Implementing conj and disj in
+microKanren]{Some Criteria for Implementing Disjunction and
+  Conjunction in Shallow microKanren Embeddings}
 
 \author{Jason Hemann}
 \email{jason.hemann@shu.edu}
@@ -73,12 +75,14 @@ microKanren]{Some Criteria for Implementations of Disjunction and
 \renewcommand{\shortauthors}{Hemann et al.}
 
 \begin{abstract}
-  We describe how an extra host language feature---namely variadic,
-  \enquote{rest argument} functions---permit the shallow embedding of
-  a more powerful but still ergonomic kernel language. We implement
-  disjunction and conjunction functions that preserve search order and
-  that do not create superfluous closures. The result is a shorter and
-  simpler overall implementation that is more elegant.
+  We describe how host language variadic, \enquote{rest argument}
+  functions permit a safe shallow embedding of a more powerful but
+  still ergonomic kernel language. Our re-implemented disjunction and
+  conjunction functions preserve the original microKanren search order
+  and avoid building superfluous closures. Our re-implemented
+  committed choice operator suggests a simplified syntax. The result
+  is a shorter and simpler overall implementation that is more
+  elegant.
 \end{abstract}
 
 \begin{CCSXML}
@@ -293,17 +297,16 @@ runtime is always a bad idea.
 \Cref{mnt:disj-reimplementation,mnt:conj-reimplementation} show our
 new implementations. Mandating one-or-more arguments lets us
 re-implement these operators as shallow wrappers over simple folds.
-Variadic functions make these operators make the operators more
-ergonomic. The first step in each is merely to remove the rest
-argument \rackinline|gs| and act as if there were no need for a rest
-argument. That is, all of our focus will be on the \emph{list},
-\rackinline|gs|. Unlike \rackinline|D|, the function \rackinline|C|
-does not take in the state \rackinline|s|; the help procedure does not
-need the state for conjunction. In each recursive call, we accumulate
-by mapping (using the special delaying implementation of
-\rackinline|append-map∞| for miniKanren streams) the next goal in the
-list. This left-fold implementation of conjunction therefore
-left-associates the conjuncts.
+Variadic functions make these operators more ergonomic. The first step
+in each is merely to remove the rest argument \rackinline|gs| and act
+as if there were no need for a rest argument. That is, all of our
+focus will be on the \emph{list}, \rackinline|gs|.
+Unlike \rackinline|D|, the function \rackinline|C| does not take in
+the state \rackinline|s|; the help procedure does not need the state
+for conjunction. In each recursive call, we accumulate by mapping
+(using the special delaying implementation of \rackinline|append-map∞|
+for miniKanren streams) the next goal in the list. This left-fold
+implementation of conjunction therefore left-associates the conjuncts.
 
 \subsection{Semantic equivalence}
 
@@ -800,14 +803,14 @@ host languages with and without macro systems and helps implementers
 build more elegant, expressive and efficient Kanrens in their chosen
 host languages.
 
-\begin{acks}
+% \begin{acks}
 
-  Thanks also to Ken Shan and Jeremy Siek, for helpful discussions and
-  debates during design decision deliberations. Thanks also to Greg
-  Rosenblatt and Michael Ballantyne for their insights and
-  suggestions.
+  % Thanks to Ken Shan and Jeremy Siek, for helpful discussions and
+  % debates during design decision deliberations. Thanks also to Greg
+  % Rosenblatt and Michael Ballantyne for their insights and
+  % suggestions.
 
-\end{acks}
+% \end{acks}
 
 \printbibliography{}
 
