@@ -17,7 +17,16 @@ clean:
 
 squeaky:
 	-rm mkw.aux
-	-rm mkw.log mkw.pdf mkw.bcf mkw.blg mkw.toc mkw.bbl mkw.idx mkw.out mkw.run.xml
+	-rm mkw.log
+	-rm mkw.pdf
+	-rm mkw.bcf
+	-rm mkw.blg
+	-rm mkw.toc
+	-rm mkw.bbl
+	-rm mkw.idx
+	-rm mkw.out
+	-rm mkw.run.xml
+
 
 supersqueaky:
 	- biber --cache
