@@ -134,7 +134,7 @@ and leaks in the streams abstractions. This left the surface syntax
 macros seem practically mandatory, and so divided host languages into
 the macro language \enquote{haves} and the macro-less \enquote{have
   nots}. Here, we bridge some of that divide by re-implementing parts
-of the kernel with some modest run time features common to most
+of the kernel with some modest runtime features common to most
 languages.
 
 In this paper we:
@@ -157,7 +157,9 @@ This exercise resulted in some higher-level operators, a more succinct
 kernel language, and made possible some performance improvement.
 Approximately half of the changes are applicable to any microKanren
 implementation, and the other half are necessarily awkward yet
-practical strategies for platforms lacking macro support.
+practical strategies for platforms lacking macro support. The source
+code for both our re-implementation and experimental results is
+available at~\url{https://github.com/jasonhemann/tfp-2023/}.
 
 In \cref{sec:all-aboard}, we illustrate by example what made surface
 syntax macros feel practically mandatory. In \cref{sec:conde}, we
@@ -203,11 +205,11 @@ would need to unroll that cascade by hand.
 The \emph{TRS2e} language implementation relies on
 macros \rackinline{fresh}, \rackinline{defrel}, and \rackinline{run}
 to introduce new logic variables, globally define relations, and
-execute queries. We can, and have, implemented these same behaviors
-via shallow embeddings without macros. These implementations had some
-harsh trade offs. We will revisit some of those trade-offs, survey the
-landscape of other available choices, and suggest performant
-compromises for the truly macroless.
+execute queries. Earlier implementations of those same behaviors via
+pure functional shallow embeddings, without macros, had some harsh
+consequences. We will revisit those earlier implementations and their
+trade-offs, survey the landscape of other available choices, and
+suggest performant compromises for those truly without macros.
 
 \section{\rackinline{disj} and \rackinline{conj} logical goal
   constructors}\label{sec:conde}
@@ -218,9 +220,8 @@ require \rackinline{apply} or rely on the binary \rackinline{disj₂}
 and \rackinline{conj₂}. Further, they should not build any extraneous
 closures: unnecessarily building closures at runtime is always a bad
 idea. This re-implementation requires a host that supports variable
-arity functions, a feature available in many languages including
-JavaScript, Ruby, Java, and Python.
-
+arity functions, a widely available feature included in such languages
+as JavaScript, Ruby, Java, and Python.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
