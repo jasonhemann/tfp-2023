@@ -62,7 +62,7 @@
 
 \begin{document}
 
-\title{Nearly Macro-free MicroKanren}
+\title{Nearly Macro-free microKanren}
 
 \author{Jason Hemann}
 \email{jason.hemann@shu.edu}
@@ -138,7 +138,7 @@ of the kernel with some modest runtime features common to most
 languages.
 
 In this paper we:
-
+%
 \begin{itemize}
 
 \item show how to functionally implement more general logical
@@ -153,13 +153,14 @@ In this paper we:
 
 \end{itemize}
 
-This exercise resulted in some higher-level operators, a more succinct
-kernel language, and made possible some performance improvement.
-Approximately half of the changes are applicable to any microKanren
-implementation, and the other half are necessarily awkward yet
-practical strategies for platforms lacking macro support. The source
-code for both our re-implementation and experimental results is
-available at~\url{https://github.com/jasonhemann/tfp-2023/}.
+This exercise resulted in some higher-level (variadic rather than just
+binary) operators, a more succinct kernel language, and made possible
+some performance improvement. Approximately half of the changes are
+applicable to any microKanren implementation, and the other half are
+necessarily awkward yet practical strategies for platforms lacking
+macro support. The source code for both our re-implementation and
+experimental results is available
+at~\url{https://github.com/jasonhemann/tfp-2023/}.
 
 In \cref{sec:all-aboard}, we illustrate by example what made surface
 syntax macros feel practically mandatory. In \cref{sec:conde}, we
@@ -214,19 +215,23 @@ suggest performant compromises for those truly without macros.
 \section{\rackinline{disj} and \rackinline{conj} logical goal
   constructors}\label{sec:conde}
 
-We want to implement disjunction and conjunction over one-or-more
-goals as functions. These implementations should not
-require \rackinline{apply} or rely on the binary \rackinline{disj₂}
-and \rackinline{conj₂}. Further, they should not build any extraneous
-closures: unnecessarily building closures at runtime is always a bad
-idea. This re-implementation requires a host that supports variable
-arity functions, a widely available feature included in such languages
-as JavaScript, Ruby, Java, and Python.
+We want to implement disjunction and conjunction over arbitrary
+quantities goals, as functions. These implementations should subsume
+the binary \rackinline{disj₂} and \rackinline{conj₂} but should not
+require \rackinline{apply}. Further, they should not build any
+extraneous closures: unnecessarily building closures at runtime is
+always a bad idea. This re-implementation requires a host that
+supports variable arity functions, a widely available feature included
+in such languages as JavaScript, Ruby, Java, and Python. These
+languages do not generally support macros and hence are beneficiaries
+of this paper's contributions.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
-  (define ((disj g . gs) s)
-    (D (g s) gs s))
+  (define ((disj . gs) s)
+    (cond
+      ((null? gs) (list))
+      (else (D ((car gs) s) (cdr gs) s))))
 
   (define (D s∞ gs s)
     (cond
@@ -241,8 +246,10 @@ as JavaScript, Ruby, Java, and Python.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
-  (define ((conj g . gs) s)
-    (C gs (g s)))
+  (define ((conj . gs) s)
+    (cond
+      ((null? gs) (list s))
+      (else (C (cdr gs) ((car gs) s)))))
 
   (define (C gs s∞)
     (cond
@@ -256,32 +263,25 @@ as JavaScript, Ruby, Java, and Python.
 \end{listing}
 
 \Cref{mnt:disj-reimplementation,mnt:conj-reimplementation} show our
-new implementations. Mandating one-or-more arguments lets us
-re-implement these operators as shallow wrappers over simple folds.
-Variadic functions make these operators more ergonomic, and Scheme's
-polyvariadic function syntax (that is to say \enquote{at least $k$
-  arguments}, for some positive integer $k$) ensures at a
-host-language level that the microKanren programmer provides at least
-one parameter to \rackinline{conj} and \rackinline{disj}. Embeddings
-in languages with variadic but without polyvariadic function syntax
-would have to implement that check. The first step in each is merely
-to remove the rest argument \rackinline{gs} and act as if there were
-no need for a rest argument. That is, all of our focus will be on the
-\emph{list}, \rackinline{gs}. Unlike \rackinline{D}, the
-function \rackinline{C} does not take in the state \rackinline{s}; the
-help procedure does not need the state for conjunction. In each
+new implementations. We re-implement these operators as shallow
+wrappers over simple folds. In each, the first steps are to dispense
+with the trivial case, and then to call a recursive help function that
+makes no use of variadic functions. That is, all of our focus will be
+on the recurring over the list \rackinline{gs}. Unlike \rackinline{D},
+the function \rackinline{C} does not take in the state \rackinline{s};
+the help procedure does not need the state for conjunction. In each
 recursive call, we accumulate by mapping (using the special delaying
-implementation of \rackinline{append-map∞} for miniKanren streams) the
-next goal in the list. This left-fold implementation of conjunction
-therefore left-associates the conjuncts.
+implementation of \rackinline{append-map∞} for Kanren-language
+streams) the next goal in the list. This left-fold implementation of
+conjunction therefore left-associates the conjuncts.
 
 \subsection{Semantic equivalence}
 
-A developer might derive these definitions as follows. We start from
-the definition of the \rackinline{disj} macro in
-\cref{mnt:disj-function-before-derivation}. At the cost of an
-\rackinline{apply}, we can build the corresponding explicitly
-recursive \rackinline{disj} function.
+A developer might derive these definitions as follows. We start with
+the definition of a recursive \rackinline{disj} macro like one would
+define as surface syntax over the microKanren \rackinline{disj₂}. At
+the cost of an \rackinline{apply}, we can build the corresponding
+explicitly recursive \rackinline{disj} function.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -344,8 +344,8 @@ The definition of \rackinline{disj} remains unchanged from
 
 \noindent We combine \rackinline{g} and \rackinline{s} in each clause;
 this suggests constructing that stream in \rackinline{disj} and
-passing it along. Making this final change results in the definition
-in~\cref{mnt:disj-reimplementation}.
+passing it along. Adding the trivial base case to \rackinline{disj}
+yields the definition in~\cref{mnt:disj-reimplementation}.
 
 
 \begin{listing}[h]
@@ -510,6 +510,11 @@ requires a simple wrapper macro, or otherwise, a run-time
   \caption{A new Carmelit subway without \rackinline{conde}}
   \label{mnt:new-carmelit}
 \end{listing}
+
+This implementation of \rackinline{carmelit-subway} uses
+our \rackinline{disj} and \rackinline{conj} functions, a far cry
+better than the 11 binary logical operator nodes the programmer would
+need to write in a language without macros.
 
 \section{Tidying up the Impure Operators}\label{sec:impure}
 
@@ -711,7 +716,7 @@ though it were a goal as the last step of executing the query, as in
 
 \section{Future Work}\label{sec:conclusion}
 
-This note shows how to provide a somewhat more powerful core language
+This note shows how to provide a somewhat more concise core language
 that significantly reduces the need for macros. The result almost
 rivals the expressivity of the full \enquote{microKanren + macros}
 approach. Variadic functions make this implementation much more
