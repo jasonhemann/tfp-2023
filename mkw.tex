@@ -127,15 +127,14 @@ port to other functional hosts. To support both those efforts, they
 also chose to program in a deliberately small and workaday set of
 Scheme primitives.
 
-The sum of those implementation choices restricted the design space to
-necessitate somewhat awkward compromises in several places including
-binary logical operators, one at a time local variable introduction,
-and leaks in the streams abstractions. This left the surface syntax
-macros seem practically mandatory, and so divided host languages into
-the macro language \enquote{haves} and the macro-less \enquote{have
-  nots}. Here, we bridge some of that divide by re-implementing parts
-of the kernel with some modest runtime features common to most
-languages.
+The sum of those implementation restrictions necessitates somewhat
+awkward compromises in several places including binary logical
+operators, one at a time local variable introduction, and leaks in the
+streams abstractions. This left the surface syntax macros seem
+practically mandatory, and so divided host languages into the macro
+language \enquote{haves} and macro-less \enquote{have nots}. Here, we
+bridge some of that divide by re-implementing parts of the kernel with
+some modest runtime features common to most languages.
 
 In this paper we:
 %
@@ -158,7 +157,7 @@ binary) operators, a more succinct kernel language, and made possible
 some performance improvement. Approximately half of the changes are
 applicable to any microKanren implementation, and the other half are
 necessarily awkward yet practical strategies for platforms lacking
-macro support. The source code for both our re-implementation and
+macro support. The source code for our re-implementation and
 experimental results is available
 at~\url{https://github.com/jasonhemann/tfp-2023/}.
 
@@ -173,23 +172,26 @@ might benefit from these alternatives.
 
 \section{All Aboard!}\label{sec:all-aboard}
 
-We assume the reader is familiar with the microKanren-based miniKanren
-implementation of \emph{The Reasoned Schemer, 2nd Ed}
-(\emph{TRS2e})~\cite{friedman2018reasoned}. In addition, at places we
-make occasional references to earlier iterations such as
+We assume the reader is familiar with the miniKanren implementation of
+\emph{The Reasoned Schemer, 2nd Ed}
+(\emph{TRS2e})~\cite{friedman2018reasoned}. Although based on
+microKanren, this implementation makes some concessions to efficiency
+and safety and uses a few macros in the language kernel itself. In
+addition, to that implementation, at places we make occasional
+references to earlier iterations such as
 \citeauthor{hemann2016small}~\cite{hemann2016small}, an expanded
 archival version of the 2013 paper~\cite{hemann2013muKanren}.
 
 Haifa's Carmelit is the world's shortest subway system with a line of
-just six stations; a sufficiently small example. But in microKanren,
-to model the order a passenger visit the stops riding the subway end
-to end requires 11 logical operator nodes, because microKanren only
-provides \emph{binary} conjunctions and disjunctions.
-(\Cref{mnt:new-carmelit} contains this paper's alternative solution,
-requiring just three.) For a logic programming language, only binary
-logical operators is too low level. To our eyes, this makes the
-superficial syntax macros are practically mandatory, and host
-languages without a macro system are out of luck.
+just six stations; an example sufficiently small that modeling it
+should be painless. But in microKanren, to model the order a passenger
+visit the stops riding the subway end to end requires 11 logical
+operator nodes, because microKanren only provides \emph{binary}
+conjunctions and disjunctions. (\Cref{mnt:new-carmelit} contains this
+paper's alternative solution, requiring just three.) For a logic
+programming language, only binary logical operators is too low level.
+To our eyes, this makes the superficial syntax macros are practically
+mandatory, and host languages without a macro system are out of luck.
 
 The microKanren language doesn't offer the programmer much guidance in
 using that fine-grained control. For a series of $n$ goals, the
@@ -203,14 +205,15 @@ and a single alternative. To build an if-then-else cascade, a
 microKanren programmer without the \rackinline{conda} surface macro
 would need to unroll that cascade by hand.
 
-The \emph{TRS2e} language implementation relies on
+The core \emph{TRS2e} language implementation relies on
 macros \rackinline{fresh}, \rackinline{defrel}, and \rackinline{run}
 to introduce new logic variables, globally define relations, and
 execute queries. Earlier implementations of those same behaviors via
 pure functional shallow embeddings, without macros, had some harsh
 consequences. We will revisit those earlier implementations and their
-trade-offs, survey the landscape of other available choices, and
-suggest performant compromises for those truly without macros.
+trade-offs, survey the landscape ofg available choices, and suggest
+performant compromises for those truly without macros, thus increasing
+microKanren's \emph{practical} portability.
 
 \section{\rackinline{disj} and \rackinline{conj} logical goal
   constructors}\label{sec:conde}
@@ -346,7 +349,6 @@ The definition of \rackinline{disj} remains unchanged from
 this suggests constructing that stream in \rackinline{disj} and
 passing it along. Adding the trivial base case to \rackinline{disj}
 yields the definition in~\cref{mnt:disj-reimplementation}.
-
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -484,11 +486,15 @@ Though this note mainly concerns the choice to implement surface
 language behavior as functions, it may also point to these as more
 natural user-level primitives than \rackinline{conde}. An
 implementation could choose to forego \rackinline{conde} and provide
-just those underlying logical primitives \rackinline{disj} and
-\rackinline{conj} to the user, as in the new definition of Carmelit in
-\cref{mnt:new-carmelit}. Moreover, reintroducing the nullary case only
-requires a simple wrapper macro, or otherwise, a run-time
-\rackinline{null?} check for a very slight cost.
+just those underlying logical primitives \rackinline{disj}
+and \rackinline{conj} to the user, as in the new definition of
+Carmelit in \cref{mnt:new-carmelit}. Moreover, removing the nullary
+case simplifies the wrapper function, and removes the very slight cost
+of a runtime \rackinline{null?} check. It also suggests rewriting the
+second pattern in \rackinline{conda}
+to \rackinline{(conda (g₀ g g* ...) ln ...)}, since the consequents
+of \rackinline{conda} clauses rely structurally on permitting nullary
+conjunctions of goals.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -518,18 +524,10 @@ need to write in a language without macros.
 
 \section{Tidying up the Impure Operators}\label{sec:impure}
 
-The operators \rackinline{conda} and \rackinline{conde} look
-superficially similar, syntactically. Semantically though,
-\rackinline{conda}'s nested \enquote{if-then-else} behavior is quite
-different, and implementing the desired behavior for
-\rackinline{conda} from existing pieces exposes some strangeness. The
-definition of \rackinline{conda} (see \cref{mnt:conda-implementation})
-requires one or more conjuncts per clause and one or more clauses. The
-consequent of each \rackinline{conda} clause is the one and only place
-in the whole language implementation that permits nullary conjunctions
-of goals. This soft-cut operator seems to force both nullary
-conjunction and those primitive goals \rackinline{#s} and
-\rackinline{#u} into the language.
+The \rackinline{conda} operators provides nested
+\enquote{if-then-else} behavior. The definition of \rackinline{conda}
+(see \cref{mnt:conda-implementation}) requires one or more conjuncts
+per clause and one or more clauses.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
