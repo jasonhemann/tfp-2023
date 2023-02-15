@@ -113,155 +113,114 @@
 
 \section{Introduction}
 
-microKanren~\cite{hemann2013muKanren} is a compact approach to
-implementing a relational programming language. The microKanren
-approach has worked out well as a tool for understanding the guts of a
-relational programming language through studying its implementation.
-The microKanren reimplementation separates surface syntax macros from
-function definitions. In doing so, the authors hoped this separation
+The authors designed microKanren~\cite{hemann2013muKanren} as a
+compact relational programming language kernel to undergird a
+miniKanren implementation. The surface miniKanren syntax and
+higher-level operators are implemented as macros.\@ microKanren is
+often used as a tool for understanding the guts of a relational
+programming language through studying its implementation. By
+re-implementing miniKanren as separate surface syntax macros over a
+purely-function microKanren kernel, the authors hoped this separation
 would simultaneously aid implementers when studying the source code,
 and also that the functional core would make the language easier to
 port to other functional hosts. To support both those efforts, they
 also chose to program in a deliberately small and workaday set of
 Scheme primitives.
 
-More languages than ever before support variable arity
-functions/methods (aka \verb|varargs| aka \verb|slurpy| methods),
-including JavaScript, Raku, Java, Python, and Ruby, to name just a
-few. This note shows how an implementer in a host language with
-variadic (any number of arguments) functions can build a somewhat more
-powerful kernel language and obviate some macros, including those for
-disjunction and conjunction. Until now there was a large gap between
-those microKanren implementations in languages with expressive macro
-systems and those without; variadic functions permit an intermediate
-point in the language design space. Implementers in languages
-\emph{with} macro systems may even choose to replace existing less
-powerful language primitives by our comparatively short but more
-powerful variants.
+The sum of those implementation choices restricted the design space to
+necessitate somewhat awkward compromises in several places including
+binary logical operators, one at a time local variable introduction,
+and leaks in the streams abstractions. This left the surface syntax
+macros seem practically mandatory, and so divided host languages into
+the macro language \enquote{haves} and the macro-less \enquote{have
+  nots}. Here, we bridge some of that divide by re-implementing parts
+of the kernel with some modest run time features common to most
+languages.
 
-Beyond being a conceptually simpler foundation for a full Kanren
-language at the level of \citetitle{friedman2018reasoned}, this
-implementation may even be more efficient.\ miniKanren folklore
-conjectures that right-associative conjunction is an inefficient
-design choice for implementing the miniKanren search strategy.
-Thinking about the expressivity of these primitives and code
-improvement \enquote{horse sense} led us to left-associate conjuncts.
+In this paper we:
 
-In \cref{sec:all-aboard}, we briefly revisit microKanren
-implementations and illustrate why surface syntax macros had seemed
-practically mandatory. In \cref{sec:conde}, we implement conjunction
-and disjunction, and in \cref{sec:impure} we discuss the
-re-implementation of the impure operators. We discuss the remaining
-macros in \cref{sec:functional}. We close some outstanding questions
-on performance impacts of these implementation choices, and consider
-how Kanren language implementers outside of the Scheme family might
-benefit from these alternatives.
+\begin{itemize}
+
+\item show how to functionally implement more general logical
+  operators, cleanly obviating some of the surface macros
+
+\item provide guidance and utilitarian solutions for eliminating all
+  other macros in the \emph{TRS2e} microKanren implementation
+
+\item survey the purely functional design space, and weigh the trade
+  offs and real-world concerns of completely eliminating those
+  remaining macros.
+
+\end{itemize}
+
+This exercise resulted in some higher-level operators, a more succinct
+kernel language, and made possible some performance improvement.
+Approximately half of the changes are applicable to any microKanren
+implementation, and the other half are necessarily awkward yet
+practical strategies for platforms lacking macro support.
+
+In \cref{sec:all-aboard}, we illustrate by example what made surface
+syntax macros feel practically mandatory. In \cref{sec:conde}, we
+implement conjunction and disjunction, and in \cref{sec:impure} we
+discuss the re-implementation of the impure operators. We discuss the
+remaining macros in \cref{sec:functional}. We close some outstanding
+questions on performance impacts of these implementation choices, and
+consider how Kanren language implementers outside of the Scheme family
+might benefit from these alternatives.
 
 \section{All Aboard!}\label{sec:all-aboard}
 
-We assume the reader is familiar with the miniKanren language as
-described in \citetitle{friedman2018reasoned} and in particular with
-microKanren implementations. See \href{minikanren.org}{minikanren.org}
-for many implementations across multiple host languages.
+We assume the reader is familiar with the microKanren-based miniKanren
+implementation of \emph{The Reasoned Schemer, 2nd Ed}
+(\emph{TRS2e})~\cite{friedman2018reasoned}. In addition, at places we
+make occasional references to earlier iterations such as
+\citeauthor{hemann2016small}~\cite{hemann2016small}, an expanded
+archival version of the 2013 paper~\cite{hemann2013muKanren}.
 
-The world's shortest subway system is Haifa's Carmelit, with only
-six stations. The system is a line, so its trains travel back and
-forth. If we wanted to describe the order in which we rode the train
-from the beginning to the end, we could use the
-\rackinline{carmelit-subway} relation in \cref{mnt:carmelit}. We
-express this relation using the more compact miniKanren syntax because
-unfolding this relation into binary conjunctions and disjunctions
-would be painful. We certainly \emph{could} write it out by hand---in
-fact, we could write it out many ways. We could nest those
-conjunctions to the left, or to the right, or try and reduce the
-indentation by trying to keep them somewhat balanced: the program
-itself does not seem to obviously encourage one particular choice.
+Haifa's Carmelit is the world's shortest subway system with a line of
+just six stations; a sufficiently small example. But in microKanren,
+to model the order a passenger visit the stops riding the subway end
+to end requires 11 logical operator nodes, because microKanren only
+provides \emph{binary} conjunctions and disjunctions.
+(\Cref{mnt:new-carmelit} contains this paper's alternative solution,
+requiring just three.) For a logic programming language, only binary
+logical operators is too low level. To our eyes, this makes the
+superficial syntax macros are practically mandatory, and host
+languages without a macro system are out of luck.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(defrel (carmelit-subway a b c d e f)
-  (conde
-    ((== a 'carmel-center)
-     (== b 'golomb)
-     (== c 'masada)
-     (== d 'haneviim)
-     (== e 'hadar-city-hall)
-     (== f 'downtown))
-    ((== a 'downtown)
-     (== b 'hadar-city-hall)
-     (== c 'haneviim)
-     (== d 'masada)
-     (== e 'golomb)
-     (== f 'carmel-center))))
-  \end{minted}
-  \caption{A miniKanren version of the Carmelit subway}
-  \label{mnt:carmelit}
-\end{listing}
+The microKanren language doesn't offer the programmer much guidance in
+using that fine-grained control. For a series of $n$ goals, the
+programmer can associate them to the left, to the right, or some
+mixtures of the two. The language itself does not seem to obviously
+encourage one particular choice.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(define-syntax conde
-  (syntax-rules ()
-    ((conde (g ...) ...)
-     (disj (conj g ...) ...))))
+The \emph{TRS2e} microKanren's soft-cut operator, \rackinline{ifte},
+is similarly low level. It permits a single test, a single consequent,
+and a single alternative. To build an if-then-else cascade, a
+microKanren programmer without the \rackinline{conda} surface macro
+would need to unroll that cascade by hand.
 
-(define-syntax disj
-  (syntax-rules ()
-    ((disj) #u)
-    ((disj g) g)
-    ((disj g₀ g ...) (disj₂ g₀ (disj g ...)))))
-
-(define ((disj₂ g₁ g₂) s)
-  (append∞ (g₁ s) (g₂ s)))
-
-(define-syntax conj
-  (syntax-rules ()
-    ((conj) #s)
-    ((conj g) g)
-    ((conj g₀ g ...) (conj₂ g₀ (conj g ...)))))
-
-(define ((conj₂ g₁ g₂) s)
-  (append-map∞ g₂ (g₁ s)))
-  \end{minted}
-  \caption{Macro based implementations of  \rackinline|disj| and \rackinline{conj} }
-  \label{mnt:conj-and-disj-implementation}
-\end{listing}
-
-\Cref{mnt:conj-and-disj-implementation} shows typical macro-based
-implementations of \rackinline|conde| and the underlying conjunction
-and disjunction operations. Here, \rackinline{#s} and \rackinline{#u}
-represent primitive goals that unconditionally succeed and fail,
-respectively.
+The \emph{TRS2e} language implementation relies on
+macros \rackinline{fresh}, \rackinline{defrel}, and \rackinline{run}
+to introduce new logic variables, globally define relations, and
+execute queries. We can, and have, implemented these same behaviors
+via shallow embeddings without macros. These implementations had some
+harsh trade offs. We will revisit some of those trade-offs, survey the
+landscape of other available choices, and suggest performant
+compromises for the truly macroless.
 
 \section{\rackinline{disj} and \rackinline{conj} logical goal
   constructors}\label{sec:conde}
 
-The  \rackinline{disj} and \rackinline{conj} macros of
-\cref{mnt:conj-and-disj-implementation} are not \emph{quite} defined
-as simple recursions over their binary functional primitives. The
-definition of zero-way conjunction (disjunction) is independent of the
-unfolding of \rackinline{conj₂} (\rackinline{disj₂}). In a sense the
-\rackinline{disj} and \rackinline{conj} macros confuse and entangle
-primitive success and failure goals with those recursive unfoldings in
-terms of the binary operators.
+We want to implement disjunction and conjunction over one-or-more
+goals as functions. These implementations should not
+require \rackinline{apply} or rely on the binary \rackinline{disj₂}
+and \rackinline{conj₂}. Further, they should not build any extraneous
+closures: unnecessarily building closures at runtime is always a bad
+idea. This re-implementation requires a host that supports variable
+arity functions, a feature available in many languages including
+JavaScript, Ruby, Java, and Python.
 
-Those zero-way logical operation base cases don't add much. The
-programmer who tries to write an elegant, efficient solution to a pure
-relational programming task would not encounter these additional base
-cases in \rackinline{conde} expressions. The programmer knows
-statically how such goals should behave, so there is no benefit to
-executing them. A conjunction of no goals would simply succeed, and a
-disjunction of no goals would simply fail. Truthfully, only the impure
-\rackinline{conda} operator seems to require these additional base
-cases (discussed further in \cref{sec:impure}). They are for all
-intents and purposes superfluous.
-
-To reduce the reliance on macros, we want to implement disjunction and
-conjunction over one-or-more goals as functions. These implementations
-should not require \rackinline{apply} or rely on the binary
-\rackinline{disj₂} and \rackinline{conj₂}. Further, they should not
-build any extraneous closures: unnecessarily building closures at
-runtime is always a bad idea.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -460,12 +419,12 @@ goals, whereas the versions of \rackinline{disj} use a right fold.
 This is not an accident.\ Folklore suggests left associating
 conjunctions tends to improve the performance of miniKanren's
 interleaving search. The authors know of no thorough algorithmic proof
-of such claims, but see for instance discussions and implementation in
-\cite{rosenblatt2019first} for some of the related work so far.
-However, we have generally resorted to small step visualizations of
-the search tree to explain the performance impact. The authors believe
-it is worth considering if we can make an equally compelling argument
-for this preference through equational reasoning and comparing the
+of such claims, but see for instance discussions and implementation
+in~\cite{rosenblatt2019first} for some of the related work so far. We
+have generally, however, resorted to small step visualizations of the
+search tree to explain the performance impact. The authors believe it
+is worth considering if we can make an equally compelling argument for
+this preference through equational reasoning and comparing the
 implementations of functions.
 
 \begin{listing}[h]
