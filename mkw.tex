@@ -147,23 +147,27 @@ In this paper we:
 \item show how to functionally implement more general logical
   operators, cleanly obviating some of the surface macros
 
-\item survey, for the remaining macros in \emph{The Reasoned Schemer,
-    2nd Ed}'s~\cite{friedman2018reasoned} (\emph{TRS2e}) core language
-  implementation, the design space of purely functional
-  implementations and weigh the trade offs and real-world concerns
+\item survey, the design space of purely functional implementation
+  alternatives for the remaining macros in \emph{The Reasoned
+    Schemer, 2nd Ed}'s~\cite{friedman2018reasoned} (\emph{TRS2e}) core
+  language implementation, and weigh the trade offs and real-world
+  consequences
 
-\item suggest practical solutions for completely eliminating those
-  remaining macros.
+\item suggest practical solutions for completely eliminating the
+  macros in those places where the pure microKanren functional
+  implementations had seemed impractical
 
 \end{itemize}
 
 This exercise resulted in some higher-level (variadic rather than just
 binary) operators, a more succinct kernel language, and enabled some
-performance improvement. Approximately half of the changes are
-applicable to any microKanren implementation, and the other half are
-necessarily awkward yet practical strategies for those platforms
-lacking macro support. The source code for our re-implementation and
-experimental results is available
+performance improvement. Around half of the changes are applicable to
+any microKanren implementation, and the more concise goal combinators
+of~\cref{sec:conde} may also be of interest to implementers embedding
+goal-oriented languages like Icon. The other half are necessarily
+awkward yet practical strategies for those platforms lacking macro
+support. Our re-implementation's source code for and the source for
+our experimental results is available
 at~\url{https://github.com/jasonhemann/tfp-2023/}.
 
 In \cref{sec:all-aboard}, we illustrate by example what made surface
@@ -224,11 +228,46 @@ microKanren's \emph{practical} portability.
 \section{\rackinline{disj} and \rackinline{conj} logical goal
   constructors}\label{sec:conde}
 
+microKanren's binary \rackinline{disj₂} and \rackinline{conj₂}
+operators are goal combinators: they each take two goals, and produce
+a new goal. Disjunction and conjunction work slightly differently. A
+\emph{goal} is an outcome the program attempts to achieve, a goal can
+fail or succeed (and it can succeed many times). A goal executes with
+respect to a \emph{state}, here the curried parameter \rackinline{s},
+and the result is a \emph{stream} of states, and each entry is one
+state that results from achieving that goal in the given state.
+The
+\rackinline{$append} function used in \rackinline{disj₂} is an
+internal kernel primitive that combines two streams into one, with an
+interleave mechanism to prevent starvation; the result is a stream of
+the ways to achieve the two goals' disjunction.
+The \rackinline{$append-map} function used in \rackinline{conj₂} is
+to\rackinline{$append} what the standard \rackinline{append-map} is
+to \rackinline{append}. The ways to achieve the conjunction of two
+goals are all the ways to achieve the second goal from the state after
+achieving the first goal.\@ \rackinline{$append-map} runs the second
+goal over the stream of results from the first goal, and combines the
+results of mapping together into a single stream representing the
+conjunction of the two, again with special attention to interleaving
+and starvation.
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall]{racket}
+(define ((disj₂ g₁ g₂) s)
+  ($append (g₁ s) (g₂ s)))
+
+(define ((conj₂ g₁ g₂) s)
+  ($append-map g₂ (g₁ s)))
+  \end{minted}
+  \caption{microKanren \rackinline{disj₂} and \rackinline{conj₂}}
+  \label{mnt:disj2-conj2}
+\end{listing}
+
 We want to implement disjunction and conjunction over arbitrary
 quantities of goals, as functions. These implementations should
-subsume the binary \rackinline{disj₂} and \rackinline{conj₂} and
-should not use \rackinline{apply}. Further, they should not build any
-extraneous closures: unnecessarily building closures at runtime is
+subsume the binary \rackinline{disj₂} and \rackinline{conj₂} and they
+also should not use \rackinline{apply}. Further, they should not build
+any extraneous closures: unnecessarily building closures at runtime is
 always a bad idea. This re-implementation requires a host that
 supports variable arity functions, a widely available feature included
 in such languages as JavaScript, Ruby, Java, and Python. These
@@ -279,20 +318,22 @@ makes no use of variadic functions. That is, all of our focus will be
 on the recurring over the list \rackinline{gs}. Unlike \rackinline{D},
 the function \rackinline{C} does not take in the state \rackinline{s};
 the help procedure does not need the state for conjunction. In each
-recursive call, we accumulate by mapping (using the special delaying
+recursive call, we accumulate by mapping (using that special delaying
 implementation of \rackinline{append-map∞} for Kanren-language
 streams) the next goal in the list. This left-fold implementation of
 conjunction therefore left-associates the conjuncts.
 
-\subsection{Semantic equivalence}
+\subsection{Deriving semantic equivalents}
 
 A developer might derive these definitions as follows. We start with
-the definition of a recursive \rackinline{disj} macro like one would
-define as surface syntax over the microKanren \rackinline{disj₂}. At
+the definition of a recursive \rackinline{disj} macro like one might
+define as surface syntax over the microKanren \rackinline{disj₂}. As
+this is not part of the microKanren language itself, we would like to
+dispense with the macro and implement this behavior functionally. At
 the cost of an \rackinline{apply}, we can build the corresponding
 explicitly recursive \rackinline{disj} function.
 
-\begin{listing}[h]
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
 (define-syntax disj
   (syntax-rules ()
@@ -310,12 +351,12 @@ explicitly recursive \rackinline{disj} function.
 \end{listing}
 
 \noindent Since \rackinline{disj} produces and consumes goals, we can
-η expand the definition in \cref{mnt:disj-function-before-derivation}
+η-expand the definition in \cref{mnt:disj-function-before-derivation}
 by a curried parameter \rackinline{s}. We then split \rackinline{disj}
 into two mutually-recursive procedures, to build the variant in
 \cref{mnt:disj-function-split}.
 
-\begin{listing}[h]
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
 (define ((disj g . gs) s)
   (D g gs s))
@@ -325,7 +366,7 @@ into two mutually-recursive procedures, to build the variant in
     ((null? gs) (g s))
     (else ((disj₂ g (apply disj gs)) s))))
 \end{minted}
-  \caption{An η expanded and split definition of \rackinline{disj}}
+  \caption{An η-expanded and split definition of \rackinline{disj}}
   \label{mnt:disj-function-split}
 \end{listing}
 
@@ -338,7 +379,7 @@ the version of \rackinline{D} in \cref{mnt:disj-substituted-through}.
 The definition of \rackinline{disj} remains unchanged from
 \cref{mnt:disj-function-split}.
 
-\begin{listing}[h]
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
 (define (D g gs s)
   (cond
@@ -358,7 +399,7 @@ in \rackinline{disj} and passing it along. Adding the trivial base
 case to that \rackinline{disj} yields the definition
 in~\cref{mnt:disj-reimplementation}.
 
-\begin{listing}[h]
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
 (define-syntax conj
   (syntax-rules ()
@@ -373,7 +414,7 @@ in~\cref{mnt:disj-reimplementation}.
      (apply conj
        (cons (conj₂ g (car gs)) (cdr gs))))))
 \end{minted}
-  \caption{\rackinline{conj₂}-based \rackinline{conj} function and macro}
+  \caption{\rackinline{conj₂}-based \rackinline{conj} macro and function}
   \label{mnt:conj-function-derived-definition}
 \end{listing}
 
@@ -383,7 +424,7 @@ the variadic function based on the macro in
 \cref{mnt:conj-function-derived-definition}, we first η-expand and
 split the definition.
 
-\begin{listing}[h]
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
     (C g gs s))
@@ -402,7 +443,7 @@ split the definition.
 \noindent We next substitute for the definitions of \rackinline{conj} and
 \rackinline{conj₂}.
 
-\begin{listing}[h]
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
   (define (C g gs s)
     (cond
@@ -421,60 +462,57 @@ Finally, since \rackinline{C} only needs \rackinline{s} to
 in---instead of passing in \rackinline{g} and \rackinline{s}
 separately, we pass in their combination as a stream. The function is
 tail recursive, we can change the signature in the one and only
-external call and the recursive call. We show the result
-in \cref{mnt:conj-reimplementation}.
+external call and the recursive call. The result, after adding the
+trivial base case to \rackinline{conj}, is shown in
+\cref{mnt:conj-reimplementation}.
 
 Both the functional and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
 goals, whereas the versions of \rackinline{disj} use a right fold.
-This is not an accident.\ Folklore suggests left associating
-conjunctions tends to improve the performance of miniKanren's
-interleaving search. The authors know of no thorough algorithmic proof
-of such claims, but see for instance discussions and implementation
-in~\cite{rosenblatt2019first} for some of the related work so far. We
-have generally, however, resorted to small step visualizations of the
-search tree to explain the performance impact. The authors believe it
-is worth considering if we can make an equally compelling argument for
-this preference through equational reasoning and comparing the
+This is not an accident.
+%
+% Folklore suggests left associating conjunctions tends to improve the
+% performance of miniKanren's interleaving search. The authors know of
+% no thorough algorithmic proof of such claims, but see for instance
+% discussions and implementation in~\cite{rosenblatt2019first} for some
+% of the related work so far. We have generally, however, resorted to
+% small step visualizations of the search tree to explain the
+% performance impact. The authors believe it is worth considering if we
+% can make an equally compelling argument for this preference through
+% equational reasoning and comparing the implementations of functions.
+%
+Folklore suggests that left associating conjunctions tends to improve
+the performance of miniKanren's interleaving search. The authors know
+of no thorough algorithmic proof of such claims, but see for instance
+discussions and implementation in~\cite{rosenblatt2019first} for some
+of the related work so far. In \cref{tab:???}, we display the results
+of some micro benchmarks that suggest the same. We have generally,
+however, resorted to small step visualizations of the search tree to
+explain the performance impact. The authors believe it is worth
+considering if we can make an equally compelling argument for this
+preference through equational reasoning and comparing the
 implementations of functions.
 
-\begin{listing}[h]
-\begin{minted}[autogobble,stripall]{racket}
-  (define (conj g . gs)
-    (cond
-      ((null? gs) g)
-      (else (conj₂ g (apply conj gs)))))
-\end{minted}
-  \caption{A right-fold variant of \rackinline{conj}}
-  \label{mnt:conj-right-fold-definition}
-\end{listing}
+The benefits of a left-fold over conjunctions becomes a little more
+obvious by comparison to a right-fold implementation after we
+η-expand, unfold to a recursive help function, substitute in the
+definition of \rackinline{conj₂}, and β-reduce. From there, we cannot
+(easily) replace the \rackinline{apply} call by a recursive call
+to \rackinline{C}, because we are still waiting for an \rackinline{s}.
+We can only abstract over \rackinline{s} and wait; we show the upshot
+of this sequence in \Cref{mnt:conj-right-fold-definition}. Since we
+know that any call to \rackinline{append-map∞} we construct will
+always yield a result, the version in \cref{mnt:conj-reimplementation}
+is tail recursive. The equivalent right-fold implementation needs to
+somehow construct a closure for every recursive call. Basic
+programming horse sense suggests the more elegant variant from
+\cref{mnt:conj-reimplementation}.
 
-\Cref{mnt:conj-right-fold-definition} shows a right-fold variant of
-\rackinline{conj}. The choice to fold left becomes a little more
-obvious after we η-expand, unfold to a recursive help function,
-substitute in the definition of \rackinline{conj₂}, and β-reduce.
-
+\begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
     (C gs (g s)))
 
-  (define (C g gs s)
-    (cond
-      ((null? gs) (g s))
-      (else (append-map∞ (apply C gs) (g s)))))
-\end{minted}
-
-\noindent Here, we cannot (easily) replace the \rackinline{apply} call
-by a recursive call to \rackinline{C}, because we are still waiting
-for an \rackinline{s}. We can only abstract over \rackinline{s} and
-wait. Since we know that any call to \rackinline{append-map∞} we
-construct will always yield a result, the version in
-\cref{mnt:conj-reimplementation} is tail recursive. The equivalent
-right-fold implementation needs either to construct a closure for
-every recursive call, or otherwise demands a help function mutually
-recursive with \rackinline{C}.
-
-\begin{minted}[autogobble,stripall]{racket}
   (define (C gs s∞)
     (cond
       ((null? gs) s∞)
@@ -483,28 +521,25 @@ recursive with \rackinline{C}.
          (λ (s) (C (cdr gs) ((car gs) s)))
          s∞))))
 \end{minted}
+  \caption{A right-fold variant of \rackinline{conj} after some derivations}
+  \label{mnt:conj-right-fold-definition}
+\end{listing}
 
-If we want to implement a variadic version that does not rely on a
-primitive \rackinline{conj2} and does not resort to
-\rackinline{apply}, we have the two aforementioned choices. Basic
-programming horse sense suggests the more elegant variant from
-\cref{mnt:conj-reimplementation}.
+The new \rackinline{disj} and \rackinline{conj} functions are, we
+believe, sufficiently high-level for programmers in implementations
+without macros. Though this note mainly concerns working towards an
+internal macro-less kernel language, it may also have something to say
+about the miniKanren-level surface syntax, namely that even the
+miniKanren language could do without its \rackinline{conde} syntax (a
+disjunction of conjunctions that looks superficially like
+Scheme's \rackinline{cond}) and have the programmer use these new
+underlying logical primitives. We
+implement \rackinline{carmelit-subway} as an example in
+\cref{mnt:new-carmelit}, and it looks far cry better than the 11
+binary logical operator nodes the programmer would have needed to
+write in a microKanren language without macros.
 
-Though this note mainly concerns the choice to implement surface
-language behavior as functions, it may also point to these as more
-natural user-level primitives than \rackinline{conde}. An
-implementation could choose to forego \rackinline{conde} and provide
-just those underlying logical primitives \rackinline{disj}
-and \rackinline{conj} to the user, as in the new definition of
-Carmelit in \cref{mnt:new-carmelit}. Moreover, removing the nullary
-case simplifies the wrapper function, and removes the very slight cost
-of a runtime \rackinline{null?} check. It also suggests rewriting the
-second pattern in \rackinline{conda}
-to \rackinline{(conda (g₀ g g* ...) ln ...)}, since the consequents
-of \rackinline{conda} clauses rely structurally on permitting nullary
-conjunctions of goals.
-
-\begin{listing}
+\begin{listing}[h]
   \begin{minted}[autogobble,stripall]{racket}
 (defrel (carmelit-subway a b c d e f)
   (disj
@@ -525,17 +560,21 @@ conjunctions of goals.
   \label{mnt:new-carmelit}
 \end{listing}
 
-This implementation of \rackinline{carmelit-subway} uses
-our \rackinline{disj} and \rackinline{conj} functions, a far cry
-better than the 11 binary logical operator nodes the programmer would
-need to write in a language without macros.
-
 \section{Tidying up the Impure Operators}\label{sec:impure}
 
-The \rackinline{conda} operators provides nested
-\enquote{if-then-else} behavior. The definition of \rackinline{conda}
-(see \cref{mnt:conda-implementation}) requires one or more conjuncts
-per clause and one or more clauses.
+The miniKanren \rackinline{conda} operator that provides nested
+\enquote{if-then-else} behavior relies on the
+microKanren \rackinline{ifte} underlying it. The definition
+of \rackinline{conda} (see \cref{mnt:conda-implementation}) requires
+one or more conjuncts per clause and one or more clauses. The last
+line of \rackinline{conda} contains the only place in the
+implementation that relies structurally on permitting nullary
+conjunctions, or disjunctions, of goals. Everywhere else conjunctions
+are one-or-more, and this one structural dependency is off-putting.
+Having already broached the topic of changing surface syntax, we
+mention a temptation to rewrite the second pattern in
+miniKanren's \rackinline{conda} to demand \emph{two} or more goals in
+each if-then clause and removing the dependency.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -558,30 +597,13 @@ per clause and one or more clauses.
   \label{mnt:conda-implementation}
 \end{listing}
 
-Some programmers would be perfectly satisfied just using
-\rackinline{ifte} directly. But just as the standard forked
-\rackinline{if} begat McCarthy's \rackinline{if} notation and
-\rackinline{cond}, a programmer may eventually feel the need for a
-nested implementation. Here are other (alternative) implementation
-choices one could consider.
-
-\begin{enumerate}
-
-\item Syntactically mandate that all clauses \emph{except the final
-    default clause} contain at least two goals.
-
-\item Introduce a special clause of the \rackinline{conda} macro
-  specifically for \enquote{if then} clauses with a single goal.
-
-\item Unconditionally add a \rackinline{#s} goal to each clause
-  during macro expansion.
-
-\end{enumerate}
-
-Each of these choices can, implicitly or explicitly, force additional
-unneeded executions of unwanted goals. Working with variable arity
-function syntax also suggests a more elegant solution for
-\rackinline{conda}.
+Some microKanren programmers without macros would be perfectly
+satisfied just using \rackinline{ifte} directly, especially so given
+the research community's focus on purely relational programming. But
+just as the standard forked \rackinline{if} begat
+McCarthy's \rackinline{if} notation and \rackinline{cond}, a
+programmer may eventually feel the need for a nested implementation.
+Here is a functional implementation of that cascade behavior.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -605,16 +627,16 @@ function syntax also suggests a more elegant solution for
 \end{listing}
 
 The implementation in \cref{mnt:conda-good-re-implementation} includes
-the delay-and-restart behavior of \rackinline{ifte} together with
-\rackinline{conda}'s logical cascade. The \rackinline{s∞} can be
+the delay-and-restart behavior of \rackinline{ifte} together
+with \rackinline{conda}'s logical cascade. The \rackinline{s∞} can be
 either empty, non-empty, or a function of no arguments. In the last
 case, we invoke \rackinline{s∞}. Rather than building a largely
 redundant implementation of \rackinline{condu}, we expose the
-higher-order goal \rackinline{once} to the user. The definition of
-\rackinline{once} in \cref{mnt:condu-reimplementation} is taken
-directly from~\cite{friedman2018reasoned}. The programmer can simulate
-\rackinline{condu} by wrapping \rackinline{once} around every test
-goal.
+higher-order goal \rackinline{once} to the user. The definition
+of \rackinline{once} in \cref{mnt:condu-reimplementation} is taken
+directly from~\cite{friedman2018reasoned}. The programmer can
+simulate \rackinline{condu} by wrapping \rackinline{once} around every
+test goal.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -674,19 +696,18 @@ them, rather than conjoin them as in \rackinline{defrel}. That small
 
 \paragraph{\rackinline{fresh}}
 
-In any implementation there must be
-some mechanism to produce the next fresh variable. For example, we
-treat the natural numbers as an indexed set of variables, and we
-thread the current index through the computation. We use
-\rackinline{add1} to get the next index; to go from index to variable
-is the identity function. For another example, we could represent each
-variable using a unique memory location,
+In any implementation there must be some mechanism to produce the next
+fresh variable. For example, we treat the natural numbers as an
+indexed set of variables, and we thread the current index through the
+computation. We use \rackinline{add1} to get the next index; to go
+from index to variable is the identity function. For another example,
+we could represent each variable using a unique memory location,
 sokuza-kanren~\cite{kiselyov2006taste} style, and the operation to
 produce a new variable requires introducing an unused memory location.
 Depending on the implementation of variables, you may also need
 additional functions to support your implementation of variables. If
 variables are not from an indexed set, you may also need an operation
-to (re)construct specifically the first element of the set, or
+to (re) construct specifically the first element of the set, or
 otherwise store that value for later re-use.
 
 Of course, one of these approaches requires memory allocation and
