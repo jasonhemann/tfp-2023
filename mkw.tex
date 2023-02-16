@@ -147,23 +147,22 @@ In this paper we:
 \item show how to functionally implement more general logical
   operators, cleanly obviating some of the surface macros
 
-\item provide guidance and utilitarian solutions for eliminating all
-  other macros in \emph{The Reasoned Schemer, 2nd
-    Ed}~\cite{friedman2018reasoned} (\emph{TRS2e}) core language
-  implementation
+\item survey, for the remaining macros in \emph{The Reasoned Schemer,
+    2nd Ed}'s~\cite{friedman2018reasoned} (\emph{TRS2e}) core language
+  implementation, the design space of purely functional
+  implementations and weigh the trade offs and real-world concerns
 
-\item survey the purely functional design space, and weigh the trade
-  offs and real-world concerns of completely eliminating those
+\item suggest practical solutions for completely eliminating those
   remaining macros.
 
 \end{itemize}
 
 This exercise resulted in some higher-level (variadic rather than just
-binary) operators, a more succinct kernel language, and made possible
-some performance improvement. Approximately half of the changes are
+binary) operators, a more succinct kernel language, and enabled some
+performance improvement. Approximately half of the changes are
 applicable to any microKanren implementation, and the other half are
-necessarily awkward yet practical strategies for platforms lacking
-macro support. The source code for our re-implementation and
+necessarily awkward yet practical strategies for those platforms
+lacking macro support. The source code for our re-implementation and
 experimental results is available
 at~\url{https://github.com/jasonhemann/tfp-2023/}.
 
