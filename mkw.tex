@@ -75,11 +75,13 @@
 
 \begin{abstract}
 
-  This paper describes changes to the microKanren implementation to
-  broaden the kinds of platforms it may be embedded in. We lift
-  microKanren's macro-support requirement for host platforms, trading
-  it for modest runtime features common to most languages. The
-  resulting implementation is smaller, simpler, and relevant even to
+  This paper describes changes to the microKanren implementation that
+  make it more practical to use in a host language without macros.
+  With the help of some modest runtime features common to most
+  languages, we show how an implementer lacking macros can come closer
+  to the expressive power that macros usually provide---with varying
+  degrees of success. The result has a friendlier programming model,
+  invites slightly shorter programs, and is relevant even to
   implementers that enjoy macro support. For those without it, we
   address some practical concerns that necessarily occur without
   macros so they can better weigh their options.
@@ -102,7 +104,6 @@
 \end{CCSXML}
 
 \ccsdesc[500]{Software and its engineering~Constraint and logic languages}
-\ccsdesc[500]{Software and its engineering~Automatic programming}
 
 %%
  %% Keywords. The author(s) should pick words that accurately describe
@@ -115,26 +116,28 @@
 
 The authors designed microKanren~\cite{hemann2013muKanren} as a
 compact relational programming language kernel to undergird a
-miniKanren implementation. The surface miniKanren syntax and
-higher-level operators are implemented as macros.\@ microKanren is
-often used as a tool for understanding the guts of a relational
-programming language through studying its implementation. By
-re-implementing miniKanren as separate surface syntax macros over a
-purely-function microKanren kernel, the authors hoped this separation
-would simultaneously aid implementers when studying the source code,
-and also that the functional core would make the language easier to
-port to other functional hosts. To support both those efforts, they
-also chose to program in a deliberately small and workaday set of
-Scheme primitives.
+miniKanren implementation. The higher-level miniKanren operators and
+surface syntax are implemented as macros.\@ microKanren is often used
+as a tool for understanding the guts of a relational programming
+language through studying its implementation. By re-implementing
+miniKanren as separate surface syntax macros over a purely-function
+microKanren kernel, the authors hoped this separation would
+simultaneously aid implementers when studying the source code, and
+also that the functional core would make the language easier to port
+to other functional hosts. To support both those efforts, they also
+chose to program in a deliberately small and workaday set of Scheme
+primitives.
 
-The sum of those implementation restrictions necessitates somewhat
-awkward compromises in several places including binary logical
-operators, one at a time local variable introduction, and leaks in the
-streams abstractions. This left the surface syntax macros seem
-practically mandatory, and so divided host languages into the macro
-language \enquote{haves} and macro-less \enquote{have nots}. Here, we
-bridge some of that divide by re-implementing parts of the kernel with
-some modest runtime features common to most languages.
+The sum of those implementation restrictions, however, necessitates
+somewhat awkward compromises in several places including binary
+logical operators, one at a time local variable introduction, and
+leaks in the streams abstractions. These left the surface syntax
+macros seem practically mandatory, and led to compromises in
+pedagogical exposition of the functional kernel itself. It also
+divided host languages into the macro language \enquote{haves} and
+macro-less \enquote{have nots}. Here, we bridge some of that divide by
+re-implementing parts of the kernel with some modest runtime features
+common to most languages.
 
 In this paper we:
 %
