@@ -80,7 +80,7 @@
   With the help of some modest runtime features common to most
   languages, we show how an implementer lacking macros can come closer
   to the expressive power that macros usually provide---with varying
-  degrees of success. The result has a friendlier programming model,
+  degrees of success. The result is a still functional microKanren that
   invites slightly shorter programs, and is relevant even to
   implementers that enjoy macro support. For those without it, we
   address some practical concerns that necessarily occur without
@@ -116,28 +116,29 @@
 
 The authors designed microKanren~\cite{hemann2013muKanren} as a
 compact relational programming language kernel to undergird a
-miniKanren implementation. The higher-level miniKanren operators and
-surface syntax are implemented as macros.\@ microKanren is often used
-as a tool for understanding the guts of a relational programming
-language through studying its implementation. By re-implementing
-miniKanren as separate surface syntax macros over a purely-function
-microKanren kernel, the authors hoped this separation would
-simultaneously aid implementers when studying the source code, and
-also that the functional core would make the language easier to port
-to other functional hosts. To support both those efforts, they also
-chose to program in a deliberately small and workaday set of Scheme
-primitives.
+miniKanren implementation. Macros are used to implement the
+surrounding higher-level miniKanren operators and surface syntax.\@
+microKanren is often used as a tool for understanding the guts of a
+relational programming language through studying its implementation.
+By re-implementing miniKanren as separate surface syntax macros over a
+purely-function microKanren kernel, the authors hoped this separation
+would simultaneously aid implementers when studying the source code,
+and also that the functional core would make the language easier to
+port to other functional hosts. To support both those efforts, they
+also chose to program in a deliberately small and workaday set of
+Scheme primitives.
 
 The sum of those implementation restrictions, however, necessitates
-some awkward compromises in places including binary
-logical operators, one at a time local variable introduction, and
-leaks in the streams abstractions. These left the surface syntax
-macros seem practically mandatory, and led to compromises in
-pedagogical exposition of the functional kernel itself. It also
-divided host languages into the macro language \enquote{haves} and
-macro-less \enquote{have nots}. Here, we bridge some of that divide by
-re-implementing parts of the kernel with some modest runtime features
-common to most languages.
+some awkward compromises in places including binary logical operators,
+one at a time local variable introduction, and leaks in the streams
+abstractions. These made the surface syntax macros seem practically
+mandatory, and fell short enough that we compromised on a purely
+functional kernel in a pedagogical
+exposition~\cite{friedman2018reasoned}. It also divided host languages
+into the macro language \enquote{haves} and macro-less \enquote{have
+  nots}. Here, we bridge some of that divide by re-implementing parts
+of the kernel with some modest runtime features common to most
+languages.
 
 In this paper we:
 %
@@ -147,7 +148,9 @@ In this paper we:
   operators, cleanly obviating some of the surface macros
 
 \item provide guidance and utilitarian solutions for eliminating all
-  other macros in the \emph{TRS2e} microKanren implementation
+  other macros in \emph{The Reasoned Schemer, 2nd
+    Ed}~\cite{friedman2018reasoned} (\emph{TRS2e}) core language
+  implementation
 
 \item survey the purely functional design space, and weigh the trade
   offs and real-world concerns of completely eliminating those
@@ -176,11 +179,10 @@ might benefit from these alternatives.
 \section{All Aboard!}\label{sec:all-aboard}
 
 We assume the reader is familiar with the miniKanren implementation of
-\emph{The Reasoned Schemer, 2nd Ed}
-(\emph{TRS2e})~\cite{friedman2018reasoned}. Although based on
+\emph{The Reasoned Schemer, 2nd Ed} (\emph{TRS2e}). Although based on
 microKanren, this implementation makes some concessions to efficiency
 and safety and uses a few macros in the language kernel itself. In
-addition, to that implementation, at places we make occasional
+addition to that implementation, in this paper we make occasional
 references to earlier iterations such as
 \citeauthor{hemann2016small}~\cite{hemann2016small}, an expanded
 archival version of the 2013 paper~\cite{hemann2013muKanren}.
@@ -188,25 +190,27 @@ archival version of the 2013 paper~\cite{hemann2013muKanren}.
 Haifa's Carmelit is the world's shortest subway system with a line of
 just six stations; an example sufficiently small that modeling it
 should be painless. But in microKanren, to model the order a passenger
-visit the stops riding the subway end to end requires 11 logical
+visit the stops riding that subway end to end requires 11 logical
 operator nodes, because microKanren only provides \emph{binary}
 conjunctions and disjunctions. (\Cref{mnt:new-carmelit} contains this
 paper's alternative solution, requiring just three.) For a logic
-programming language, only binary logical operators is too low level.
-To our eyes, this makes the superficial syntax macros are practically
-mandatory, and host languages without a macro system are out of luck.
+programming language, solely binary logical operators is too low
+level. To our eyes, this makes the superficial syntax macros
+practically mandatory, and host languages without a macro system are
+out of luck.
 
-The microKanren language doesn't offer the programmer much guidance in
-using that fine-grained control. For a series of $n$ goals, the
-programmer can associate them to the left, to the right, or some
-mixtures of the two. The language itself does not seem to obviously
-encourage one particular choice.
+Moreover, the microKanren language doesn't offer the programmer much
+guidance in using that fine-grained control. For a series of $n$
+goals, the programmer can associate them to the left, to the right, or
+some mixtures of the two. The syntax does not obviously encourage any
+one choice. Subtle changes in program structure can have profound
+effects on performance, and mistakes are easy to make.
 
 The \emph{TRS2e} microKanren's soft-cut operator, \rackinline{ifte},
 is similarly low level. It permits a single test, a single consequent,
 and a single alternative. To build an if-then-else cascade, a
 microKanren programmer without the \rackinline{conda} surface macro
-would need to unroll that cascade by hand.
+would need to code that unrolled cascade by hand.
 
 The core \emph{TRS2e} language implementation relies on
 macros \rackinline{fresh}, \rackinline{defrel}, and \rackinline{run}
@@ -222,9 +226,9 @@ microKanren's \emph{practical} portability.
   constructors}\label{sec:conde}
 
 We want to implement disjunction and conjunction over arbitrary
-quantities goals, as functions. These implementations should subsume
-the binary \rackinline{disj₂} and \rackinline{conj₂} but should not
-require \rackinline{apply}. Further, they should not build any
+quantities of goals, as functions. These implementations should
+subsume the binary \rackinline{disj₂} and \rackinline{conj₂} and
+should not use \rackinline{apply}. Further, they should not build any
 extraneous closures: unnecessarily building closures at runtime is
 always a bad idea. This re-implementation requires a host that
 supports variable arity functions, a widely available feature included
