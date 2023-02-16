@@ -345,10 +345,12 @@ The definition of \rackinline{disj} remains unchanged from
   \label{mnt:disj-substituted-through}
 \end{listing}
 
-\noindent We combine \rackinline{g} and \rackinline{s} in each clause;
-this suggests constructing that stream in \rackinline{disj} and
-passing it along. Adding the trivial base case to \rackinline{disj}
-yields the definition in~\cref{mnt:disj-reimplementation}.
+
+\noindent In both clauses of \rackinline{D} we combine \rackinline{g}
+and \rackinline{s}, this suggests constructing that stream
+in \rackinline{disj} and passing it along. Adding the trivial base
+case to that \rackinline{disj} yields the definition
+in~\cref{mnt:disj-reimplementation}.
 
 \begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
@@ -636,16 +638,21 @@ programs.
 
 \paragraph{\rackinline{define}}
 
-The microKanren programmer can just
-use their host language's \rackinline{define} feature to construct
-relations as host-language functions, and manually introduce the
-delays in relations. This may be a larger concession than it looks,
-since it exposes the delay and interleave mechanism to the user, and
-both correct interleaving and even the termination of relation
+The microKanren programmer can just use their host
+language's \rackinline{define} feature to construct relations as
+host-language functions, and manually introduce the delays in
+relations. This may be a larger concession than it looks, since it
+exposes the delay and interleave mechanism to the user, and both
+correct interleaving and even the termination of relation
 \emph{definitions} rely on a whole-program correctness property of
 relation definitions having a delay. \Cref{mnt:subtleo} relies on a
 help function \rackinline{Zzz} to introduce delays, akin to some
-earlier implementations~\cite{hemann2013muKanren}.
+earlier implementations~\cite{hemann2013muKanren}. Another downside
+worth mentioning is the programmer must now take extra care not to
+provide multiple goals to define. The \rackinline{define} form will
+treat all but the last expression as statements and silently drop
+them, rather than conjoin them as in \rackinline{defrel}. That small
+\emph{gotcha} can be subtle but significant drawback.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
