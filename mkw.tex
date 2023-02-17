@@ -13,6 +13,7 @@
 \usepackage{balance}
 \usepackage{polyglossia} %% for xelatex use polyglossia, needed for csquotes
 \setdefaultlanguage[variant=american]{english}
+\usepackage{fancybox}
 
 \PassOptionsToPackage{cache=false,newfloat=true}{minted}
 \PassOptionsToPackage{unicode}{hyperref}
@@ -33,8 +34,9 @@
 
 \overfullrule=0pt
 
-%\usepackage{nag} %% should complain about old and outdated commands
+\usepackage{nag} %% should complain about old and outdated commands
 \usepackage{minted}
+
 \usepackage[strict,autostyle]{csquotes} %% enquote &c that doesn't interfere w/cdlatex usage
 %% http://ftp.lyx.org/pub/tex-archive/macros/latex/contrib/csquotes/csquotes.pdf
 %% \usepackage[xspace]{ellipsis} they suggest using xetex instead
@@ -259,8 +261,7 @@ to interleaving and starvation.
 (define ((conj₂ g₁ g₂) s)
   ($append-map g₂ (g₁ s)))
   \end{minted}
-  \caption{microKanren \rackinline{disj₂} and \rackinline{conj₂}}
-  \label{mnt:disj2-conj2}
+  \caption{microKanren \rackinline{disj₂} and \rackinline{conj₂}}\label{mnt:disj2-conj2}
 \end{listing}
 
 We want to implement disjunction and conjunction over arbitrary
@@ -275,7 +276,7 @@ languages do not generally support macros and hence can use this
 paper's contributions.
 
 \begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,frame=single]{racket}
   (define ((disj . gs) s)
     (cond
       ((null? gs) (list))
@@ -287,13 +288,7 @@ paper's contributions.
       (else
        (append∞ s∞
          (D ((car gs) s) (cdr gs) s)))))
-  \end{minted}
-  \caption{Eventual redefinition of \rackinline{disj}}
-  \label{mnt:disj-reimplementation}
-\end{listing}
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
   (define ((conj . gs) s)
     (cond
       ((null? gs) (list s))
@@ -305,9 +300,8 @@ paper's contributions.
       (else
        (C (cdr gs)
           (append-map∞ (car gs) s∞)))))
-  \end{minted}
-  \caption{Eventual redefinition of \rackinline{conj}}
-  \label{mnt:conj-reimplementation}
+\end{minted}
+  \caption{Final re-definitions of \rackinline{disj} and \rackinline{conj}}\label{mnt:disj-reimplementation}
 \end{listing}
 
 \Cref{mnt:disj-reimplementation,mnt:conj-reimplementation} show our
@@ -351,8 +345,7 @@ two mutually-recursive procedures, to build the variant in
     ((null? gs) g)
     (else (disj₂ g (apply disj gs)))))
 \end{minted}
-  \caption{Deriving \rackinline{disj} function from macro}
-  \label{mnt:disj-function-before-derivation}
+  \caption{Deriving \rackinline{disj} function from macro}\label{mnt:disj-function-before-derivation}
 \end{listing}
 
 \begin{listing}
@@ -365,8 +358,7 @@ two mutually-recursive procedures, to build the variant in
     ((null? gs) (g s))
     (else ((disj₂ g (apply disj gs)) s))))
 \end{minted}
-  \caption{An η-expanded and split definition of \rackinline{disj}}
-  \label{mnt:disj-function-split}
+  \caption{An η-expanded and split definition of \rackinline{disj}}\label{mnt:disj-function-split}
 \end{listing}
 
 We can replace the call to \rackinline{disj₂} in
@@ -392,8 +384,7 @@ in~\cref{mnt:disj-reimplementation}.
       (append∞ (g s)
         (D (car gs) (cdr gs) s)))))
 \end{minted}
-  \caption{Derivation of \rackinline{disj} function definition}
-  \label{mnt:disj-substituted-through}
+  \caption{Derivation of \rackinline{disj} function definition}\label{mnt:disj-substituted-through}
 \end{listing}
 
 \begin{listing}
@@ -428,8 +419,7 @@ in~\cref{mnt:disj-reimplementation}.
           (cons (conj₂ g (car gs)) (cdr gs)))
         s))))
 \end{minted}
-  \caption{Derivation of split \rackinline{conj} function definition}
-  \label{mnt:conj-substituted-through}
+  \caption{Derivation of split \rackinline{conj} function definition}\label{mnt:conj-substituted-through}
 \end{listing}
 
 \begin{listing}
@@ -443,12 +433,11 @@ in~\cref{mnt:disj-reimplementation}.
           (cdr gs)
           s))))
 \end{minted}
-  \caption{Replacing \rackinline{apply} in \rackinline{C} function definition}
-  \label{mnt:C-substituted-through}
+  \caption{Replacing \rackinline{apply} in \rackinline{C} function definition}\label{mnt:C-substituted-through}
 \end{listing}
 
 We can derive the definition of \rackinline{conj} from
-\cref{mnt:conj-reimplementation} via a similar process. Starting with
+\cref{mnt:disj-reimplementation} via a similar process. Starting with
 the variadic function based on the macro in
 \cref{mnt:conj-function-derived-definition}, we first η-expand and
 split the definition. We next substitute for the definitions
@@ -459,7 +448,7 @@ in \rackinline{g} and \rackinline{s} separately, we pass in their
 combination as a stream. The function is tail recursive, we can change
 the signature in the one and only external call and the recursive
 call. The result, after adding the trivial base case
-to \rackinline{conj}, is shown in \cref{mnt:conj-reimplementation}.
+to \rackinline{conj}, is shown in \cref{mnt:disj-reimplementation}.
 
 Both the functional and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
@@ -497,11 +486,11 @@ to \rackinline{C}, because we are still waiting for an \rackinline{s}.
 We can only abstract over \rackinline{s} and wait; we show the upshot
 of this sequence in \Cref{mnt:conj-right-fold-definition}. Since we
 know that any call to \rackinline{append-map∞} we construct will
-always yield a result, the version in \cref{mnt:conj-reimplementation}
+always yield a result, the version in \cref{mnt:disj-reimplementation}
 is tail recursive. The equivalent right-fold implementation needs to
 somehow construct a closure for every recursive call. Basic
 programming horse sense suggests the more elegant variant from
-\cref{mnt:conj-reimplementation}.
+\cref{mnt:disj-reimplementation}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -517,8 +506,7 @@ programming horse sense suggests the more elegant variant from
            (C (cdr gs) ((car gs) s)))
          s∞))))
 \end{minted}
-  \caption{A right-fold variant of \rackinline{conj} after some derivations}
-  \label{mnt:conj-right-fold-definition}
+  \caption{A right-fold variant of \rackinline{conj} after some derivations}\label{mnt:conj-right-fold-definition}
 \end{listing}
 
 The new \rackinline{disj} and \rackinline{conj} functions are, we
@@ -552,8 +540,7 @@ microKanren language without macros.
           (== e 'golomb)
           (== f 'carmel-center))))
   \end{minted}
-  \caption{A new Carmelit subway without \rackinline{conde}}
-  \label{mnt:new-carmelit}
+  \caption{A new Carmelit subway without \rackinline{conde}}\label{mnt:new-carmelit}
 \end{listing}
 
 \section{Tidying up the Impure Operators}\label{sec:impure}
@@ -589,8 +576,7 @@ each if-then clause and removing the dependency.
       (else (lambda ()
               (loop (s∞)))))))
   \end{minted}
-  \caption{A typical implementation of \rackinline{conda}}
-  \label{mnt:conda-implementation}
+  \caption{A typical implementation of \rackinline{conda}}\label{mnt:conda-implementation}
 \end{listing}
 
 Some microKanren programmers without macros would be perfectly
@@ -618,8 +604,7 @@ Here is a functional implementation of that cascade behavior.
     ((pair? s∞) (append-map∞ a s∞))
     (else (lambda () (A (s∞) a q-and-a* s)))))
   \end{minted}
-  \caption{A functional \rackinline{conda} implementation}
-  \label{mnt:conda-good-re-implementation}
+  \caption{A functional \rackinline{conda} implementation}\label{mnt:conda-good-re-implementation}
 \end{listing}
 
 The implementation in \cref{mnt:conda-good-re-implementation} includes
@@ -646,18 +631,37 @@ test goal.
         (else (lambda ()
                 (loop (s-inf))))))))
   \end{minted}
-  \caption{The \rackinline{once} function} %% \rackinline{}
-  \label{mnt:condu-reimplementation}
+  \caption{The \rackinline{once} function}\label{mnt:condu-reimplementation}
 \end{listing}
 
 
 \section{Remainders and Practicalities}\label{sec:functional}
 
 In this section we collect together some workarounds to obviate macros
-in the rest of the implementation. Some of these come with significant
-drawbacks. With these, however, a programmer in even a pedestrian
-functional language should be able to directly translate the
-implementation and our test programs.
+in the rest of the implementation. The \citeyear{hemann2013muKanren}
+microKanren paper demonstrates how to implement a purely functional
+Kanren language in an eager host.
+\Cref{mnt:call-fresh-and-call-initial-state} exhibits variants from
+the.
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall]{racket}
+(define ((call/fresh f) s)
+  (let ((v (state->newvar s)))
+    ((f v) (incr-var-ct s))))
+
+(define (call/initial-state n g)
+  (take n (pull (g init-state))))
+
+(define (((Zzz g) s))
+  (g s))
+  \end{minted}
+  \caption{Functional microKanren equivalents of \emph{TRS2e} kernel macros}\label{mnt:call-fresh-and-call-initial-state}
+\end{listing}
+
+Some of these come with significant drawbacks. With these, however, a
+programmer in even a pedestrian functional language should be able to
+directly translate the implementation and our test programs.
 
 \paragraph{\rackinline{define}}
 
@@ -685,8 +689,7 @@ them, rather than conjoin them as in \rackinline{defrel}. That small
       (subtleo x)
       (== x 'cat))))
   \end{minted}
-  \caption{Omitting the delay is a subtle bug}
-  \label{mnt:subtleo}
+  \caption{Omitting the delay is a subtle bug}\label{mnt:subtleo}
 \end{listing}
 
 \paragraph{\rackinline{fresh}}
@@ -737,8 +740,7 @@ though it were a goal as the last step of executing the query, as in
         (== q x))
       (reify q))))
   \end{minted}
-  \caption{Queries as expressed with global-state variables}
-  \label{mnt:run-query}
+  \caption{Queries as expressed with global-state variables}\label{mnt:run-query}
 \end{listing}
 
 \section{Future Work}\label{sec:conclusion}
@@ -746,11 +748,7 @@ though it were a goal as the last step of executing the query, as in
 This note shows how to provide a somewhat more concise core language
 that significantly reduces the need for macros. The result almost
 rivals the expressivity of the full \enquote{microKanren + macros}
-approach. Variadic functions make this implementation much more
-convenient for the end programmer, and Scheme's polyvariadic function
-syntax ensures at a host-language level that the microKanren
-programmer provides at least one parameter to \rackinline{conj}
-and \rackinline{disj}.
+approach.
 
 The old desugaring macros do not seem to suggest how to associate the
 calls to the binary primitives---both left and right look equally
