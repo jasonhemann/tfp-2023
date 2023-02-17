@@ -80,10 +80,10 @@
   With the help of some modest runtime features common to most
   languages, we show how an implementer lacking macros can come closer
   to the expressive power that macros usually provide---with varying
-  degrees of success. The result is a still functional microKanren that
-  invites slightly shorter programs, and is relevant even to
+  degrees of success. The result is a still functional microKanren
+  that invites slightly shorter programs, and is relevant even to
   implementers that enjoy macro support. For those without it, we
-  address some practical concerns that necessarily occur without
+  address some pragmatic concerns that necessarily occur without
   macros so they can better weigh their options.
 
 \end{abstract}
@@ -130,7 +130,7 @@ Scheme primitives.
 
 The sum of those implementation restrictions, however, necessitates
 some awkward compromises in places including binary logical operators,
-one at a time local variable introduction, and leaks in the streams
+one at a time local variable introduction, and leaks in the stream
 abstractions. These made the surface syntax macros seem practically
 mandatory, and fell short enough that we compromised on a purely
 functional kernel in a pedagogical
@@ -148,10 +148,9 @@ In this paper we:
   operators, cleanly obviating some of the surface macros
 
 \item survey, the design space of purely functional implementation
-  alternatives for the remaining macros in \emph{The Reasoned
-    Schemer, 2nd Ed}'s~\cite{friedman2018reasoned} (\emph{TRS2e}) core
-  language implementation, and weigh the trade offs and real-world
-  consequences
+  alternatives for the remaining macros in \emph{The Reasoned Schemer,
+    2nd Ed}'s~\cite{friedman2018reasoned} core language
+  implementation, and weigh the trade offs and real-world consequences
 
 \item suggest practical solutions for completely eliminating the
   macros in those places where the pure microKanren functional
@@ -163,57 +162,57 @@ This exercise resulted in some higher-level (variadic rather than just
 binary) operators, a more succinct kernel language, and enabled some
 performance improvement. Around half of the changes are applicable to
 any microKanren implementation, and the more concise goal combinators
-of~\cref{sec:conde} may also be of interest to implementers embedding
-goal-oriented languages like Icon. The other half are necessarily
-awkward yet practical strategies for those platforms lacking macro
-support. Our re-implementation's source code for and the source for
-our experimental results is available
+of~\cref{sec:conde} may also be of interest to implementers who embed
+goal-oriented languages like Icon~\cite{griswold1983icon}. The other
+half are necessarily awkward yet practical strategies for those
+platforms lacking macro support. Our re-implementation's source code
+for and the source for our experimental results is available
 at~\url{https://github.com/jasonhemann/tfp-2023/}.
 
 In \cref{sec:all-aboard}, we illustrate by example what made surface
 syntax macros feel practically mandatory. In \cref{sec:conde}, we
 implement conjunction and disjunction, and in \cref{sec:impure} we
 discuss the re-implementation of the impure operators. We discuss the
-remaining macros in \cref{sec:functional}. We close some outstanding
-questions on performance impacts of these implementation choices, and
-consider how Kanren language implementers outside of the Scheme family
-might benefit from these alternatives.
+remaining macros in \cref{sec:functional}. We close with some
+outstanding questions on performance impacts of these implementation
+choices, and consider how Kanren language implementers outside of the
+Scheme family might benefit from these alternatives.
 
-\section{All Aboard!}\label{sec:all-aboard}
+\section{All aboard!}\label{sec:all-aboard}
 
 We assume the reader is familiar with the miniKanren implementation of
-\emph{The Reasoned Schemer, 2nd Ed} (\emph{TRS2e}). Although based on
-microKanren, this implementation makes some concessions to efficiency
-and safety and uses a few macros in the language kernel itself. In
-addition to that implementation, in this paper we make occasional
-references to earlier iterations such as
+\emph{TRS2e}. Although based on microKanren, this implementation makes
+some concessions to efficiency and safety and uses a few macros in the
+language kernel itself. In addition to that implementation, in this
+paper we make occasional references to earlier iterations such as
 \citeauthor{hemann2016small}~\cite{hemann2016small}, an expanded
 archival version of the 2013 paper~\cite{hemann2013muKanren}.
 
-Haifa's Carmelit is the world's shortest subway system with a line of
-just six stations; an example sufficiently small that modeling it
-should be painless. But in microKanren, to model the order a passenger
-visit the stops riding that subway end to end requires 11 logical
-operator nodes, because microKanren only provides \emph{binary}
-conjunctions and disjunctions. (\Cref{mnt:new-carmelit} contains this
-paper's alternative solution, requiring just three.) For a logic
-programming language, solely binary logical operators is too low
+The Carmelit in Haifa is the world's shortest subway system with only
+six stations on its line: an example sufficiently small that modeling
+it should be painless. But in microKanren, to model the order a rider
+travels past the stops riding that subway end to end requires 11
+logical operator nodes, because microKanren only provides
+\emph{binary} conjunctions and disjunctions. (\Cref{mnt:new-carmelit}
+contains this paper's alternative solution, requiring just 3.) For a
+logic programming language, solely binary logical operators is too low
 level. To our eyes, this makes the superficial syntax macros
 practically mandatory, and host languages without a macro system are
 out of luck.
 
-Moreover, the microKanren language doesn't offer the programmer much
-guidance in using that fine-grained control. For a series of $n$
-goals, the programmer can associate them to the left, to the right, or
-some mixtures of the two. The syntax does not obviously encourage any
-one choice. Subtle changes in program structure can have profound
-effects on performance, and mistakes are easy to make.
+Moreover, the microKanren language doesn't offer the programmer
+sufficient guidance in using that fine-grained control. For a series
+of $n$ goals, the programmer can associate them to the left, to the
+right, or some mixtures of the two. The syntax does not obviously
+encourage any one choice. Subtle changes in program structure can have
+profound effects on performance, and mistakes are easy to make.
 
-The \emph{TRS2e} microKanren's soft-cut operator, \rackinline{ifte},
-is similarly low level. It permits a single test, a single consequent,
-and a single alternative. To build an if-then-else cascade, a
-microKanren programmer without the \rackinline{conda} surface macro
-would need to code that unrolled cascade by hand.
+Similarly, the soft-cut operator \rackinline{ifte} in \emph{TRS2e}
+language kernel is also low level. It permits a single test, a single
+consequent, and a single alternative. To construct an if-then-else
+cascade, a microKanren programmer without the \rackinline{conda}
+surface macro would need to code that unrolled conditional expression
+by hand.
 
 The core \emph{TRS2e} language implementation relies on
 macros \rackinline{fresh}, \rackinline{defrel}, and \rackinline{run}
@@ -234,22 +233,23 @@ a new goal. Disjunction and conjunction work slightly differently. A
 \emph{goal} is an outcome the program attempts to achieve, a goal can
 fail or succeed (and it can succeed many times). A goal executes with
 respect to a \emph{state}, here the curried parameter \rackinline{s},
-and the result is a \emph{stream} of states, and each entry is one
-state that results from achieving that goal in the given state.
-The
+and the result is a \emph{stream} of states, usually
+denoted \rackinline{s∞} as each entry is a state that results from
+achieving that goal in the given state. The
 \rackinline{$append} function used in \rackinline{disj₂} is an
 internal kernel primitive that combines two streams into one, with an
 interleave mechanism to prevent starvation; the result is a stream of
 the ways to achieve the two goals' disjunction.
 The \rackinline{$append-map} function used in \rackinline{conj₂} is
-to\rackinline{$append} what the standard \rackinline{append-map} is
+to
+\rackinline{$append} what the standard \rackinline{append-map} is
 to \rackinline{append}. The ways to achieve the conjunction of two
-goals are all the ways to achieve the second goal from the state after
-achieving the first goal.\@ \rackinline{$append-map} runs the second
-goal over the stream of results from the first goal, and combines the
-results of mapping together into a single stream representing the
-conjunction of the two, again with special attention to interleaving
-and starvation.
+goals are all the ways to achieve the second goal in a state itself
+the result of achieving the first goal.\@ \rackinline{$append-map}
+runs the second goal over the stream of results from the first goal,
+and combines the results of mapping together into a single stream
+representing the conjunction of the two, again with special attention
+to interleaving and starvation.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -271,8 +271,8 @@ any extraneous closures: unnecessarily building closures at runtime is
 always a bad idea. This re-implementation requires a host that
 supports variable arity functions, a widely available feature included
 in such languages as JavaScript, Ruby, Java, and Python. These
-languages do not generally support macros and hence are beneficiaries
-of this paper's contributions.
+languages do not generally support macros and hence can use this
+paper's contributions.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -321,7 +321,7 @@ the help procedure does not need the state for conjunction. In each
 recursive call, we accumulate by mapping (using that special delaying
 implementation of \rackinline{append-map∞} for Kanren-language
 streams) the next goal in the list. This left-fold implementation of
-conjunction therefore left-associates the conjuncts.
+conjunctions therefore left-associates the conjuncts.
 
 \subsection{Deriving semantic equivalents}
 
@@ -332,6 +332,11 @@ this is not part of the microKanren language itself, we would like to
 dispense with the macro and implement this behavior functionally. At
 the cost of an \rackinline{apply}, we can build the corresponding
 explicitly recursive \rackinline{disj} function.
+Since \rackinline{disj} produces and consumes goals, we can η-expand
+the definition in \cref{mnt:disj-function-before-derivation} by a
+curried parameter \rackinline{s}. We then split \rackinline{disj} into
+two mutually-recursive procedures, to build the variant in
+\cref{mnt:disj-function-split}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -350,12 +355,6 @@ explicitly recursive \rackinline{disj} function.
   \label{mnt:disj-function-before-derivation}
 \end{listing}
 
-\noindent Since \rackinline{disj} produces and consumes goals, we can
-η-expand the definition in \cref{mnt:disj-function-before-derivation}
-by a curried parameter \rackinline{s}. We then split \rackinline{disj}
-into two mutually-recursive procedures, to build the variant in
-\cref{mnt:disj-function-split}.
-
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
 (define ((disj g . gs) s)
@@ -370,14 +369,19 @@ into two mutually-recursive procedures, to build the variant in
   \label{mnt:disj-function-split}
 \end{listing}
 
-\noindent We can replace the call to \rackinline{disj₂} in
-\cref{mnt:disj-function-split} by its definition in terms of
-\rackinline{append∞} and perform a trivial β-reduction. The explicit
-\rackinline{s} argument suggests removing the call to
-\rackinline{apply} and making \rackinline{D} recursive. The result is
-the version of \rackinline{D} in \cref{mnt:disj-substituted-through}.
-The definition of \rackinline{disj} remains unchanged from
-\cref{mnt:disj-function-split}.
+We can replace the call to \rackinline{disj₂} in
+\cref{mnt:disj-function-split} by its definition in terms
+of \rackinline{append∞} and perform a trivial β-reduction. The
+explicit \rackinline{s} argument suggests removing the call
+to \rackinline{apply} and making \rackinline{D} recursive. The result
+is the version of \rackinline{D} in
+\cref{mnt:disj-substituted-through}. The definition
+of \rackinline{disj} remains unchanged from
+\cref{mnt:disj-function-split}. In both clauses of \rackinline{D} we
+combine \rackinline{g} and \rackinline{s}, this suggests constructing
+that stream in \rackinline{disj} and passing it along. Adding the
+trivial base case to that \rackinline{disj} yields the definition
+in~\cref{mnt:disj-reimplementation}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -391,13 +395,6 @@ The definition of \rackinline{disj} remains unchanged from
   \caption{Derivation of \rackinline{disj} function definition}
   \label{mnt:disj-substituted-through}
 \end{listing}
-
-
-\noindent In both clauses of \rackinline{D} we combine \rackinline{g}
-and \rackinline{s}, this suggests constructing that stream
-in \rackinline{disj} and passing it along. Adding the trivial base
-case to that \rackinline{disj} yields the definition
-in~\cref{mnt:disj-reimplementation}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -418,12 +415,6 @@ in~\cref{mnt:disj-reimplementation}.
   \label{mnt:conj-function-derived-definition}
 \end{listing}
 
-We can derive the definition of \rackinline{conj} from
-\cref{mnt:conj-reimplementation} via a similar process. Starting with
-the variadic function based on the macro in
-\cref{mnt:conj-function-derived-definition}, we first η-expand and
-split the definition.
-
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
@@ -440,8 +431,6 @@ split the definition.
   \caption{Derivation of split \rackinline{conj} function definition}
   \label{mnt:conj-substituted-through}
 \end{listing}
-\noindent We next substitute for the definitions of \rackinline{conj} and
-\rackinline{conj₂}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall]{racket}
@@ -449,7 +438,8 @@ split the definition.
     (cond
       ((null? gs) (g s))
       (else
-       (C (λ (s) (append-map∞ (car gs) (g s)))
+       (C (λ (s)
+            (append-map∞ (car gs) (g s)))
           (cdr gs)
           s))))
 \end{minted}
@@ -457,14 +447,19 @@ split the definition.
   \label{mnt:C-substituted-through}
 \end{listing}
 
-Finally, since \rackinline{C} only needs \rackinline{s} to
-\emph{build} the stream, we can assemble the stream on the way
-in---instead of passing in \rackinline{g} and \rackinline{s}
-separately, we pass in their combination as a stream. The function is
-tail recursive, we can change the signature in the one and only
-external call and the recursive call. The result, after adding the
-trivial base case to \rackinline{conj}, is shown in
-\cref{mnt:conj-reimplementation}.
+We can derive the definition of \rackinline{conj} from
+\cref{mnt:conj-reimplementation} via a similar process. Starting with
+the variadic function based on the macro in
+\cref{mnt:conj-function-derived-definition}, we first η-expand and
+split the definition. We next substitute for the definitions
+of \rackinline{conj} and \rackinline{conj₂}. Finally,
+since \rackinline{C} only needs \rackinline{s} to \emph{build} the
+stream, we can assemble the stream on the way in---instead of passing
+in \rackinline{g} and \rackinline{s} separately, we pass in their
+combination as a stream. The function is tail recursive, we can change
+the signature in the one and only external call and the recursive
+call. The result, after adding the trivial base case
+to \rackinline{conj}, is shown in \cref{mnt:conj-reimplementation}.
 
 Both the functional and the macro based versions of
 \cref{mnt:conj-function-derived-definition} use a left fold over the
@@ -518,7 +513,8 @@ programming horse sense suggests the more elegant variant from
       ((null? gs) s∞)
       (else
        (append-map∞
-         (λ (s) (C (cdr gs) ((car gs) s)))
+         (λ (s)
+           (C (cdr gs) ((car gs) s)))
          s∞))))
 \end{minted}
   \caption{A right-fold variant of \rackinline{conj} after some derivations}
@@ -535,9 +531,9 @@ disjunction of conjunctions that looks superficially like
 Scheme's \rackinline{cond}) and have the programmer use these new
 underlying logical primitives. We
 implement \rackinline{carmelit-subway} as an example in
-\cref{mnt:new-carmelit}, and it looks far cry better than the 11
-binary logical operator nodes the programmer would have needed to
-write in a microKanren language without macros.
+\cref{mnt:new-carmelit}, and it reads much better than the 11 binary
+logical operator nodes the programmer would have needed to write in a
+microKanren language without macros.
 
 \begin{listing}[h]
   \begin{minted}[autogobble,stripall]{racket}
@@ -600,7 +596,7 @@ each if-then clause and removing the dependency.
 Some microKanren programmers without macros would be perfectly
 satisfied just using \rackinline{ifte} directly, especially so given
 the research community's focus on purely relational programming. But
-just as the standard forked \rackinline{if} begat
+just as the standard forked \rackinline{if} led to
 McCarthy's \rackinline{if} notation and \rackinline{cond}, a
 programmer may eventually feel the need for a nested implementation.
 Here is a functional implementation of that cascade behavior.
