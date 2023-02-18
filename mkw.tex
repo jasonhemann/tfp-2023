@@ -303,7 +303,6 @@ languages do not generally support macros and hence can use these ideas.
   \caption{Final re-definitions of \rackinline{disj} and \rackinline{conj}}\label{mnt:disj-reimplementation}
 \end{listing}
 
-
 \Cref{mnt:disj-reimplementation} shows our new versions, implemented
 as shallow wrappers over simple folds. The first steps are to dispense
 with the trivial case, and then to call a recursive help function that
@@ -533,67 +532,42 @@ There is a temptation to rewrite the second pattern in
 miniKanren's \rackinline{conda} to demand \emph{two} or more goals in
 each if-then clause and remove the dependency.
 
-% (define-syntax conda
-%   (syntax-rules ()
-%     ((conda (g₀ g ...)) (conj g₀ g ...))
-%     ((conda (g₀ g ...) ln ...)
-%      (ifte g₀ (conj g ...) (conda ln ...)))))
-
-% (define ((ifte g₁ g₂ g₃) s)
-%   (let loop ((s∞ (g₁ s)))
-%     (cond
-%       ((null? s∞) (g₃ s))
-%       ((pair? s∞)
-%        (append-map∞ g₂ s∞))
-%       (else (lambda ()
-%               (loop (s∞)))))))
-
-% (define ((conda q a . q-and-a*) s)
-%   (A (q s) a q-and-a* s))
-
-% (define (A s∞ a q-and-a* s)
-%   (cond
-%     ((null? s∞)
-%      (cond
-%        ((null? (cdr q-and-a*)) ((car q-and-a*) s))
-%        (else (A ((car q-and-a*) s)
-%                 (cadr q-and-a*)
-%                 (cddr q-and-a*)
-%                 s))))
-%     ((pair? s∞) (append-map∞ a s∞))
-%     (else (lambda () (A (s∞) a q-and-a* s)))))
-
 Some microKanren programmers without macros would be perfectly
 satisfied just using \rackinline{ifte} directly, especially so given
 the research community's focus on purely relational programming. But
 just as the standard forked \rackinline{if} led to
 McCarthy's \rackinline{if} notation and \rackinline{cond}, a
 programmer may eventually feel the need for a nested implementation.
-The lower portion of \cref{mnt:conda-implementation} contains a
-functional implementation of that cascade behavior. It includes the
-delay-and-restart behavior of \rackinline{ifte} together
-with \rackinline{conda}'s logical cascade. The \rackinline{s∞} can be
-either empty, non-empty, or a function of no arguments. In the last
-case, we invoke \rackinline{s∞}. Rather than building a largely
-redundant implementation of \rackinline{condu}, we expose the
-higher-order goal \rackinline{once} to the user. We take the
-definition of \rackinline{once} directly from \emph{TRS2e}. The
-programmer can simulate \rackinline{condu} by
+Most of \cref{mnt:conda-implementation} is a functional implementation
+of that cascade behavior. The \rackinline{conda} function consumes a
+sequence of goals. Our \rackinline{g₁g⁺} naming convention evokes
+regular expression syntax to indicate that there should be two or more
+goals. These goals are consumed in \enquote{if-then} pairs, perhaps
+followed by a final \enquote{else}. \rackinline{A}'s job is to pull
+off the first two goals in the sequence, and \rackinline{B} determines
+if there are precisely two goals, precisely three goals, or more.
+This mutual recursion is largely for readability. Rather than building
+a largely redundant implementation of \rackinline{condu}, we expose
+the higher-order goal \rackinline{once} to the user. We take the
+definitions of \rackinline{ifte} and \rackinline{once} directly from
+\emph{TRS2e}. The programmer can simulate \rackinline{condu} by
 wrapping \rackinline{once} around every test goal.
 
 
+
 \begin{listing}[h]
-  \begin{minted}[autogobble,stripall]{racket}
-(define (conda . <qa>*e)
-  (A <qa>*e))
+  \begin{minted}[autogobble,stripall,frame=single]{racket}
+(define (conda . g₁g⁺)
+  (A g₁g⁺))
 
-(define (A <qa>*e)
-  (B (car <qa>*e) (cadr <qa>*e) (cddr <qa>*e)))
+(define (A g₁g⁺)
+  (B (car g₁g⁺) (cadr g₁g⁺) (cddr g₁g⁺)))
 
-(define (B q a <qa>*e)
+(define (B g₁ g₂ g*)
   (cond
-    ((null? (cdr <qa>*e)) (ifte q a (car <qa>*e)))
-    (else (ifte q a (A <qa>*e)))))
+    ((null? g*) (conj g₁ g₂))
+    ((null? (cdr g*)) (ifte g₁ g₂ (car g*)))
+    (else (ifte g₁ g₂ (A g*)))))
 
 (define ((ifte g₁ g₂ g₃) s)
   (let loop ((s∞ (g₁ s)))
