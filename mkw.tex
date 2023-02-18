@@ -586,7 +586,7 @@ wrapping \rackinline{once} around every test goal.
   \caption{A functional \rackinline{conda}, \rackinline{ifte}, and \rackinline{once}}\label{mnt:conda-implementation}
 \end{listing}
 
-\section{Remainders and practicalities}\label{sec:functional}
+\section{Removing more macros}\label{sec:functional}
 
 The \citeyear{hemann2013muKanren} microKanren paper demonstrates how
 to implement a purely functional Kanren language in an eager host. In
@@ -619,20 +619,20 @@ other non-macro alternatives that may demand more from a host language
 than the original microKanren choices, and offer some thoughts on the
 choice.
 
-\paragraph{Logic variables}
+\subsection{Logic variables}
 
-Many of the choices for these last option hinge on a representation of
-logic variables. Every implementation must have a mechanism to produce
-the next fresh logic variable. The choice of variable representation
-will affect the implementation of unification and constraint solving,
-the actual introduction of fresh variables, as well as answer
-projection, the formatting and presentation of a query's results.
-Depending on the implementation of variables, you may also need
-additional functions to support your implementation of variables. In a
-shallow embedding, designating some set as logic variables means
-either using a \rackinline{struct}-like mechanism to construct a
-bespoke datatype hidden from the end user, or to arrogate some subset
-of the host language's values for use as logic variables.
+Many of the choices for these last options hinge on a representation
+of logic variables. Every implementation must have a mechanism to
+produce the next fresh logic variable. The choice of variable
+representation will affect the implementation of unification and
+constraint solving, the actual introduction of fresh variables, as
+well as answer projection, the formatting and presentation of a
+query's results. Depending on the implementation, the variables may
+also need additional functions to support them. In a shallow
+embedding, designing a set of logic variables means either using
+a \rackinline{struct}-like mechanism custom-build a datatype hidden
+from the microKanren programmer, or designating some subset of the
+host language's values for use as logic variables.
 Using \rackinline{struct}s and limiting the visibility of the
 constructors and accessors is a nice option for languages that support
 it.
@@ -647,7 +647,7 @@ and so requires more logic variables overall. The microKanren approach
 implicitly removes numbers, as data, from the user's term language and
 uses the natural numbers directly as an indexed set of variables.
 
-\paragraph{\rackinline{fresh}}
+\subsection{\rackinline{fresh}}
 
 There are numerous ways to represent variables, and so too are there
 many ways to introduce fresh variables. In the microKanren approach,
@@ -656,7 +656,7 @@ through the computation; to go from index to variable is the identity
 function, and the \rackinline{state->newvar} we use can be just an
 accessor. The function \rackinline{incr-var-ct} can reconstruct that
 state with the variable count incremented. The \rackinline{call/fresh}
-function takes as its first argument, a goal parameterized by the name
+function takes as its first argument a goal parameterized by the name
 of a fresh variable. \rackinline{call/fresh} then applies that
 function with the newly created logic variable, thereby associating
 that host-language lexical variable with the DSL's logic variable.
@@ -698,13 +698,13 @@ With this latter approach, however, we can expose \rackinline{var}
 directly to the programmer and the programmer can use \rackinline{let}
 bindings to introduce several logic variables simultaneously.
 
-\paragraph{\rackinline{run}}
+\subsection{\rackinline{run}}
 
 \Cref{mnt:call-fresh-and-call-initial-state} also shows how we have
 implemented a \rackinline{run}-like behavior without using macros.
-Using the purely-functional implementation of logic variables, a
-function like \rackinline{call/initial-state} can do the job
-of \rackinline{run} and \rackinline{run*}. The query is itself
+Using the purely-functional implementation of logic variables, we can
+accomplish the job of \rackinline{run} and \rackinline{run*} by a
+function like \rackinline{call/initial-state}. The query is itself
 expressed as a goal that introduces the first logic
 variable \rackinline{q}. A run-like operator displays the result with
 respect to the first variable introduced. This means pruning
@@ -716,9 +716,9 @@ variable into the query, and also to the answer projection,
 called \rackinline{reify}. The pointer-based logic variable approach
 forces the programmer to explicitly invoke \rackinline{reify} as
 though it were a goal as the last step of executing the query, as in
-\cref{mnt:run-query}, or create a special variable introduction
-mechanism for the first variable, scoped over both the query and the
-answer projection.
+the first example in \cref{mnt:run-query}, or create a special
+variable introduction mechanism for the first variable, scoped over
+both the query and the answer projection, as in the second example.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
@@ -728,13 +728,21 @@ answer projection.
       (let ((x (var 'x)))
         (== q x))
       (reify q))))
+
+(define (call/initial-state n f)
+  (let ((q (var 'q)))
+    (map (reify q)
+         (take n ((f q) initial-state)))))
+
   \end{minted}
-  \caption{Queries as expressed with global-state variables}\label{mnt:run-query}
+  \caption{Several approaches to reifying variables in \rackinline{call/initial-state}. Here \rackinline{initial-state} is a representation of an initially empty set of equations}\label{mnt:run-query}
 \end{listing}
 
-\paragraph{\rackinline{define}}
 
-The microKanren programmer can just use their host
+
+\subsection{\rackinline{define}}
+
+The microKanren programmer can use their host
 language's \rackinline{define} feature to construct relations as
 host-language functions, and manually introduce the delays in
 relations using a help function like \rackinline{Zzz} to introduce
@@ -756,7 +764,7 @@ The \rackinline{define} form will treat all but the last expression as
 statements and silently drop them, rather than conjoin them as
 in \rackinline{defrel}. That can be a subtle mistake to debug. Those
 implementing a shallowly embedded stream-based implementation in an
-eager host language may, however, have little choice.
+eager host language may have little choice.
 
 \section{Future work}\label{sec:conclusion}
 
