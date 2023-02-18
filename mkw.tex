@@ -233,42 +233,42 @@ microKanren's binary \rackinline{disj₂} and \rackinline{conj₂}
 operators, shown in \cref{mnt:disj2-conj2}, are goal combinators: they
 each take two goals, and produce a new goal. Disjunction and
 conjunction work slightly differently. The program attempts to achieve
-a \emph{goal}: it can fail or succeed (and it can succeed multiple times).
-A goal executes with respect to a \emph{state}, here the curried
-parameter \rackinline{s}, and the result is a \emph{stream} of states,
-usually denoted \rackinline{s∞} as each entry is a state that results
-from achieving that goal in the given state. The
-\rackinline{$append} function used in \rackinline{disj₂} is an
-internal kernel primitive that combines two streams into one, with an
-interleave mechanism to prevent starvation; the result is a stream of
-the ways to achieve the two goals' disjunction.
-The \rackinline{$append-map} function used in \rackinline{conj₂} is
-to
-\rackinline{$append} what \rackinline{append-map} is
+a \emph{goal}: it can fail or succeed (and it can succeed multiple
+times). A goal executes with respect to a \emph{state}, here the
+curried parameter \rackinline{s}, and the result is a \emph{stream} of
+states, usually denoted \rackinline{s∞} as each entry is a state that
+results from achieving that goal in the given state.
+The
+\rackinline{append∞} function used in \rackinline{disj₂} is a kernel
+primitive that combines two streams into one, with an interleave
+mechanism to prevent starvation; the result is a stream of the ways to
+achieve the two goals' disjunction. The \rackinline{append-map∞}
+function used in \rackinline{conj₂} is to
+\rackinline{append∞} what \rackinline{append-map} is
 to \rackinline{append}. The ways to achieve the conjunction of two
-goals are all the ways to achieve the second goal in a state itself
-the result of achieving the first goal.\@ \rackinline{$append-map}
-runs the second goal over the stream of results from the first goal,
-and combines together into a single stream the results of mapping.
-That stream represents the conjunction of the two goals, again with
-special attention to interleaving and starvation.
+goals are all the ways to achieve the second goal in a state that
+results from achieving the first goal.\@ \rackinline{append-map∞} runs
+the second goal over the stream of results from the first goal, and
+combines together the results of mapping into a single stream. That
+stream represents the conjunction of the two goals, again with special
+attention to interleaving and starvation.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
 (define ((disj₂ g₁ g₂) s)
-  ($append (g₁ s) (g₂ s)))
+  (append∞ (g₁ s) (g₂ s)))
 
 (define ((conj₂ g₁ g₂) s)
-  ($append-map g₂ (g₁ s)))
+  (append-map∞ g₂ (g₁ s)))
   \end{minted}
   \caption{microKanren \rackinline{disj₂} and \rackinline{conj₂}}\label{mnt:disj2-conj2}
 \end{listing}
 
-We want to implement disjunction and conjunction over arbitrary
-quantities of goals as functions. These implementations should
-subsume the binary \rackinline{disj₂} and \rackinline{conj₂} and they
-also should not use \rackinline{apply}. Further, they should not build
-any extraneous closures: unnecessarily building closures at runtime is
+We want to implement as functions disjunction and conjunction over
+arbitrary quantities of goals. These implementations should subsume
+the binary \rackinline{disj₂} and \rackinline{conj₂} and they also
+should not use \rackinline{apply}. Further, they should not build
+extraneous closures: unnecessarily building closures at runtime is
 always a bad idea. This re-implementation requires a host that
 supports variable arity functions, a widely available feature included
 in such languages as JavaScript, Ruby, Java, and Python. These
@@ -307,15 +307,14 @@ paper's contributions.
 \Cref{mnt:disj-reimplementation} shows our new versions, implemented
 as shallow wrappers over simple folds. In each, the first steps are to
 dispense with the trivial case, and then to call a recursive help
-function that makes no use of variadic functions. That is, all of our
-focus will be on the recurring over the list \rackinline{gs}.
-Unlike \rackinline{D}, the function \rackinline{C} does not take in
-the state \rackinline{s}; the help procedure does not need the state
-for conjunction. In each recursive call, we accumulate by mapping
-(using that special delaying implementation
-of \rackinline{append-map∞} for Kanren-language streams) the next goal
-in the list. This left-fold implementation of conjunctions therefore
-left-associates the conjuncts.
+function that makes no use of variadic functions. Our focus will be on
+recurring over the list \rackinline{gs}. Unlike \rackinline{D}, the
+function \rackinline{C} does not take in the state \rackinline{s}; the
+help procedure does not need the state for conjunction. In each
+recursive call, we accumulate by mapping (using that special delaying
+implementation of \rackinline{append-map∞} for Kanren-language
+streams) the next goal in the list. This left-fold implementation of
+conjunctions therefore left-associates the conjuncts.
 
 \subsection{Deriving semantic equivalents}
 
@@ -775,7 +774,7 @@ extra care not to provide multiple goals in the body.
 The \rackinline{define} form will treat all but the last expression as
 statements and silently drop them, rather than conjoin them as
 in \rackinline{defrel}. That can be a subtle mistake to debug. Those
-implementing a shallowly embedded streams-based implementation in an
+implementing a shallowly embedded stream-based implementation in an
 eager host language may, however, have little choice.
 
 \section{Future work}\label{sec:conclusion}
