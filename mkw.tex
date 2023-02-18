@@ -310,10 +310,10 @@ dispense with the trivial case, and then to call a recursive help
 function that makes no use of variadic functions. Our focus will be on
 recurring over the list \rackinline{gs}. Unlike \rackinline{D}, the
 function \rackinline{C} does not take in the state \rackinline{s}; the
-help procedure does not need the state for conjunction. In each
-recursive call, we accumulate by mapping (using that special delaying
-implementation of \rackinline{append-map∞} for Kanren-language
-streams) the next goal in the list. This left-fold implementation of
+help function does not need the state for conjunction. In each
+recursive call, we accumulate by mapping the next goal in the list
+using that special delaying implementation of \rackinline{append-map∞}
+for Kanren-language streams. This left-fold implementation of
 conjunctions therefore left-associates the conjuncts.
 
 \subsection{Deriving semantic equivalents}
@@ -321,14 +321,14 @@ conjunctions therefore left-associates the conjuncts.
 A developer might derive these definitions as follows. We start with
 the definition of a recursive \rackinline{disj} macro like one might
 define as surface syntax over the microKanren \rackinline{disj₂}. As
-this is not part of the microKanren language itself, we would like to
+this is not part of the microKanren language, we would like to
 dispense with the macro and implement this behavior functionally. At
 the cost of an \rackinline{apply}, we can build the corresponding
 explicitly recursive \rackinline{disj} function.
 Since \rackinline{disj} produces and consumes goals, we can η-expand
 that first functional definition by a curried
 parameter \rackinline{s}. We then split \rackinline{disj} into two
-mutually-recursive procedures, the third and fourth in definitions in
+mutually-recursive functions, the third and fourth definitions in
 \cref{mnt:disj-substituted-through}.
 
 We can replace the call to \rackinline{disj₂} in that version by its
@@ -437,9 +437,9 @@ no thorough algorithmic proof of such claims, but see for instance
 discussions and implementation in~\cite{rosenblatt2019first} for some
 of the related work so far. We have generally, however, resorted to
 small step visualizations of the search tree to explain the
-performance impact. The authors believe it is worth considering if we
-can make an equally compelling argument for this preference through
-equational reasoning and comparing the implementations of functions.
+performance impact. It is worth considering if we can make an equally
+compelling argument for this preference through equational reasoning
+and comparing the implementations of functions.
 
 % Folklore suggests that left associating conjunctions tends to improve
 % the performance of miniKanren's interleaving search. The authors know
@@ -462,11 +462,10 @@ to \rackinline{C}, because we are still waiting for an \rackinline{s}.
 We can only abstract over \rackinline{s} and wait; we show the upshot
 of this sequence in \Cref{mnt:conj-right-fold-definition}. Since we
 know that any call to \rackinline{append-map∞} we construct will
-always yield a result, the version in \cref{mnt:disj-reimplementation}
-is tail recursive. The equivalent right-fold implementation needs to
-somehow construct a closure for every recursive call. Building these
-superfluous closures is expensive. The same closure stacking behavior
-appears in the right fold variant of \rackinline{disj}. Basic
+always yield a result. The equivalent right-fold implementation needs
+to somehow construct a closure for every recursive call. Building
+these superfluous closures is expensive. The same closure stacking
+behavior appears in the right fold variant of \rackinline{disj}. Basic
 programming horse sense suggests the more elegant variants from
 \cref{mnt:disj-reimplementation}.
 
