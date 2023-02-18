@@ -466,7 +466,9 @@ of this sequence in \Cref{mnt:conj-right-fold-definition}. Since we
 know that any call to \rackinline{append-map∞} we construct will
 always yield a result, the version in \cref{mnt:disj-reimplementation}
 is tail recursive. The equivalent right-fold implementation needs to
-somehow construct a closure for every recursive call. Basic
+somehow construct a closure for every recursive call. Building these
+superfluous closures is expensive. The same closure stacking behavior
+appears in the right fold variant of \rackinline{disj}. Basic
 programming horse sense suggests the more elegant variants from
 \cref{mnt:disj-reimplementation}.
 
@@ -756,60 +758,54 @@ answer projection.
 The microKanren programmer can just use their host
 language's \rackinline{define} feature to construct relations as
 host-language functions, and manually introduce the delays in
-relations. This may be a larger concession than it looks, since it
-exposes the delay and interleave mechanism to the user, and both
-correct interleaving and even the termination of relation
-\emph{definitions} rely on a whole-program correctness property of
-relation definitions having a delay. \Cref{mnt:subtleo} relies on a
-help function \rackinline{Zzz} to introduce delays, akin to some
-earlier implementations~\cite{hemann2013muKanren}. Another downside
-worth mentioning is the programmer must now take extra care not to
-provide multiple goals to define. The \rackinline{define} form will
-treat all but the last expression as statements and silently drop
-them, rather than conjoin them as in \rackinline{defrel}. That small
-\emph{gotcha} can be subtle but significant drawback.
-
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(define (subtleo x)
-  (Zzz
-    (disj
-      (subtleo x)
-      (== x 'cat))))
-  \end{minted}
-  \caption{Omitting the delay is a subtle bug}\label{mnt:subtleo}
-\end{listing}
+relations using a help function like \rackinline{Zzz} to introduce
+delays, as in the original implementation.~\cite{hemann2013muKanren}
+This may be a larger concession than it looks, since it exposes the
+delay and interleave mechanism to the user, and both correct
+interleaving and, in an eager host language, even the termination of
+relation \emph{definitions} rely on a whole-program correctness
+property of relation definitions having a delay. \rackinline{Zzz} if
+\emph{always used correctly} would be sufficient to address that
+problem, but forgetting it just once would cause the entire program to
+loop. Turning the delaying and interleaving into a user-level
+operation means giving the programmer some explicit control over the
+search, and that in turn could transform a logic language into an
+imperative one. Another downside of relying on a
+host-language \rackinline{define} is that the programmer must now take
+extra care not to provide multiple goals in the body.
+The \rackinline{define} form will treat all but the last expression as
+statements and silently drop them, rather than conjoin them as
+in \rackinline{defrel}. That can be a subtle mistake to debug. Those
+implementing shallow streams-based implementation in an eager host
+language may have no other choice, however.
 
 \section{Future Work}\label{sec:conclusion}
 
 This note shows how to provide a somewhat more concise core language
-that significantly reduces the need for macros. The result almost
-rivals the expressivity of the full \enquote{microKanren + macros}
-approach.
+that significantly reduces the need for macros, and provides some
+alternatives for working without macros that may be more practical
+than those of~\citeauthor{hemann2013muKanren}.
 
-The old desugaring macros do not seem to suggest how to associate the
-calls to the binary primitives---both left and right look equally
-nice. Forcing ourselves to program the solution functionally, and the
-restrictions we placed on ourselves in this reimplementation, removed
-a degree of implementation freedom and led us to what seems like the
-right solution.
+Forcing ourselves to define \rackinline{disj} and \rackinline{conj}
+functionally, and with the restrictions we placed on ourselves in this
+reimplementation, removed a degree of implementation freedom and led
+us to what seems like the right solution. The result is closer to the
+design of Prolog, where the user represents conjunction of goals in
+the body of a clause with a comma and disjunction, either implicitly
+in listing various clauses or explicitly with a semicolon. The prior
+desugaring macros do not seem to suggest how to associate the calls to
+the binary primitives---both left and right look equally nice---where
+these transformations suggest a reason for the performance difference.
 
-The result is closer to the design of Prolog, where the user
-represents conjunction of goals in the body of a clause with a comma
-and disjunction, either implicitly in listing various clauses or
-explicitly with a semicolon. We assume it is agreed that our
-definitions of \rackinline{disj} and \rackinline{conj} themselves are
-sufficiently high-level operators for a surface language and that the
-zero-element base cases are at best unnecessary and likely
-undesirable; given the opportunity to define a surface language and
-its desugaring, we really shouldn't tempt the programmer by making
-undesirable programs representable when we can avoid it.
-
-Techniques for implementing \rackinline{defrel}, \rackinline{fresh}
-and \rackinline{run} (and \rackinline{run*}) without macros come with
+Existing techniques for
+implementing \rackinline{defrel}, \rackinline{fresh}
+and \rackinline{run} (and \rackinline{run*}) without macros have with
 serious drawbacks. These include exposing the implementation of
 streams and delays, and the inefficiency and clumsiness of introducing
-variables one at a time, or the need to reason with global state.
+variables one at a time, or the need to reason with global state. With
+a few more runtime features from the host language, an implementer can
+overcome some of those drawbacks, and may find one the suggested
+solutions an acceptable trade-off.
 
 From time to time we find that the usual miniKanren implementation is
 \emph{itself} lower-level than we would like to program with
@@ -833,8 +829,8 @@ optimization, as in \enquote{tail call optimization} vs.
   Handling}~\cite{felleisen2014requestions}. Regardless, we hope this
 document helps narrow the gap between implementations in functional
 host languages with and without macro systems and helps implementers
-build more elegant, expressive and efficient Kanrens in their chosen
-host languages.
+build more elegant, expressive and efficient microKanrens in their
+chosen host languages.
 
 \begin{acks}
 
