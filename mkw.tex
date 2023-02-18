@@ -74,7 +74,7 @@
 \email{dfried@indiana.edu}
 \orcid{0000-0001-9992-1675}
 
-\renewcommand{\shortauthors}{Hemann et al.}
+\renewcommand{\shortauthors}{Hemann and Friedman}
 
 \begin{abstract}
 
@@ -226,7 +226,7 @@ trade-offs, survey the landscape of available choices, and suggest
 compromises for those truly without macros, thus increasing
 microKanren's \emph{practical} portability.
 
-\section{\rackinline{disj} and \rackinline{conj} goal
+\section{The \rackinline{disj} and \rackinline{conj} goal
   constructors}\label{sec:conde}
 
 microKanren's binary \rackinline{disj₂} and \rackinline{conj₂}
@@ -272,8 +272,7 @@ extraneous closures: unnecessarily building closures at runtime is
 always a bad idea. This re-implementation requires a host that
 supports variable arity functions, a widely available feature included
 in such languages as JavaScript, Ruby, Java, and Python. These
-languages do not generally support macros and hence can use this
-paper's contributions.
+languages do not generally support macros and hence can use these ideas.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall,frame=single]{racket}
@@ -304,11 +303,12 @@ paper's contributions.
   \caption{Final re-definitions of \rackinline{disj} and \rackinline{conj}}\label{mnt:disj-reimplementation}
 \end{listing}
 
+
 \Cref{mnt:disj-reimplementation} shows our new versions, implemented
-as shallow wrappers over simple folds. In each, the first steps are to
-dispense with the trivial case, and then to call a recursive help
-function that makes no use of variadic functions. Our focus will be on
-recurring over the list \rackinline{gs}. Unlike \rackinline{D}, the
+as shallow wrappers over simple folds. The first steps are to dispense
+with the trivial case, and then to call a recursive help function that
+makes no use of variadic functions. The focus is on recurring over the
+list \rackinline{gs}. Unlike \rackinline{D}, the
 function \rackinline{C} does not take in the state \rackinline{s}; the
 help function does not need the state for conjunction. In each
 recursive call, we accumulate by mapping the next goal in the list
@@ -374,44 +374,6 @@ the definition in~\cref{mnt:disj-reimplementation}.
   \caption{Derivation of \rackinline{disj} function definition}\label{mnt:disj-substituted-through}
 \end{listing}
 
-\begin{listing}
-\begin{minted}[autogobble,stripall]{racket}
-(define-syntax conj
-  (syntax-rules ()
-    ((conj g) g)
-    ((conj g g₁ gs ...)
-     (conj (conj₂ g g₁) gs ...))))
-
-(define (conj g . gs)
-  (cond
-    ((null? gs) g)
-    (else
-     (apply conj
-       (cons (conj₂ g (car gs)) (cdr gs))))))
-
-  (define ((conj g . gs) s)
-    (C g gs s))
-
-  (define (C g gs s)
-    (cond
-      ((null? gs) (g s))
-      (else
-       ((apply conj
-          (cons (conj₂ g (car gs)) (cdr gs)))
-        s))))
-
-  (define (C g gs s)
-    (cond
-      ((null? gs) (g s))
-      (else
-       (C (λ (s)
-            (append-map∞ (car gs) (g s)))
-          (cdr gs)
-          s))))
-\end{minted}
-  \caption{Derivation of split \rackinline{conj} function definition}\label{mnt:conj-substituted-through}
-\end{listing}
-
 We can derive the definition of \rackinline{conj} from
 \cref{mnt:disj-reimplementation} via a similar process. Starting with
 the variadic function based on the macro in
@@ -460,16 +422,53 @@ definition of \rackinline{conj₂}, and β-reduce. From there, we cannot
 (easily) replace the \rackinline{apply} call by a recursive call
 to \rackinline{C}, because we are still waiting for an \rackinline{s}.
 We can only abstract over \rackinline{s} and wait; we show the upshot
-of this sequence in \Cref{mnt:conj-right-fold-definition}. Since we
-know that any call to \rackinline{append-map∞} we construct will
-always yield a result. The equivalent right-fold implementation needs
-to somehow construct a closure for every recursive call. Building
-these superfluous closures is expensive. The same closure stacking
-behavior appears in the right fold variant of \rackinline{disj}. Basic
-programming horse sense suggests the more elegant variants from
+of this sequence in \Cref{mnt:conj-right-fold-definition}. The
+equivalent right-fold implementation needs to somehow construct a
+closure for every recursive call. Building these superfluous closures
+is expensive. The same closure stacking behavior appears in the right
+fold variant of \rackinline{disj}. Basic programming horse sense
+suggests the more elegant variants from
 \cref{mnt:disj-reimplementation}.
 
-\begin{listing}
+\begin{listing}[h]
+\begin{minted}[autogobble,stripall]{racket}
+(define-syntax conj
+  (syntax-rules ()
+    ((conj g) g)
+    ((conj g g₁ gs ...)
+     (conj (conj₂ g g₁) gs ...))))
+
+(define (conj g . gs)
+  (cond
+    ((null? gs) g)
+    (else
+     (apply conj
+       (cons (conj₂ g (car gs)) (cdr gs))))))
+
+  (define ((conj g . gs) s)
+    (C g gs s))
+
+  (define (C g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else
+       ((apply conj
+          (cons (conj₂ g (car gs)) (cdr gs)))
+        s))))
+
+  (define (C g gs s)
+    (cond
+      ((null? gs) (g s))
+      (else
+       (C (λ (s)
+            (append-map∞ (car gs) (g s)))
+          (cdr gs)
+          s))))
+\end{minted}
+  \caption{Derivation of split \rackinline{conj} function definition}\label{mnt:conj-substituted-through}
+\end{listing}
+
+\begin{listing}[h]
 \begin{minted}[autogobble,stripall]{racket}
   (define ((conj g . gs) s)
     (C gs (g s)))
@@ -496,8 +495,9 @@ disjunction of conjunctions that looks superficially like
 Scheme's \rackinline{cond}) and have the programmer use these new
 underlying logical primitives. In \cref{mnt:new-carmelit}, we
 implement \rackinline{carmelit-subway} as an example, and it reads
-much better than the 11 binary logical operator nodes the programmer
-would have needed to write in a microKanren language without macros.
+much better than the 11 binary logical operators the programmer would
+have needed in the earlier version.
+
 
 \begin{listing}[h]
   \begin{minted}[autogobble,stripall]{racket}
@@ -521,54 +521,47 @@ would have needed to write in a microKanren language without macros.
 
 \section{Tidying up the impure operators}\label{sec:impure}
 
-The miniKanren \rackinline{conda} operator that provides nested
-\enquote{if-then-else} behavior relies on the
-microKanren \rackinline{ifte} underlying it. The definition
-of \rackinline{conda} requires one or more conjuncts per clause and
-one or more clauses. The last line of \rackinline{conda} contains the
-only place in the implementation that relies structurally on
-permitting nullary conjunctions, or disjunctions, of goals. Everywhere
-else conjunctions are one-or-more, and this one structural dependency
-is off-putting. There is a temptation to rewrite the second pattern in
+The \rackinline{conda} of \emph{TRS2e} provides nested
+\enquote{if-then-else} behavior. It relies on microKanren's
+underlying \rackinline{ifte}. The definition of \rackinline{conda}
+requires one or more conjuncts per clause and one or more clauses. The
+last line of \rackinline{conda} contains the only place in the
+implementation that relies structurally on permitting nullary
+conjunctions, or disjunctions, of goals. Everywhere else conjunctions
+are one-or-more, and this one structural dependency is off-putting.
+There is a temptation to rewrite the second pattern in
 miniKanren's \rackinline{conda} to demand \emph{two} or more goals in
-each if-then clause and removing the dependency.
+each if-then clause and remove the dependency.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(define-syntax conda
-  (syntax-rules ()
-    ((conda (g₀ g ...)) (conj g₀ g ...))
-    ((conda (g₀ g ...) ln ...)
-     (ifte g₀ (conj g ...) (conda ln ...)))))
+% (define-syntax conda
+%   (syntax-rules ()
+%     ((conda (g₀ g ...)) (conj g₀ g ...))
+%     ((conda (g₀ g ...) ln ...)
+%      (ifte g₀ (conj g ...) (conda ln ...)))))
 
-(define ((ifte g₁ g₂ g₃) s)
-  (let loop ((s∞ (g₁ s)))
-    (cond
-      ((null? s∞) (g₃ s))
-      ((pair? s∞)
-       (append-map∞ g₂ s∞))
-      (else (lambda ()
-              (loop (s∞)))))))
+% (define ((ifte g₁ g₂ g₃) s)
+%   (let loop ((s∞ (g₁ s)))
+%     (cond
+%       ((null? s∞) (g₃ s))
+%       ((pair? s∞)
+%        (append-map∞ g₂ s∞))
+%       (else (lambda ()
+%               (loop (s∞)))))))
 
-(define ((conda q a . q-and-a*) s)
-  (A (q s) a q-and-a* s))
+% (define ((conda q a . q-and-a*) s)
+%   (A (q s) a q-and-a* s))
 
-(define (A s∞ a q-and-a* s)
-  (cond
-    ((null? s∞)
-     (cond
-       ((null? (cdr q-and-a*)) ((car q-and-a*) s))
-       (else (A ((car q-and-a*) s)
-                (cadr q-and-a*)
-                (cddr q-and-a*)
-                s))))
-    ((pair? s∞) (append-map∞ a s∞))
-    (else (lambda () (A (s∞) a q-and-a* s)))))
-  \end{minted}
-  \caption{A typical macro implementation of \rackinline{conda} and functional reimplementation}\label{mnt:conda-implementation}
-\end{listing}
-
-
+% (define (A s∞ a q-and-a* s)
+%   (cond
+%     ((null? s∞)
+%      (cond
+%        ((null? (cdr q-and-a*)) ((car q-and-a*) s))
+%        (else (A ((car q-and-a*) s)
+%                 (cadr q-and-a*)
+%                 (cddr q-and-a*)
+%                 s))))
+%     ((pair? s∞) (append-map∞ a s∞))
+%     (else (lambda () (A (s∞) a q-and-a* s)))))
 
 Some microKanren programmers without macros would be perfectly
 satisfied just using \rackinline{ifte} directly, especially so given
@@ -583,25 +576,40 @@ with \rackinline{conda}'s logical cascade. The \rackinline{s∞} can be
 either empty, non-empty, or a function of no arguments. In the last
 case, we invoke \rackinline{s∞}. Rather than building a largely
 redundant implementation of \rackinline{condu}, we expose the
-higher-order goal \rackinline{once} to the user. The definition
-of \rackinline{once} in \cref{mnt:condu-reimplementation} is taken
-directly from~\cite{friedman2018reasoned}. The programmer can
-simulate \rackinline{condu} by wrapping \rackinline{once} around every
-test goal.
+higher-order goal \rackinline{once} to the user. We take the
+definition of \rackinline{once} directly from \emph{TRS2e}. The
+programmer can simulate \rackinline{condu} by
+wrapping \rackinline{once} around every test goal.
 
-\begin{listing}
+
+\begin{listing}[h]
   \begin{minted}[autogobble,stripall]{racket}
-(define (once g)
-  (lambda (s)
-    (let loop ((s-inf (g s)))
-      (cond
-        ((null? s-inf) '())
-        ((pair? s-inf)
-         (cons (car s-inf) '()))
-        (else (lambda ()
-                (loop (s-inf))))))))
+(define (conda . <qa>*e)
+  (A <qa>*e))
+
+(define (A <qa>*e)
+  (B (car <qa>*e) (cadr <qa>*e) (cddr <qa>*e)))
+
+(define (B q a <qa>*e)
+  (cond
+    ((null? (cdr <qa>*e)) (ifte q a (car <qa>*e)))
+    (else (ifte q a (A <qa>*e)))))
+
+(define ((ifte g₁ g₂ g₃) s)
+  (let loop ((s∞ (g₁ s)))
+    (cond
+      ((null? s∞) (g₃ s))
+      ((pair? s∞) (append-map∞ g₂ s∞))
+      (else (lambda () (loop (s∞)))))))
+
+(define ((once g) s)
+  (let loop ((s∞ (g s)))
+    (cond
+      ((null? s∞) '())
+      ((pair? s∞) (cons (car s∞) '()))
+      (else (lambda () (loop (s∞)))))))
   \end{minted}
-  \caption{The \rackinline{once} function}\label{mnt:condu-reimplementation}
+  \caption{A functional \rackinline{conda}, \rackinline{ifte}, and \rackinline{once}}\label{mnt:conda-implementation}
 \end{listing}
 
 \section{Remainders and practicalities}\label{sec:functional}
