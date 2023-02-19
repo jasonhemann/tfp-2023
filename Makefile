@@ -6,38 +6,38 @@
 # $Id: Makefile,v 1.10 2016/04/14 21:55:57 boris Exp $
 #
 
-default: mkw.pdf
+default: tfp.pdf
 
 CC = xelatex # pdflatex
 BC = biber # bibtex
 
 .PHONY: clean
 clean:
-	-rm mkw.aux mkw.log mkw.pdf mkw.bbl
+	-rm tfp.aux tfp.log tfp.pdf tfp.bbl
 
 squeaky:
-	-rm mkw.aux
-	-rm mkw.log
-	-rm mkw.pdf
-	-rm mkw.bcf
-	-rm mkw.blg
-	-rm mkw.toc
-	-rm mkw.bbl
-	-rm mkw.idx
-	-rm mkw.out
-	-rm mkw.run.xml
+	-rm tfp.aux
+	-rm tfp.log
+	-rm tfp.pdf
+	-rm tfp.bcf
+	-rm tfp.blg
+	-rm tfp.toc
+	-rm tfp.bbl
+	-rm tfp.idx
+	-rm tfp.out
+	-rm tfp.run.xml
 
 
 supersqueaky:
 	- biber --cache
 	- echo "clear biber's cache"
 
-mkw.pdf: mkw.tex mkw.bib
-	$(CC) --shell-escape mkw.tex
-	$(BC) --validate_datamodel --isbn-normalise --debug --trace mkw
-	$(CC) --shell-escape mkw.tex
-	$(CC) --shell-escape mkw.tex
+tfp.pdf: tfp.tex tfp.bib
+	$(CC) --shell-escape tfp.tex
+	$(BC) --validate_datamodel --isbn-normalise --debug --trace tfp
+	$(CC) --shell-escape tfp.tex
+	$(CC) --shell-escape tfp.tex
 
 
-grammar: mkw.tex
-	detex mkw.tex | tee >(style -L en -n -r 9) >(diction -L en -s) >/dev/null | less
+grammar: tfp.tex
+	detex tfp.tex | tee >(style -L en -n -r 9) >(diction -L en -s) >/dev/null | less

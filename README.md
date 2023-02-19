@@ -1,2 +1,2 @@
-# miniKanren Workshop 2022 Paper Directory.
+# TFP 2023 Paper Directory
 
