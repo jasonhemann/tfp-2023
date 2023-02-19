@@ -1,4 +1,4 @@
-\documentclass[sigplan,balance,pbalance,natbib=false]{acmart}
+\documentclass[sigplan,balance=true,pbalance=true,natbib=false]{acmart}
 %% ∞
 %% …
 %% ₀
@@ -604,7 +604,7 @@ to be consistent with this presentation.
 
 (define (call/initial-state n g)
   (reify/1st
-    (take n (pull (g init-state)))))
+    (take∞ n (pull (g initial-state)))))
 
 (define (((Zzz g) s))
   (g s))
@@ -720,7 +720,7 @@ the first example in \cref{mnt:run-query}, or create a special
 variable introduction mechanism for the first variable, scoped over
 both the query and the answer projection, as in the second example.
 
-\begin{listing}
+\begin{listing}[h]
   \begin{minted}[autogobble,stripall]{racket}
 (call/initial-state 1
   (let ((q (var 'q)))
@@ -732,8 +732,7 @@ both the query and the answer projection, as in the second example.
 (define (call/initial-state n f)
   (let ((q (var 'q)))
     (map (reify q)
-         (take n ((f q) initial-state)))))
-
+         (take∞ n ((f q) initial-state)))))
   \end{minted}
   \caption{Several approaches to reifying variables in \rackinline{call/initial-state}. Here \rackinline{initial-state} is a representation of an initially empty set of equations}\label{mnt:run-query}
 \end{listing}
@@ -771,7 +770,8 @@ eager host language may have little choice.
 This note shows how to provide a somewhat more concise core language
 that significantly reduces the need for macros, and provides some
 alternatives for working without macros that may be more practical
-than those of~\citeauthor{hemann2013muKanren}.
+than those
+of~\citeauthor{hemann2013muKanren}~\cite{hemann2013muKanren}.
 
 Forcing ourselves to define \rackinline{disj} and \rackinline{conj}
 functionally, and with the restrictions we placed on ourselves in this
@@ -783,6 +783,10 @@ in listing various clauses or explicitly with a semicolon. The prior
 desugaring macros do not seem to suggest how to associate the calls to
 the binary primitives---both left and right look equally nice---where
 these transformations suggest a reason for the performance difference.
+The functional \rackinline{conda} re-implementation is now also
+variadic, and exposing \rackinline{once} to the programmer makes using
+committed choice almost as easy as with the
+earlier \rackinline{condu}.
 
 Existing techniques for
 implementing \rackinline{defrel}, \rackinline{fresh}
@@ -791,8 +795,8 @@ serious drawbacks. These include exposing the implementation of
 streams and delays, and the inefficiency and clumsiness of introducing
 variables one at a time, or the need to reason with global state. With
 a few more runtime features from the host language, an implementer can
-overcome some of those drawbacks, and may find one the suggested
-solutions an acceptable trade-off.
+overcome some of those drawbacks, and may find one of the suggested
+proposals an acceptable trade-off.
 
 From time to time we find that the usual miniKanren implementation is
 \emph{itself} lower-level than we would like to program with
@@ -821,11 +825,10 @@ chosen host languages.
 
 \begin{acks}
 
-  Thanks to Ken Shan and Jeremy Siek, for helpful discussions and
-  debates during design decision deliberations. Thanks also to Greg
-  Rosenblatt and Michael Ballantyne for their insights and
-  suggestions. We would also like to thank our anonymous reviewers
-  for their insightful contributions.
+  Thanks to Ken Shan and Jeremy Siek, Greg Rosenblatt and Michael
+  Ballantyne for their helpful discussions and ideas. We would
+  also like to thank our anonymous reviewers for their insightful
+  contributions.
 
 \end{acks}
 
