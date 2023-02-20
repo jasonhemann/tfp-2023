@@ -444,25 +444,25 @@ suggests the more elegant variants from
      (apply conj
        (cons (conj₂ g (car g*)) (cdr g*))))))
 
-  (define ((conj g . g*) s)
-    (C g g* s))
+(define ((conj g . g*) s)
+  (C g g* s))
 
-  (define (C g g* s)
-    (cond
-      ((null? g*) (g s))
-      (else
-       ((apply conj
-          (cons (conj₂ g (car g*)) (cdr g*)))
+(define (C g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     ((apply conj
+        (cons (conj₂ g (car g*)) (cdr g*)))
+      s))))
+
+(define (C g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (C (λ (s)
+          (append-map∞ (car g*) (g s)))
+        (cdr g*)
         s))))
-
-  (define (C g g* s)
-    (cond
-      ((null? g*) (g s))
-      (else
-       (C (λ (s)
-            (append-map∞ (car g*) (g s)))
-          (cdr g*)
-          s))))
 \end{minted}
   \caption{Derivation of split \rackinline{conj} function definition}\label{mnt:conj-substituted-through}
 \end{listing}
@@ -825,10 +825,9 @@ chosen host languages.
 
 \begin{acks}
 
-  Thanks to Ken Shan and Jeremy Siek and Michael Ballantyne and Greg
-  Rosenblatt for their helpful discussions and ideas. We would also
-  like to thank our anonymous reviewers for their insightful
-  contributions.
+  Thanks to Michael Ballantyne, Greg Rosenblatt, Ken Shan, and Jeremy
+  Siek for their helpful discussions and ideas. We would also like to
+  thank our anonymous reviewers for their insightful contributions.
 
 \end{acks}
 
