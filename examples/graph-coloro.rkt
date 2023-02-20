@@ -1,5 +1,5 @@
 #lang racket
-;; (require minikanren (only-in racket [define define-relation]))
+;; (require minikanren (only-in racket [define defrel]))
 (require "../interface-definitions.rkt")
 (require "./functional-graph-split.rkt")
 (require (prefix-in australia: "./australia.rkt"))
@@ -12,27 +12,27 @@
 (require (prefix-in kazakhstan: "./kazakhstan.rkt"))
 (require (prefix-in ireland: "./ireland.rkt"))
 
-(define-relation (membero x l)
+(defrel (membero x l)
   (fresh (car cdr)
     (== l `(,car . ,cdr))
     (conde ((== x car))
 	   ((membero x cdr)))))
 
-(define-relation (not-membero x l)
+(defrel (not-membero x l)
   (conde ((== l '()))
 	 ((fresh (car cdr)
 	    (== l `(,car . ,cdr))
 	    (=/= x car)
 	    (not-membero x cdr)))))
 
-(define-relation (appendo xs ys zs)
+(defrel (appendo xs ys zs)
   (conde ((== xs '()) (== ys zs))
 	 ((fresh (x-head x-tail z-tail)
 	    (== xs `(,x-head . ,x-tail))
 	    (== zs `(,x-head . ,z-tail))
 	    (appendo x-tail ys z-tail)))))
 
-(define-relation (selecto x l l-x)
+(defrel (selecto x l l-x)
   (fresh (car cdr)
     (== l `(,car . ,cdr))
     (conde ((== x car)
@@ -41,14 +41,14 @@
 	      (== l-x `(,car . ,cdr-x))
 	      (selecto x cdr cdr-x))))))
 
-(define-relation (mapo p l)
+(defrel (mapo p l)
   (conde ((== l '()))
 	 ((fresh (car cdr)
 	    (== l `(,car . ,cdr))
 	    (p car)
 	    (mapo p cdr)))))
 
-;; (define-relation (mapo p l [acc (== 'cat 'cat)])
+;; (defrel (mapo p l [acc (== 'cat 'cat)])
 ;;   (conde
 ;;    [(== l '())
 ;;     acc]
@@ -58,14 +58,14 @@
 ;; 			      acc
 ;; 			      (p car))))]))
 
-(define-relation (mapo2 p t l)
+(defrel (mapo2 p t l)
   (conde ((== l '()))
 	 ((fresh (car cdr)
 	    (== l `(,car . ,cdr))
 	    (p t car)
 	    (mapo2 p t cdr)))))
 
-;; (define-relation (mapo2 p t l [acc (== 'cat 'cat)])
+;; (defrel (mapo2 p t l [acc (== 'cat 'cat)])
 ;;   (conde
 ;;    [(== l '())
 ;;     acc]
@@ -75,20 +75,20 @@
 ;; 			      acc
 ;; 			      (p t car))))]))
 
-(define-relation (assoco key table value)
+(defrel (assoco key table value)
   (fresh (car table-cdr)
     (== table `(,car . ,table-cdr))
     (conde ((== `(,key . ,value) car))
 	   ((assoco key table-cdr value)))))
 
-(define-relation (same-lengtho l1 l2)
+(defrel (same-lengtho l1 l2)
   (conde ((== l1 '()) (== l1 '()))
 	 ((fresh (car1 cdr1 car2 cdr2)
 	    (== l1 `(,car1 . ,cdr1))
 	    (== l2 `(,car2 . ,cdr2))
 	    (same-lengtho cdr1 cdr2)))))
 
-(define-relation (make-assoc-tableo l1 l2 table)
+(defrel (make-assoc-tableo l1 l2 table)
   (conde ((== l1 '()) (== l1 '()) (== table '()))
 	 ((fresh (car1 cdr1 car2 cdr2 cdr3)
 	    (== l1 `(,car1 . ,cdr1))
@@ -96,10 +96,10 @@
 	    (== table `((,car1 . ,car2) . ,cdr3))
 	    (make-assoc-tableo cdr1 cdr2 cdr3)))))
 
-(define-relation (coloro x)
+(defrel (coloro x)
   (membero x '(red green blue yellow)))
 
-(define-relation (different-colors table constraint)
+(defrel (different-colors table constraint)
   (fresh (x y x-color y-color)
     (== constraint `(,x ,y))
     (assoco x table x-color)
@@ -115,7 +115,7 @@
 ;; 		(p car)
 ;; 		(my-mapo p cdr (+ i 1))))))
 
-(define-relation (color states edges colors)
+(defrel (color states edges colors)
   ;; This is a simple constrained generate and test solver
   ;; The interesting part was the graph reduction preprocessing
   ;; stage.

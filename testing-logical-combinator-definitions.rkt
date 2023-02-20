@@ -109,7 +109,7 @@
 (when disj-result-right-to-left?
   (printf "disj answer stream comes from goals in right to left order\n"))
 
-(define-relation (answer-of arg)
+(defrel (answer-of arg)
   (disj (λ (s/c) (list arg))
         (answer-of arg)))
 

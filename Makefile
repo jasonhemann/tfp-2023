@@ -1,8 +1,6 @@
 #
-# Makefile for acmart package
-#
+# Edited from Makefile for acmart package
 # This file is in public domain
-#
 # $Id: Makefile,v 1.10 2016/04/14 21:55:57 boris Exp $
 #
 

@@ -1,7 +1,7 @@
 #lang racket
 (require "./logical-combinator-function-definitions.rkt")
 (require (for-syntax syntax/parse))
-(provide run* run conde fresh == =/= define-relation)
+(provide run* run conde fresh == =/= defrel)
 ;; left  associative conjunction ((((a & b) & c) & d) & e)
 ;; right associative conjunction (a & (b & (c & (d & e))))
 ;;

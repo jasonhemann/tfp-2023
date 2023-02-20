@@ -249,7 +249,7 @@
     ((promise? $) (delay/name ($append-map g (force $))))
     (else ($append (g (car $)) ($append-map g (cdr $))))))
 
-(define-syntax-rule (define-relation (defname . args) g)
+(define-syntax-rule (defrel (defname . args) g)
   (define ((defname . args) st) (delay/name (g st))))
 
 (define (take n $)

@@ -1,6 +1,7 @@
 #lang racket
 (require "../interface-definitions.rkt")
-;; (require minikanren (only-in racket [define define-relation]))
+;; Approximate tests against miniKanren definition
+;; (require minikanren (only-in racket [define defrel]))
 (provide (all-defined-out))
 
 (define-syntax test-compare-unreified
@@ -17,7 +18,7 @@
            (pretty-print produced)))))))
 
 
-(define-relation (appendo l s out)
+(defrel (appendo l s out)
   (conde
    [(== '() l) (== s out)]
    [(fresh (a d res)
@@ -37,21 +38,21 @@
       ((zero? n) '()))))
 
 
-(define-relation (zeroo n)
+(defrel (zeroo n)
   (== '() n))
 
 
-(define-relation (poso n)
+(defrel (poso n)
   (fresh (a d)
          (== `(,a . ,d) n)))
 
 
-(define-relation (>1o n)
+(defrel (>1o n)
   (fresh (a ad dd)
          (== `(,a ,ad . ,dd) n)))
 
 
-(define-relation (full-addero b x y r c)
+(defrel (full-addero b x y r c)
   (conde
    ((== #f b) (== #f x) (== #f y) (== #f r) (== #f c))
    ((== #t b) (== #f x) (== #f y) (== #t r) (== #f c))
@@ -63,7 +64,7 @@
    ((== #t b) (== #t x) (== #t y) (== #t r) (== #t c))))
 
 
-(define-relation (addero d n m r)
+(defrel (addero d n m r)
   (conde
    ((== #f d) (== '() m) (== n r))
    ((== #f d) (== '() n) (== m r)
@@ -82,7 +83,7 @@
    ((>1o n) (gen-addero d n m r))))
 
 
-(define-relation (gen-addero d n m r)
+(defrel (gen-addero d n m r)
   (fresh (a b c e x y z)
          (== `(,a . ,x) n)
          (== `(,b . ,y) m) (poso y)
@@ -91,15 +92,15 @@
          (addero e x y z)))
 
 
-(define-relation (pluso n m k)
+(defrel (pluso n m k)
   (addero #f n m k))
 
 
-(define-relation (minuso n m k)
+(defrel (minuso n m k)
   (pluso m k n))
 
 
-(define-relation (*o n m p)
+(defrel (*o n m p)
   (conde
    ((== '() n) (== '() p))
    ((poso n) (== '() m) (== '() p))
@@ -120,14 +121,14 @@
            (odd-*o x n m p)))))
 
 
-(define-relation (odd-*o x n m p)
+(defrel (odd-*o x n m p)
   (fresh (q)
          (bound-*o q p n m)
          (*o x m q)
          (pluso `(#f . ,q) m p)))
 
 
-(define-relation (bound-*o q p n m)
+(defrel (bound-*o q p n m)
   (conde
    ((== '() q) (poso p))
    ((fresh (a0 a1 a2 a3 x y z)
@@ -141,7 +142,7 @@
              (bound-*o x y z m)))))))
 
 
-(define-relation (=lo n m)
+(defrel (=lo n m)
   (conde
    ((== '() n) (== '() m))
    ((== '(#t) n) (== '(#t) m))
@@ -151,7 +152,7 @@
            (=lo x y)))))
 
 
-(define-relation (<lo n m)
+(defrel (<lo n m)
   (conde
    ((== '() n) (poso m))
    ((== '(#t) n) (>1o m))
@@ -161,13 +162,13 @@
            (<lo x y)))))
 
 
-(define-relation (<=lo n m)
+(defrel (<=lo n m)
   (conde
    ((=lo n m))
    ((<lo n m))))
 
 
-(define-relation (<o n m)
+(defrel (<o n m)
   (conde
    ((<lo n m))
    ((=lo n m)
@@ -176,13 +177,13 @@
            (pluso n x m)))))
 
 
-(define-relation (<=o n m)
+(defrel (<=o n m)
   (conde
    ((== n m))
    ((<o n m))))
 
 
-(define-relation (/o n m q r)
+(defrel (/o n m q r)
   (conde
    ((== r n) (== '() q) (<o n m))
    ((== '(#t) q) (=lo n m) (pluso r m n)
@@ -206,7 +207,7 @@
              (/o nh m qh rh)))))))
 
 
-(define-relation (splito n r l h)
+(defrel (splito n r l h)
   (conde
    ((== '() n) (== '() h) (== '() l))
    ((fresh (b n^)
@@ -237,7 +238,7 @@
            (splito n^ r^ l^ h)))))
 
 
-(define-relation (logo n b q r)
+(defrel (logo n b q r)
   (conde
    ;; ((== '(#t) n) (poso b) (== '() q) (== '() r)) I don't think this is needed
    ((== '() q) (<o n b) (pluso r '(#t) n))
@@ -283,7 +284,7 @@
                          (<o n bq1)))))))
 
 
-(define-relation (exp2 n b q)
+(defrel (exp2 n b q)
   (conde
    ((== '(#t) n) (== '() q))
    ((>1o n) (== '(#t) q)
@@ -304,7 +305,7 @@
            (exp2 nh b2 q1)))))
 
 
-(define-relation (repeated-mul n q nq)
+(defrel (repeated-mul n q nq)
   (conde
    ((poso n) (== '() q) (== '(#t) nq))
    ((== '(#t) q) (== n nq))
@@ -315,11 +316,11 @@
            (*o nq1 n nq)))))
 
 
-(define-relation (expo b q n)
+(defrel (expo b q n)
   (logo n b q '()))
 
 
-(define-relation (hot-dog ht)
+(defrel (hot-dog ht)
   (conde
    ((== ht 'dog))
    ((fresh (d)

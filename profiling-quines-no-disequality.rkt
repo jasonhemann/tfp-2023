@@ -58,7 +58,7 @@
 ;; ---------------------------------------------------------------------------------------------------
 
 ;; Peano numbers w/1 cons cell saved
-(define-relation (nat? o)
+(defrel (nat? o)
   (disj
    (== o '())
    (fresh (n)
@@ -67,7 +67,7 @@
        (nat? n)))))
 
 ;; Terms
-(define-relation (expr? o)
+(defrel (expr? o)
   (disj
    (fresh (n)
      (conj
@@ -91,7 +91,7 @@
        (expr? t₂)))))
 
 ;; Values
-(define-relation (val? o)
+(defrel (val? o)
   (disj
    (fresh (e n t)
      (conj
@@ -105,7 +105,7 @@
        (expr? t)))))
 
 ;; Environment
-(define-relation (env? o)
+(defrel (env? o)
   (disj
    (== o '())
    (fresh (n v e)
@@ -118,7 +118,7 @@
 ;;; Helpers
 
 ;; Disequality for Peano Numbers
-(define-relation (=/= n₁ n₂)
+(defrel (=/= n₁ n₂)
   (disj
    (fresh (pn₂)
           (conj
@@ -135,7 +135,7 @@
            (=/= pn₁ pn₂)))))
 
 ;; Environment Lookup (where keys are indices)
-(define-relation (lookup e i v)
+(defrel (lookup e i v)
   (fresh (j vj er)
     (conj
      (== e `((,j . ,vj) . ,er))
@@ -146,7 +146,7 @@
             (lookup er i v))))))
 
 ;; Evaluation
-(define-relation (valof e t v)
+(defrel (valof e t v)
   (disj
    (fresh (x)
           (conj
