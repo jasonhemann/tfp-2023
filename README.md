@@ -8,30 +8,31 @@ bench-marking those variations on some small programs.
 
 We structure the re-implementations through several files.
 
-| Purpose                                                           | File                                               |
-|-------------------------------------------------------------------|----------------------------------------------------|
-| Underlying implementation + disj/conj re-implementations          | [](./logical-combinator-function-definitions.rkt)  |
-| Minimal correctness tests for re-implementations                  | [](./testing-logical-combinator-definitions.rkt)   |
-| Interface macros, to facilitate comparisons w/miniKanren programs | [](./interface-definitions.rkt)                    |
-| Demonstrate potential cost of null? checks in base case           | [](./profiling-logical-combinator-definitions.rkt) |
-|                                                                   |                                                    |
+| File & Purpose                                                                                            |
+|-----------------------------------------------------------------------------------------------------------|
+| [Underlying implementation + disj/conj re-implementations](./logical-combinator-function-definitions.rkt) |
+| [Minimal correctness tests for re-implementations](./testing-logical-combinator-definitions.rkt)          |
+| [Interface macros, to facilitate comparisons w/miniKanren programs](./interface-definitions.rkt)          |
+| [Demonstrate potential cost of null? checks in base case](./profiling-logical-combinator-definitions.rkt) |
+
+
 
 These files are tested against Racket 8.7.
 
 
 ## Paper
 
-| Purpose    | File           |
-|------------|----------------|
-| tex source | [](./tfp.tex)  |
-| bib source | [](./tfp.bib)  |
-| Makefile   | [](./Makefile) |
-|            |                |
+| Purpose                 |
+|-------------------------|
+| [tex source](./tfp.tex) |
+| [bib source](./tfp.bib) |
+| [Makefile](./Makefile)  |
+|                         |
+
 
 In order to build the paper, you should have `pygments`, `xelatex`,
 `biber` installed and available on path. You should then be able to
 type `make`, as the default target is the paper.
-
 
 ## Examples
 
@@ -55,10 +56,11 @@ the performance impact on quines.
 
 These tests in their current state are:
 
-| Purpose                                               | File                                        |
-|-------------------------------------------------------|---------------------------------------------|
-|                                                       | [](./profiling-quines.rkt)                  |
-| Incipient program for quines interp w/o disequality   | [](./profiling-quines-no-disequality.rkt)   |
-| Incipient program for disequality based quines interp | [](./profiling-quines-with-disequality.rkt) |
-| Incipient program to reify a constraint store         | [](./constraint-store-to-program.rkt)       |
-| useful to ensure correct output                       |                                             |
+| File & Purpose                                                                                   |
+|--------------------------------------------------------------------------------------------------|
+| [](./profiling-quines.rkt)                                                                       |
+| [Incipient program for quines interp w/o disequality](./profiling-quines-no-disequality.rkt)     |
+| [Incipient program for disequality based quines interp](./profiling-quines-with-disequality.rkt) |
+| [Incipient program to reify a constraint store](./constraint-store-to-program.rkt)               |
+| useful to ensure correct output                                                                  |
+|                                                                                                  |
