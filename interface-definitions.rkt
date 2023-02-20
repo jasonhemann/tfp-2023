@@ -2,6 +2,16 @@
 (require "./logical-combinator-function-definitions.rkt")
 (require (for-syntax syntax/parse))
 (provide run* run conde fresh == =/= defrel)
+;;
+;; This file contains interface definitions to ease comparisons
+;; against existing code and examples.
+;;
+;; This also contains an alternative non-recursive fresh
+;; implementation that does not use recursive applications of
+;; call/fresh; this can be used to isolate the performance impact of
+;; conjunction and disjunction behavior
+;;
+
 ;; left  associative conjunction ((((a & b) & c) & d) & e)
 ;; right associative conjunction (a & (b & (c & (d & e))))
 ;;

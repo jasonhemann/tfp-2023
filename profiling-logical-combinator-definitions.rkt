@@ -1,12 +1,14 @@
 #lang racket
 (require profile)
 (require profile/render-graphviz)
-(require (rename-in "./logical-combinator-function-definitions.rkt"
-                    ($append append∞)
-                    ($append-map append-map∞)))
+(require
+ (rename-in "./logical-combinator-function-definitions.rkt"
+            ($append append∞)
+            ($append-map append-map∞)))
 
-;; This file attempts to show the additional cost of a null? test to
-;; check for no goals.
+;; This file attempts to demonstrate the additional cost of a null?
+;; test to check for no goals.
+
 
 (defrel (unpro1)
   (disj-variant-1 (unpro1)))
@@ -29,5 +31,7 @@
        (append∞ s∞
          (D ((car gs) s) (cdr gs) s)))))
 
-(define prof1 (profile-thunk (λ () (pull ((unpro1) '(() . 0))))))
-(define prof2 (profile-thunk (λ () (pull ((unpro2) '(() . 0))))))
+(define prof1
+  (profile-thunk (λ () (pull ((unpro1) '(() . 0))))))
+(define prof2
+  (profile-thunk (λ () (pull ((unpro2) '(() . 0))))))

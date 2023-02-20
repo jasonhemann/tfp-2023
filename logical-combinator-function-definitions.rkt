@@ -2,26 +2,21 @@
 (require (except-in rackunit fail))
 (provide (all-defined-out))
 
-;; So it seems like, if we build the 1+arg version based on
-;; conj2/disj2 primitives, we can implement them with:
+;; We can implement conj2/disj2 primitives with:
 ;;
 ;; - macros or varargs
 ;; - left recursive or right recursive
-;; - regular or flipped (verify that this latter is actually providing reasonable behavior)
-;;
-;; That points to 8 different possibilties (at least, might be still
-;; more axes of variation than I’ve considered.)
+;; - consume args list l-to-r or r-to-l
 ;;
 ;; All four of the varags versions seem to require apply, at least in
 ;; the built-over-conj2/disj2 versions.
 ;;
-;; - How many of those can have the conj2/disj2 substituted through and simplified away?
+;; This file contains a single core implementation of the
+;; non-conj/disj functionality, which is exported in all examples.
 ;;
-;; - When you do that, what do they look like?
+;; That can be required separately from these specific implementations
+;; of the conjunction/disjunction behavior.
 ;;
-;; Which one is our version?
-
-
 
 (module* macros-1+-left-assoc #f
   (provide (all-defined-out))
