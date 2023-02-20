@@ -367,8 +367,8 @@ the definition in~\cref{mnt:disj-reimplementation}.
   (cond
     ((null? g*) (g s))
     (else
-      (append∞ (g s)
-        (D (car g*) (cdr g*) s)))))
+     (append∞ (g s)
+       (D (car g*) (cdr g*) s)))))
 \end{minted}
   \caption{Derivation of \rackinline{disj} function definition}\label{mnt:disj-substituted-through}
 \end{listing}
