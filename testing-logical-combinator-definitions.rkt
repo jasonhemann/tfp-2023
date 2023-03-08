@@ -164,7 +164,7 @@
  "first\n")
 
 (test-true
- "This combination of logical operators give give the properties we want"
+ "This combination of logical operators give the properties we want"
  (and
   disj-result-left-to-right?
   first-disjunct-apprx-half?))
