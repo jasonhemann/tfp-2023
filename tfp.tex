@@ -231,14 +231,13 @@ microKanren's \emph{practical} portability.
 
 microKanren's binary \rackinline{disj₂} and \rackinline{conj₂}
 operators, shown in \cref{mnt:disj2-conj2}, are goal combinators: they
-each take two goals, and produce a new goal. Disjunction and
-conjunction work slightly differently. The program attempts to achieve
+each take two goals, and produce a new goal. The program attempts to achieve
 a \emph{goal}: it can fail or succeed (and it can succeed multiple
 times). A goal executes with respect to a \emph{state}, here the
 curried parameter \rackinline{s}, and the result is a \emph{stream} of
 states, usually denoted \rackinline{s∞} as each entry is a state that
 results from achieving that goal in the given state.
-The
+Disjunction and conjunction work slightly differently. The
 \rackinline{append∞} function used in \rackinline{disj₂} is a kernel
 primitive that combines two streams into one, with an interleave
 mechanism to prevent starvation; the result is a stream of the ways to
@@ -264,7 +263,7 @@ attention to interleaving and starvation.
   \caption{microKanren \rackinline{disj₂} and \rackinline{conj₂}}\label{mnt:disj2-conj2}
 \end{listing}
 
-We want to implement as functions disjunction and conjunction over
+We want to implement disjunction and conjunction as functions taking
 arbitrary quantities of goals. These implementations should subsume
 the binary \rackinline{disj₂} and \rackinline{conj₂} and they also
 should not use \rackinline{apply}. Further, they should not build
@@ -272,7 +271,8 @@ extraneous closures: unnecessarily building closures at runtime is
 always a bad idea. This re-implementation requires a host that
 supports variable arity functions, a widely available feature included
 in such languages as JavaScript, Ruby, Java, and Python. These
-languages do not generally support macros and hence can use these ideas.
+languages do not generally support macros, and so we advise
+implementers working in such languages to use the present approach.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall,frame=single]{racket}
@@ -311,8 +311,8 @@ list \rackinline{g*}. Unlike \rackinline{D}, the
 function \rackinline{C} does not take in the state \rackinline{s}; the
 help function does not need the state for conjunction. In each
 recursive call, we accumulate by mapping the next goal in the list
-using that special delaying implementation of \rackinline{append-map∞}
-for Kanren-language streams. This left-fold implementation of
+using \rackinline{append-map∞}'s special delaying implementation of
+Kanren-language streams. This left-fold implementation of
 conjunctions therefore left-associates the conjuncts.
 
 \subsection{Deriving semantic equivalents}
@@ -532,7 +532,7 @@ There is a temptation to rewrite the second pattern in
 miniKanren's \rackinline{conda} to demand \emph{two} or more goals in
 each if-then clause and remove the dependency.
 
-Some microKanren programmers without macros would be perfectly
+Some microKanren programmers without access to macros would be perfectly
 satisfied just using \rackinline{ifte} directly, especially so given
 the research community's focus on purely relational programming. But
 just as the standard forked \rackinline{if} led to
@@ -644,8 +644,8 @@ variable using a vector, and identifying vectors by their unique
 memory location. This latter approach models logic variables as a
 single global pool rather than reused separately across each disjunct,
 and so requires more logic variables overall. The microKanren approach
-implicitly removes numbers, as data, from the user's term language and
-uses the natural numbers directly as an indexed set of variables.
+uses the natural numbers as an indexed set of variables, which
+necessitates removing numbers from the user's term language.
 
 \subsection{\rackinline{fresh}}
 
@@ -695,8 +695,8 @@ new variable allocates some formerly unused memory location so the
 programmer does not need to track the next logic variable. See
 sokuza-kanren~\cite{kiselyov2006taste} for an example of this style.
 With this latter approach, however, we can expose \rackinline{var}
-directly to the programmer and the programmer can use \rackinline{let}
-bindings to introduce several logic variables simultaneously.
+directly to the programmer who can use \rackinline{let} bindings to
+introduce several logic variables simultaneously.
 
 \subsection{\rackinline{run}}
 
@@ -706,13 +706,13 @@ Using the purely-functional implementation of logic variables, we can
 accomplish the job of \rackinline{run} and \rackinline{run*} by a
 function like \rackinline{call/initial-state}. The query is itself
 expressed as a goal that introduces the first logic
-variable \rackinline{q}. A run-like operator displays the result with
-respect to the first variable introduced. This means pruning
+variable \rackinline{q}. A \rackinline{run}-like operator displays the
+result with respect to the first variable introduced. This means pruning
 superfluous variables from the answer, producing a single value from
 the accumulated equations, and numbering the fresh variables. When
 logic variables are only identified by reference equality, the
-language implementation must pass \emph{the} actual same logic
-variable into the query, and also to the answer projection,
+language implementation must pass the same \emph{pointer-identical} logic
+variable into both the query and into the answer projection,
 called \rackinline{reify}. The pointer-based logic variable approach
 forces the programmer to explicitly invoke \rackinline{reify} as
 though it were a goal as the last step of executing the query, as in
@@ -741,29 +741,29 @@ both the query and the answer projection, as in the second example.
 
 \subsection{\rackinline{define}}
 
-The microKanren programmer can use their host
-language's \rackinline{define} feature to construct relations as
-host-language functions, and manually introduce the delays in
-relations using a help function like \rackinline{Zzz} to introduce
-delays, as in the original implementation.~\cite{hemann2013muKanren}
-This may be a larger concession than it looks, since it exposes the
-delay and interleave mechanism to the user, and both correct
-interleaving and, in an eager host language, even the termination of
-relation \emph{definitions} rely on a whole-program correctness
-property of relation definitions having a delay. \rackinline{Zzz} if
-\emph{always used correctly} would be sufficient to address that
-problem, but forgetting it just once would cause the entire program to
-loop. Turning the delaying and interleaving into a user-level
-operation means giving the programmer some explicit control over the
-search, and that in turn could transform a logic language into an
-imperative one. Another downside of relying on a
-host-language \rackinline{define} is that the programmer must now take
-extra care not to provide multiple goals in the body.
-The \rackinline{define} form will treat all but the last expression as
-statements and silently drop them, rather than conjoin them as
-in \rackinline{defrel}. That can be a subtle mistake to debug. Those
-implementing a shallowly embedded stream-based implementation in an
-eager host language may have little choice.
+The microKanren programmer can use their host language's
+\rackinline{define} feature to construct relations as host-language
+functions, and manually introduce the delays in relations using a help
+function like \rackinline{Zzz}
+(\cref{mnt:call-fresh-and-call-initial-state}) to introduce delays, as
+in the original implementation.~\cite{hemann2013muKanren} This may be
+a larger concession than it looks, since it exposes the delay and
+interleave mechanism to the user, and both correct interleaving and,
+in an eager host language, even the termination of relation
+\emph{definitions} rely on a whole-program correctness property of
+relation definitions having a delay. \rackinline{Zzz} \emph{if always
+  used correctly} would be sufficient to address that problem, but
+forgetting it just once would cause the entire program to loop.
+Turning the delaying and interleaving into a user-level operation
+means giving the programmer some explicit control over the search, and
+that in turn could transform a logic language into an imperative one.
+Another downside of relying on a host-language \rackinline{define} is
+that the programmer must now take extra care not to provide multiple
+goals in the body. The \rackinline{define} form will treat all but the
+last expression as statements and silently drop them, rather than
+conjoin them as in \rackinline{defrel}. For those implementing a
+shallowly embedded stream-based implementation in an eager host
+language, that can be a subtle mistake to debug.
 
 \section{Future work}\label{sec:conclusion}
 
@@ -790,10 +790,10 @@ earlier \rackinline{condu}.
 
 Existing techniques for
 implementing \rackinline{defrel}, \rackinline{fresh}
-and \rackinline{run} (and \rackinline{run*}) without macros have with
+and \rackinline{run} (and \rackinline{run*}) without macros have
 serious drawbacks. These include exposing the implementation of
 streams and delays, and the inefficiency and clumsiness of introducing
-variables one at a time, or the need to reason with global state. With
+variables one at a time, or the need to reason about global state. With
 a few more runtime features from the host language, an implementer can
 overcome some of those drawbacks, and may find one of the suggested
 proposals an acceptable trade-off.
@@ -818,10 +818,9 @@ left-associative conjunction as a matter of correctness rather than an
 optimization, as in \enquote{tail call optimization} vs.
 \enquote{Properly Implemented Tail Call
   Handling}~\cite{felleisen2014requestions}. Regardless, we hope this
-document helps narrow the gap between implementations in functional
-host languages with and without macro systems and helps implementers
-build more elegant, expressive and efficient microKanrens in their
-chosen host languages.
+document narrows the gap between macro-free microKanrens and those
+using macro systems, and lead to more elegant, expressive and
+efficient implementations regardless of functional host language.
 
 \begin{acks}
 

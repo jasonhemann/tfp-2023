@@ -32,7 +32,7 @@ These files are tested against Racket 8.7.
 
 In order to build the paper, you should have `pygments`, `xelatex`,
 `biber` installed and available on path. You should then be able to
-type `make`, as the default target is the paper.
+type `make`, as the default target is the paper. 
 
 ## Examples
 
