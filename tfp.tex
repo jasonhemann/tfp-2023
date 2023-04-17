@@ -211,8 +211,8 @@ states the relation body as a logical expression, built up with
 conjunctions and disjunctions, over a class of equations and primitive
 constraints on terms. Take the \rackinline{carmelit-subway} relation
 of \cref{mnt:carmelit} as a concrete example. The Carmelit in Haifa is
-the world's shortest subway system with only six stations on its line.
-\@ \rackinline{carmelit-subway} is a six-place relation modeling a
+the world's shortest subway system with only six stations on its line;
+\rackinline{carmelit-subway} is a six-place relation modeling a
 passenger riding that subway end to end. \@
 \rackinline{carmel-center}, \rackinline{golomb}, \rackinline{masada},
 etc.\ are all term constants in the program; each is the name of a
@@ -233,23 +233,23 @@ Each query against the database contains some expression the
 programmer wants to satisfy and introduces some number of variables
 against which the language should express the answer. Each query asks
 either for all, or some bounded number of answers. The
-\rackinline{run} expression of \cref{mnt:carmelit} is a query---it ask
-for at most three answers, printed as a list of six values
-$\rackinline{s₁} \ldots \rackinline{s₆}$ for which a passenger
-could have ridden the Carmelit.\@ miniKanren returns a list of two
-answers, the only two valid ways a passenger could ride all the way
-from one end to the other.
+\rackinline{run} expression of \cref{mnt:carmelit} is a query---it
+asks for at most three ways a passenger could have ridden the
+Carmelit, printed as a list of six values for variables
+$\rackinline{s₁} \ldots \rackinline{s₆}$.\@ miniKanren returns a list
+of two answers, the only two valid ways a passenger could ride all the
+way from one end to the other.
 
 \subsection{Limitations of microKanren}
 
 A six station subway line is an example sufficiently small that
-modeling it should be painless. Without the higher-level operators and
-surface syntax that the miniKanren macros provide, however, that same
-relation requires 11 logical operator nodes, because microKanren only
-provides \emph{binary} conjunctions and disjunctions. In our view,
-this makes the superficial syntax macros practically mandatory, and
-impedes host languages without a macro system. For a logic programming
-language, solely binary logical operators is too low level.
+modeling it should be painless. Without the higher-level operators
+that the miniKanren macros implement, however, that same relation
+requires 11 logical operator nodes, because microKanren only provides
+\emph{binary} conjunctions and disjunctions. In our view, this makes
+the superficial syntax macros practically mandatory, and impedes host
+languages without a macro system. For a logic programming language,
+solely binary logical operators is too low level.
 
 \begin{listing}
   \begin{minted}[autogobble,stripall]{racket}
