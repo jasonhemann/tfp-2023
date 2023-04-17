@@ -650,14 +650,14 @@ wrapping \rackinline{once} around every test goal.
     (cond
       ((null? s∞) (g₃ s))
       ((pair? s∞) (append-map∞ g₂ s∞))
-      (else (lambda () (loop (s∞)))))))
+      (else (λ () (loop (s∞)))))))
 
 (define ((once g) s)
   (let loop ((s∞ (g s)))
     (cond
       ((null? s∞) '())
       ((pair? s∞) (cons (car s∞) '()))
-      (else (lambda () (loop (s∞)))))))
+      (else (λ () (loop (s∞)))))))
   \end{minted}
   \caption{A functional \rackinline{conda}, \rackinline{ifte}, and \rackinline{once}}\label{mnt:conda-implementation}
 \end{listing}
@@ -684,8 +684,13 @@ to be consistent with this presentation.
 
 (define (((Zzz g) s))
   (g s))
+
+> (call/initial-state 3
+    (call/fresh
+      (λ (x)
+        (== x 'cat))))
   \end{minted}
-  \caption{Functional microKanren equivalents of \emph{TRS2e} kernel macros}\label{mnt:call-fresh-and-call-initial-state}
+  \caption{Definition and use of functional microKanren equivalents of \emph{TRS2e} kernel macros}\label{mnt:call-fresh-and-call-initial-state}
 \end{listing}
 
 Each of these has drawbacks that compelled the \emph{TRS2e} authors to
@@ -732,12 +737,13 @@ through the computation; to go from index to variable is the identity
 function, and the \rackinline{state->newvar} we use can be just an
 accessor. The function \rackinline{incr-var-ct} can reconstruct that
 state with the variable count incremented. The \rackinline{call/fresh}
-function takes as its first argument a goal parameterized by the name
-of a fresh variable. \rackinline{call/fresh} then applies that
-function with the newly created logic variable, thereby associating
-that host-language lexical variable with the DSL's logic variable.
-This lets the logic language \enquote{piggyback} on the host's lexical
-scoping and variable lookup.
+function, shown in \cref{mnt:call-fresh-and-call-initial-state}, takes
+as its first argument a goal parameterized by the name of a fresh
+variable. \rackinline{call/fresh} then applies that function with the
+newly created logic variable, thereby associating that host-language
+lexical variable with the DSL's logic variable. This lets the logic
+language \enquote{piggyback} on the host's lexical scoping and
+variable lookup.
 
 This approach also means, however, that absent some additional
 machinery the user must introduce those new logic variables one at a
