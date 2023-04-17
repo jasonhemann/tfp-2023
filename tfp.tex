@@ -5,6 +5,7 @@
 %% ₁
 %% ₂
 %% ₃
+%% ₁₂₃₄₅₆
 \usepackage{fontspec,newunicodechar}
 \usepackage{hyphenat} %% electromagnetic\hyp{}endioscopy
 \usepackage[shortcuts]{extdash}
@@ -132,15 +133,15 @@ also chose to program in a deliberately small and workaday set of
 Scheme primitives.
 
 The sum of those implementation restrictions, however, seemed to force
-some awkward choices including binary logical operators, one at a time
-local variable introduction, and leaks in the stream abstractions.
-These made the surface syntax macros seem almost required, and were
-far enough from our goals that \emph{The Reasoned Schemer, 2nd
-  Ed}~\cite{friedman2018reasoned} did not use a purely functional
-kernel. It also divided host languages into those that used macros and
-those that did not. We bridge some of that split by re-implementing
-parts of the kernel using some modest runtime features common to many
-languages.
+some awkward choices including: binary logical operators, one at a
+time local variable introduction, and leaks in the stream
+abstractions. These made the surface syntax macros seem almost
+required, and were far enough from our goals that \emph{The Reasoned
+  Schemer, 2nd Ed}~\cite{friedman2018reasoned} did not use a purely
+functional kernel. It also divided host languages into those that used
+macros and those that did not. We bridge some of that split by
+re-implementing parts of the kernel using some modest runtime features
+common to many languages.
 
 Here we:
 %
@@ -180,27 +181,103 @@ outstanding questions on performance impacts of these implementation
 choices, and consider how Kanren language implementers outside of the
 Scheme family might benefit from these alternatives.
 
-\section{Limitations of microKanren}\label{sec:all-aboard}
+\section{The problem}\label{sec:all-aboard}
 
-We assume the reader is familiar with the miniKanren implementation of
-\emph{TRS2e}. Although based on microKanren, this implementation makes
-some concessions to efficiency and safety and uses a few macros in the
-language kernel itself. In addition to that implementation, in this
-paper we make occasional references to earlier iterations such as
+We briefly reprise here the basics of programming in the miniKanren
+implementation of \emph{TRS2e}, but we assume the reader is largely
+familiar with \emph{TRS2e} language. Although based on microKanren,
+the \emph{TRS2e} implementation makes some concessions to efficiency
+and safety and uses a few macros in the language kernel itself. In
+addition to that implementation, in this paper we make occasional
+references to earlier iterations such as
 \citeauthor{hemann2016small}~\cite{hemann2016small}, an expanded
 archival version of the 2013 paper~\cite{hemann2013muKanren}.
 
-The Carmelit in Haifa is the world's shortest subway system with only
-six stations on its line: an example sufficiently small that modeling
-it should be painless. But in microKanren, to model the order a
-passenger travels past the stops riding that subway end to end
-requires 11 logical operator nodes, because microKanren only provides
-\emph{binary} conjunctions and disjunctions. (\Cref{mnt:new-carmelit}
-contains this paper's alternative solution, requiring just 3.) For a
-logic programming language, solely binary logical operators is too low
-level. In our view, this makes the superficial syntax macros
-practically mandatory, and impedes host languages without a macro
-system.
+\subsection{Background}
+
+Programs consist of a database of relation definitions and queries
+executed in the context of those definitions. A relation definition
+consists of a name for the relation and a number of parameters equal
+to the relations arity, and then a body. This body states the
+condition under which the relationship holds between the parameters.
+Parameters range over a domain of terms, and the programmer can
+introduce local auxiliary variables as needed. The core \emph{TRS2e}
+language implementation relies on macros \rackinline{fresh},
+\rackinline{defrel}, and \rackinline{run} to introduce new logic
+variables, globally define relations, and execute queries. Relations
+can refer to themselves or one another in their definitions; the whole
+database of relations is mutually-recursively defined. The programmer
+states the relation body as a logical expression, built up with
+conjunctions and disjunctions, over a class of equations and primitive
+constraints on terms. Take the \rackinline{carmelit-subway} relation
+of \cref{mnt:carmelit} as a concrete example. The Carmelit in Haifa is
+the world's shortest subway system with only six stations on its line.
+\@ \rackinline{carmelit-subway} is a six-place relation modeling a
+passenger riding that subway end to end. \@
+\rackinline{carmel-center}, \rackinline{golomb}, \rackinline{masada},
+etc.\ are all term constants in the program; each is the name of a
+stop on the line. The sub-expression
+\rackinline{(== a 'carmel-center)} is an equation between the
+parameter \rackinline{a} and the term \rackinline{carmel-center}. The
+\rackinline{conde} operator takes any number of parenthesized
+sequences of expressions. Each parenthesized sequence represents the
+conjunction of those expressions, and the meaning of the
+\rackinline{conde} expression represents the disjunction of those
+conjunctions. Altogether, this program states that there are two ways
+to ride the subway end to end: a passenger can either start at
+\rackinline{carmel-center} and travel five stops to
+\rackinline{downtown}, or start at \rackinline{downtown} and travel
+five stops to \rackinline{carmel-center}.
+
+Each query against the database contains some expression the
+programmer wants to satisfy and introduces some number of variables
+against which the language should express the answer. Each query asks
+either for all, or some bounded number of answers. The
+\rackinline{run} expression of \cref{mnt:carmelit} is a query---it ask
+for at most three answers, printed as a list of six values
+$\rackinline{s₁} \ldots \rackinline{s₆}$ for which a passenger
+could have ridden the Carmelit.\@ miniKanren returns a list of two
+answers, the only two valid ways a passenger could ride all the way
+from one end to the other.
+
+\subsection{Limitations of microKanren}
+
+A six station subway line is an example sufficiently small that
+modeling it should be painless. Without the higher-level operators and
+surface syntax that the miniKanren macros provide, however, that same
+relation requires 11 logical operator nodes, because microKanren only
+provides \emph{binary} conjunctions and disjunctions. In our view,
+this makes the superficial syntax macros practically mandatory, and
+impedes host languages without a macro system. For a logic programming
+language, solely binary logical operators is too low level.
+
+\begin{listing}
+  \begin{minted}[autogobble,stripall]{racket}
+(defrel (carmelit-subway a b c d e f)
+  (conde
+    ((== a 'carmel-center)
+     (== b 'golomb)
+     (== c 'masada)
+     (== d 'haneviim)
+     (== e 'hadar-city-hall)
+     (== f 'downtown))
+    ((== a 'downtown)
+     (== b 'hadar-city-hall)
+     (== c 'haneviim)
+     (== d 'masada)
+     (== e 'golomb)
+     (== f 'carmel-center))))
+
+> (run 3 (s₁ s₂ s₃ s₄ s₅ s₆)
+    (carmelit-subway s₁ s₂ s₃ s₄ s₅ s₆))
+'((carmel-center golomb masada
+   haneviim hadar-city-hall downtown)
+  (downtown hadar-city-hall haneviim
+    masada golomb carmel-center))
+  \end{minted}
+  \caption{A miniKanren version of the Carmelit subway relation and a query. Results reformatted for space and clarity.}
+  \label{mnt:carmelit}
+\end{listing}
 
 Moreover, the microKanren language doesn't offer the programmer
 sufficient guidance in using that fine-grained control. With $n$
@@ -216,15 +293,14 @@ cascade, a microKanren programmer without the \rackinline{conda}
 surface macro would need to code that unrolled conditional expression
 by hand.
 
-The core \emph{TRS2e} language implementation relies on
-macros \rackinline{fresh}, \rackinline{defrel}, and \rackinline{run}
-to introduce new logic variables, globally define relations, and
-execute queries. Earlier implementations of those same behaviors via
-pure functional shallow embeddings, without macros, had some harsh
-consequences. We will revisit those earlier implementations and their
-trade-offs, survey the landscape of available choices, and suggest
-compromises for those truly without macros, thus increasing
-microKanren's \emph{practical} portability.
+In earlier renditions of related work, the strictures of pure
+functional shallow embedding---sans macros---seemed to force
+implementations of variable introduction, relation definition, and the
+query interface that suffered from harsh downsides. We will revisit
+those earlier implementations and their trade-offs, survey the
+landscape of available choices, and suggest compromises for those
+truly without macros, thus increasing microKanren's \emph{practical}
+portability.
 
 \section{The \rackinline{disj} and \rackinline{conj} goal
   constructors}\label{sec:conde}
