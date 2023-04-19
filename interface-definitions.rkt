@@ -1,7 +1,7 @@
 #lang racket
 (require "./logical-combinator-function-definitions.rkt")
 (require (for-syntax syntax/parse))
-(provide run* run conde fresh == =/= defrel)
+(provide run* run conde fresh == =/= defrel conda)
 ;;
 ;; This file contains interface definitions to ease comparisons
 ;; against existing code and examples.
@@ -48,6 +48,13 @@
     (conj g00 g01 ...)
     (conj gn0 gn1 ...)
     ...))
+
+(define-syntax conda
+  (syntax-rules ()
+    ((_ g) g)
+    ((_ g1 g2) (conj g1 g2))
+    ((_ g1 g2 g3 gs ...)
+     (ifte g1 g2 (conda g3 gs ...)))))
 
 ;; (define-syntax fresh
 ;;   (λ (stx)
