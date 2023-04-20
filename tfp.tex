@@ -1,5 +1,6 @@
 \documentclass[sigplan,balance=true,pbalance=true,natbib=false]{acmart}
 %% ∞
+%% ⊂
 %% …
 %% ₀
 %% ₁
@@ -503,16 +504,48 @@ and \rackinline{conj₂}.
         s))))
 \end{minted}
 
-Finally, since \rackinline{C} only needs \rackinline{s} to
-\emph{build} the stream, we can assemble the stream on the way
-in---instead of passing in \rackinline{g} and \rackinline{s}
-separately, we pass in their combination as a stream. In each
-recursive call, we accumulate by mapping the next goal in the list
-using \rackinline{append-map∞}'s special delaying implementation of
-Kanren-language streams. The function is tail recursive; we can change
-the signature in the one and only external call and the recursive
-call. Adding the trivial base case to \rackinline{conj}, yields the
-version shown in \cref{mnt:disj-reimplementation}.
+This definition of \rackinline{C} sequences the invocations of goal
+with state in the order they appear. Calls to goals stack up: the
+first goal in is the first goal executed. In each recursive call, we
+accumulate by mapping the next goal in the list using
+\rackinline{append-map∞}'s special delaying implementation of
+Kanren-language streams.
+
+\begin{minted}[autogobble,stripall]{racket}
+(C g (list p q) s)
+=
+(C (λ (s)
+     (append-map∞ p
+       (g s)))
+   (list q)
+   s)
+=
+(C (λ (s)
+     (append-map∞ q
+       ((λ (s)
+          (append-map∞ p
+            (g s)))
+        s)))
+   '()
+   s)
+=
+((λ (s)
+   (append-map∞ q
+     ((λ (s)
+        (append-map∞ p
+          (g s)))
+      s)))
+ s)
+\end{minted}
+
+The state does not change in the recursion: \rackinline{C} only needs
+\rackinline{s} to \emph{build} the stream. Therefore we can assemble
+the stream on the way in---instead of passing in \rackinline{g} and
+\rackinline{s} separately, we pass in their combination as a stream.
+The function is tail recursive; we can change the signature in the one
+and only external call and the recursive call. Adding the trivial base
+case to \rackinline{conj}, yields the version shown in
+\cref{mnt:disj-reimplementation}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall,frame=single]{racket}
@@ -584,19 +617,10 @@ comparing the implementations of functions.
 % preference through equational reasoning and comparing the
 % implementations of functions.
 
-The benefits of a left-fold over conjunctions becomes a little more
-obvious by comparison to a right-fold implementation. After we
-η-expand, unfold to a recursive help function, substitute in the
-definition of \rackinline{conj₂}, and β-reduce, we get stuck. From
-there, we cannot (easily) replace the \rackinline{apply} call by a
-recursive call to \rackinline{C}, because we are still waiting for an
-\rackinline{s}. To remove the \rackinline{apply} we can only abstract
-over \rackinline{s}. So the equivalent right-fold implementation needs
-to somehow construct a closure for every recursive call. Building
-these superfluous closures is expensive. The same closure stacking
-behavior appears in the right fold variant of \rackinline{disj}. Basic
-programming horse sense suggests the more elegant variants from
-\cref{mnt:disj-reimplementation}.
+Compare the preceding derivation from a left-fold over conjunctions
+with the following attempted derivation from a right-fold
+implementation. We η-expand and unfold to a recursive help
+function like before.
 
 \begin{minted}[autogobble,stripall]{racket}
 (define (conj g . g*)
@@ -608,57 +632,79 @@ programming horse sense suggests the more elegant variants from
   (cond
     ((null? g*) (g s))
     (else ((conj₂ g (apply conj g*)) s))))
-= { ... }
+⊂
 (define ((conj g . g*) s)
-  (define (C g g* s)
-    (cond
-      ((null? g*) (g s))
-      (else ((conj₂ g (apply conj g*)) s))))
   (C g g* s))
-=  { by the definition of conj₂ }
-(define ((conj g . g*) s)
-  (define (C g g* s)
-    (cond
-      ((null? g*) (g s))
-      (else
-        ((λ (s)
-           (append-map∞
-             (apply conj g*)
-             (g s)))
-         s))))
-  (C g g* s))
-= { β-reduction }
-(define ((conj g . g*) s)
-  (define (C g g* s)
-    (cond
-      ((null? g*) (g s))
-      (else
-        (append-map∞
-          (apply conj g*)
-          (g s)))))
-  (C g g* s))
+
+(define (C g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else ((conj₂ g (apply conj g*)) s))))
+\end{minted}
+
+In \rackinline{C}, we can substitute in the definition of
+\rackinline{conj₂} and β-reduce. We once again eta-expand the call to
+\rackinline{(apply conj g*)} to substitute with the definition of
+\rackinline{conj} and eliminate the \rackinline{apply}. There,
+however, we get stuck.
+
+\begin{minted}[]{racket}
+(define (C g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else ((conj₂ g (apply conj g*)) s))))
+=  { by definition of conj₂ and β-reduction }
+(define (C g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+      (append-map∞
+        (apply conj g*)
+        (g s)))))
 = { η-expand to use the definition of conj }
-(define ((conj g . g*) s)
-  (define (C g g* s)
-    (cond
-      ((null? g*) (g s))
-      (else
-        (append-map∞
-          (λ (s)
-            (C (car g*) (cdr g*) s))
-          (g s)))))
-  (C g g* s))
- { ... }
-(define ((conj g . g*) s)
-  (define (C g* s∞)
-    (cond
-      ((null? g*) s∞)
-      (else
-        (append-map∞
-          (λ (s)
-            (C (car g*) (cdr g*) s))
-          s∞))))
-  (C g* (g s)))
+(define (C g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+      (append-map∞
+        (λ (s)
+          (C (car g*) (cdr g*) s))
+        (g s)))))
+\end{minted}
+
+At this point in the left-fold implementation, these calls accumulate
+in a stack-like discipline, so we can simplify and pass \rackinline{g}
+and \rackinline{s} together as a stream. The equivalent right-fold
+implementation, however, is written in continuation-passing style. It
+seems to need to somehow construct a closure for every recursive call.
+Building these superfluous closures is expensive. The same closure
+stacking behavior appears in the right fold variant of
+\rackinline{disj}. Basic programming horse sense suggests the more
+elegant variants from \cref{mnt:disj-reimplementation}.
+
+\begin{minted}[]{racket}
+(C g (list p q) s)
+=
+(append-map∞
+  (λ (s)
+    (C p (list q) s))
+  (g s))
+=
+(append-map∞
+ (λ (s)
+    (append-map∞
+     (λ (s)
+        (C q '() s))
+     (p s)))
+ (g s))
+=
+(append-map∞
+ (λ (s)
+    (append-map∞
+     (λ (s)
+        (q s))
+     (p s)))
+ (g s))
 \end{minted}
 
 The new \rackinline{disj} and \rackinline{conj} functions are, we
