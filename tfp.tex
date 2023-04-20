@@ -461,8 +461,8 @@ first η-expand and split the definition.
   (cond
     ((null? g*) (g s))
     (else
-      ((apply conj
-         (cons (conj₂ g (car g*)) (cdr g*))) s))))
+     ((apply conj
+        (cons (conj₂ g (car g*)) (cdr g*))) s))))
 ⊂
 (define ((conj g . g*) s)
   (C g g* s))
@@ -672,39 +672,40 @@ however, we get stuck.
         (g s)))))
 \end{minted}
 
-At this point in the left-fold implementation, these calls accumulate
-in a stack-like discipline, so we can simplify and pass \rackinline{g}
-and \rackinline{s} together as a stream. The equivalent right-fold
-implementation, however, is written in continuation-passing style. It
-seems to need to somehow construct a closure for every recursive call.
-Building these superfluous closures is expensive. The same closure
-stacking behavior appears in the right fold variant of
-\rackinline{disj}. Basic programming horse sense suggests the more
-elegant variants from \cref{mnt:disj-reimplementation}.
+At this point in the left-fold derivation, these calls are
+accumulating in a stack-like discipline, so we can simplify and pass
+\rackinline{g} and \rackinline{s} together as a stream. The equivalent
+right-fold implementation, however, is written in a kind of
+continuation-passing style for non-deterministic computations. Every
+goal in the list seems to require a closure for every recursive call.
+Building these superfluous closures is expensive. Similar behavior
+shows up in the right-fold variant of \rackinline{disj}. Basic
+programming horse sense suggests the more elegant variants from
+\cref{mnt:disj-reimplementation}.
 
 \begin{minted}[]{racket}
-(C g (list p q) s)
+(C g (list g₁ g₂) s)
 =
 (append-map∞
   (λ (s)
-    (C p (list q) s))
+    (C g₁ (list g₂) s))
   (g s))
 =
 (append-map∞
- (λ (s)
+  (λ (s)
     (append-map∞
-     (λ (s)
-        (C q '() s))
-     (p s)))
- (g s))
+      (λ (s)
+        (C g₂ '() s))
+      (g₁ s)))
+  (g s))
 =
 (append-map∞
- (λ (s)
+  (λ (s)
     (append-map∞
-     (λ (s)
-        (q s))
-     (p s)))
- (g s))
+      (λ (s)
+        (g₂ s))
+      (g₁ s)))
+  (g s))
 \end{minted}
 
 The new \rackinline{disj} and \rackinline{conj} functions are, we
