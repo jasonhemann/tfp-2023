@@ -26,6 +26,8 @@
     Bib\TeX}}}
 
 \RequirePackage[
+  backend=biber,
+  natbib=true,
   datamodel=acmdatamodel,
 %%  style=acmnumeric,
   ]{biblatex}
@@ -187,7 +189,7 @@ implementation of \emph{TRS2e}. Although based on microKanren, the
 safety and uses a few macros in the language kernel itself. In
 addition to that implementation, in this paper we make occasional
 references to earlier iterations such as
-\citeauthor{hemann2016small}~\cite{hemann2016small}, an expanded
+\citet{hemann2016small}, an expanded
 archival version of the 2013 paper~\cite{hemann2013muKanren}.
 
 \subsection{Background}
@@ -300,7 +302,7 @@ landscape of available choices, and suggest compromises for those
 truly without macros, thus increasing microKanren's \emph{practical}
 portability.
 
-\section{The \rackinline{disj}unction and \rackinline{conj}unction
+\section{The \textmd{\rackinline{disj}}unction and \textmd{\rackinline{conj}}unction
   goal constructors}\label{sec:conde}
 
 microKanren's binary \rackinline{disj₂} and \rackinline{conj₂}
@@ -346,7 +348,7 @@ attention to interleaving and starvation.
     ((conj g₁ g₂ g* ...)
      (conj (conj₂ g₁ g₂) g* ...))))
   \end{minted}
-  \caption{microKanren \rackinline{disj₂} and \rackinline{conj₂} and their wrapper macros}\label{mnt:disj2-conj2}
+  \caption{microKanren \rackinline{disj₂}, \rackinline{conj₂}, and macros that use them}\label{mnt:disj2-conj2}
 \end{listing}
 
 We want to implement disjunction and conjunction as functions taking
@@ -437,9 +439,8 @@ remains unchanged from before.
 
 In both clauses of \rackinline{D} we combine \rackinline{g} and
 \rackinline{s}, this suggests constructing that stream in
-\rackinline{disj} and passing it along. Lifting \rackinline{D} to a
-global definition, and adding the trivial base case to that
-\rackinline{disj} yields the definition
+\rackinline{disj} and passing it along. Adding the trivial base case
+to that \rackinline{disj} yields the definition
 in~\cref{mnt:disj-reimplementation}.
 
 We can derive the definition of \rackinline{conj} from
@@ -505,18 +506,19 @@ and \rackinline{conj₂}.
 Finally, since \rackinline{C} only needs \rackinline{s} to
 \emph{build} the stream, we can assemble the stream on the way
 in---instead of passing in \rackinline{g} and \rackinline{s}
-separately, we pass in their combination as a stream. The function is
-tail recursive, we can change the signature in the one and only
-external call and the recursive call. Lifting \rackinline{C} to a
-global definition and adding the trivial base case to
-\rackinline{conj}, yields the version shown in
-\cref{mnt:disj-reimplementation}.
+separately, we pass in their combination as a stream. In each
+recursive call, we accumulate by mapping the next goal in the list
+using \rackinline{append-map∞}'s special delaying implementation of
+Kanren-language streams. The function is tail recursive; we can change
+the signature in the one and only external call and the recursive
+call. Adding the trivial base case to \rackinline{conj}, yields the
+version shown in \cref{mnt:disj-reimplementation}.
 
 \begin{listing}
 \begin{minted}[autogobble,stripall,frame=single]{racket}
   (define ((disj . g*) s)
     (cond
-      ((null? g*) (list))
+      ((null? g*) '())
       (else (D ((car g*) s) (cdr g*) s))))
 
   (define (D s∞ g* s)
@@ -528,7 +530,7 @@ global definition and adding the trivial base case to
 
   (define ((conj . g*) s)
     (cond
-      ((null? g*) (list s))
+      ((null? g*) (cons s '()))
       (else (C (cdr g*) ((car g*) s)))))
 
   (define (C g* s∞)
@@ -544,12 +546,10 @@ global definition and adding the trivial base case to
 Both of these new versions are shallow wrappers over simple folds. The
 first steps are to dispense with the trivial case, and then to call a
 recursive help function that makes no use of variadic arguments. The
-focus is on recurring over the list \rackinline{g*}. In each recursive
-call, we accumulate by mapping the next goal in the list using
-\rackinline{append-map∞}'s special delaying implementation of
-Kanren-language streams. Unlike \rackinline{D}, the function
-\rackinline{C} does not take in the state \rackinline{s}; the help
-function does not need the state for conjunction.
+focus is on recurring over the list \rackinline{g*}. Unlike
+\rackinline{D}, the function \rackinline{C} does not take in the state
+\rackinline{s}; the help function does not need the state for
+conjunction.
 
 \subsection{What's left?}\label{sec:whats-left}
 
@@ -563,12 +563,14 @@ left-associates the conjuncts. This is not an accident.
 Folklore suggests left associating conjunctions tends to improve the
 performance of miniKanren's interleaving search. The authors know of
 no thorough algorithmic proof of such claims, but see for instance
-discussions and implementation in~\cite{rosenblatt2019first} for some
-of the related work so far. We have generally, however, resorted to
-small step visualizations of the search tree to explain the
-performance impact. It is worth considering if we can make an equally
-compelling argument for this preference through equational reasoning
-and comparing the implementations of functions.
+discussions and implementation in
+\citet{rosenblatt2019first} for some of
+the related work so far. We have generally, however, resorted to small
+step visualizations of the search tree to explain the performance
+impact. It is worth considering if we can make an equally compelling
+argument for this preference through equational reasoning and
+comparing the implementations of functions.
+
 
 % Folklore suggests that left associating conjunctions tends to improve
 % the performance of miniKanren's interleaving search. The authors know
@@ -697,64 +699,69 @@ have needed in the earlier version.
 The \rackinline{conda} of \emph{TRS2e} provides nested
 \enquote{if-then-else} behavior (the \rackinline{a} is because
 \rackinline{a}t most one line succeeds). It relies on microKanren's
-underlying \rackinline{ifte}. The definition of \rackinline{conda}
-requires one or more conjuncts per clause and one or more clauses. The
-last line of \rackinline{conda} contains the only place in the
-implementation that relies structurally on permitting nullary
-conjunctions, or disjunctions, of goals. Everywhere else conjunctions
-are one-or-more, and this one structural dependency is off-putting.
-There is a temptation to rewrite the second pattern in
-miniKanren's \rackinline{conda} to demand \emph{two} or more goals in
-each if-then clause and remove the dependency.
+underlying \rackinline{ifte}. That \rackinline{conda} requires one or
+more conjuncts per clause and one or more clauses. Once again, we
+would like to have an equivalently expressive feature without
+resorting to macros. Unlike the \emph{TRS2e} implementation, the
+versions of \rackinline{conda} in \cref{mnt:conda-macro} consume a
+sequence of goals. They consume those goals in \enquote{if-then}
+pairs, perhaps followed by a final \enquote{else}; we have no choice
+if we want to proceed without using a macro.
 
-Some microKanren programmers without access to macros would be perfectly
-satisfied just using \rackinline{ifte} directly, especially so given
-the research community's focus on purely relational programming. But
-just as the standard forked \rackinline{if} led to
-McCarthy's \rackinline{if} notation and \rackinline{cond}, a
-programmer may eventually feel the need for a nested implementation.
-Most of \cref{mnt:conda-implementation} is a functional implementation
-of that cascade behavior. The \rackinline{conda} function consumes a
-sequence of goals. Our \rackinline{g₁g⁺} naming convention evokes
-regular expression syntax to indicate that there should be two or more
-goals. These goals are consumed in \enquote{if-then} pairs, perhaps
-followed by a final \enquote{else}. \rackinline{A}'s job is to pull
-off the first two goals in the sequence, and \rackinline{B} determines
-if there are precisely two goals, precisely three goals, or more.
-This mutual recursion is largely for readability. Rather than building
-a largely redundant implementation of \rackinline{condu}, we expose
-the higher-order goal \rackinline{once} to the user. We take the
-definitions of \rackinline{ifte} and \rackinline{once} directly from
-\emph{TRS2e}. The programmer can simulate \rackinline{condu} by
-wrapping \rackinline{once} around every test goal.
+\begin{listing}
+\begin{minted}[autogobble,stripall]{racket}
+(define-syntax conda
+  (syntax-rules ()
+    ((conda g) g)
+    ((conda g₁ g₂) (conj g₁ g₂))
+    ((conda g₁ g₂ g₃ g* ...)
+     (ifte g₁ g₂ (conda g₃ g* ...)))))
+
+(define (conda g . g*)
+  (cond
+    ((null? g*) g)
+    ((null? (cdr g*)) (conj g (car g*)))
+    (else
+     (ifte g (car g*) (apply conda (cdr g*))))))
+\end{minted}
+  \caption{A re-implemented \rackinline{conda} macro and its functional equivalent}\label{mnt:conda-macro}
+\end{listing}
+
+We defer the derivation of our new \rackinline{conda} solution to
+\cref{sec:conda-derivation}. Rather than building a largely redundant
+implementation of \rackinline{condu}, we expose the higher-order goal
+\rackinline{once} to the user. The programmer can simulate
+\rackinline{condu} by wrapping \rackinline{once} around every test
+goal. We do however take this opportunity to also lift the inner
+function \rackinline{loop} to a top-level definition.
 
 \begin{listing}[h]
   \begin{minted}[autogobble,stripall,frame=single]{racket}
-(define (conda . g₁g⁺)
-  (A g₁g⁺))
-
-(define (A g₁g⁺)
-  (B (car g₁g⁺) (cadr g₁g⁺) (cddr g₁g⁺)))
-
-(define (B g₁ g₂ g*)
+(define ((conda . g*) s)
   (cond
-    ((null? g*) (conj g₁ g₂))
-    ((null? (cdr g*)) (ifte g₁ g₂ (car g*)))
-    (else (ifte g₁ g₂ (A g*)))))
+    ((null? g*) '())
+    (else (A (cdr g*) ((car g*) s) s))))
 
-(define ((ifte g₁ g₂ g₃) s)
-  (let loop ((s∞ (g₁ s)))
-    (cond
-      ((null? s∞) (g₃ s))
-      ((pair? s∞) (append-map∞ g₂ s∞))
-      (else (λ () (loop (s∞)))))))
+(define (A g* s∞ s)
+  (cond
+    ((null? g*) s∞)
+    ((null? (cdr g*)) (append-map∞ (car g*) s∞))
+    (else (ifs∞te s∞ (car g*) (cdr g*) s))))
+
+(define (ifs∞te s∞ g g+ s)
+  (cond
+    ((null? s∞) (A (cdr g+) ((car g+) s) s))
+    ((pair? s∞) (append-map∞ g s∞))
+    (else (λ () (ifs∞te (s∞) g g+ s)))))
 
 (define ((once g) s)
-  (let loop ((s∞ (g s)))
-    (cond
-      ((null? s∞) '())
-      ((pair? s∞) (cons (car s∞) '()))
-      (else (λ () (loop (s∞)))))))
+  (O (g s)))
+
+(define (O s∞)
+  (cond
+    ((null? s∞) '())
+    ((pair? s∞) (cons (car s∞) '()))
+    (else (λ () (O (s∞))))))
   \end{minted}
   \caption{A functional \rackinline{conda}, \rackinline{ifte}, and \rackinline{once}}\label{mnt:conda-implementation}
 \end{listing}
@@ -794,8 +801,7 @@ Each of these has drawbacks that compelled the \emph{TRS2e} authors to
 instead use macro-based alternatives in the kernel layer. In this
 section, we explicitly address those drawbacks and point out some
 other non-macro alternatives that may demand more from a host language
-than the original microKanren choices, and offer some thoughts on the
-choice.
+than the original microKanren choices, and make some recommendations.
 
 \subsection{Logic variables}
 
@@ -807,13 +813,12 @@ constraint solving, the actual introduction of fresh variables, as
 well as answer projection, the formatting and presentation of a
 query's results. Depending on the implementation, the variables may
 also need additional functions to support them. In a shallow
-embedding, designing a set of logic variables means either using
-a \rackinline{struct}-like mechanism custom-build a datatype hidden
+embedding, designing a set of logic variables means either using a
+\rackinline{struct}-like mechanism to custom-build a datatype hidden
 from the microKanren programmer, or designating some subset of the
-host language's values for use as logic variables.
-Using \rackinline{struct}s and limiting the visibility of the
-constructors and accessors is a nice option for languages that support
-it.
+host language's values for use as logic variables. Using
+\rackinline{struct}s and limiting the visibility of the constructors
+and accessors is a nice option for languages that support it.
 
 The choice of which host language values to take for logic variables
 divides roughly into the structurally equal and the referentially
@@ -831,16 +836,17 @@ There are numerous ways to represent variables, and so too are there
 many ways to introduce fresh variables. In the microKanren approach,
 the current variable index is one of the fields of the state threaded
 through the computation; to go from index to variable is the identity
-function, and the \rackinline{state->newvar} we use can be just an
-accessor. The function \rackinline{incr-var-ct} can reconstruct that
-state with the variable count incremented. The \rackinline{call/fresh}
-function, shown in \cref{mnt:call-fresh-and-call-initial-state}, takes
-as its first argument a goal parameterized by the name of a fresh
-variable. \rackinline{call/fresh} then applies that function with the
-newly created logic variable, thereby associating that host-language
-lexical variable with the DSL's logic variable. This lets the logic
-language \enquote{piggyback} on the host's lexical scoping and
-variable lookup.
+function, and the \rackinline{state->newvar} function we use can be
+just an accessor. The function \rackinline{incr-var-ct} can
+reconstruct that state with the variable count incremented. The
+\rackinline{call/fresh} function, shown in
+\cref{mnt:call-fresh-and-call-initial-state}, takes as its first
+argument a goal parameterized by the name of a fresh variable.
+\rackinline{call/fresh} then applies that function with the newly
+created logic variable, thereby associating that host-language lexical
+variable with the DSL's logic variable. This lets the logic language
+\enquote{piggyback} on the host's lexical scoping and variable lookup,
+as shown in \cref{mnt:call-fresh-and-call-initial-state}.
 
 This approach also means, however, that absent some additional
 machinery the user must introduce those new logic variables one at a
@@ -883,7 +889,7 @@ introduce several logic variables simultaneously.
 implemented a \rackinline{run}-like behavior without using macros.
 Using the referentially transparent implementation of logic variables,
 we can accomplish the job of \rackinline{run} and \rackinline{run*} by
-a function like \rackinline{call/initial-state}. The query is itself
+a \rackinline{call/initial-state}-like function. The query is itself
 expressed as a goal that introduces the first logic variable
 \rackinline{q}. A \rackinline{run}-like operator displays the result
 with respect to the first variable introduced. This means pruning
@@ -932,7 +938,7 @@ in an eager host language, even the termination of relation
 \emph{definitions} rely on a whole-program correctness property of
 relation definitions having a delay. \rackinline{Zzz} \emph{if always
   used correctly} would be sufficient to address that problem, but
-forgetting it just once would cause the entire program to loop.
+forgetting it just once could cause the entire program to loop.
 Turning the delaying and interleaving into a user-level operation
 means giving the programmer some explicit control over the search, and
 that in turn could transform a logic language into an imperative one.
@@ -949,8 +955,7 @@ language, that can be a subtle mistake to debug.
 This note shows how to provide a somewhat more concise core language
 that significantly reduces the need for macros, and provides some
 alternatives for working without macros that may be more practical
-than those
-of~\citeauthor{hemann2013muKanren}~\cite{hemann2013muKanren}.
+than those of~\citet{hemann2013muKanren}.
 
 Forcing ourselves to define \rackinline{disj} and \rackinline{conj}
 functionally, and with the restrictions we placed on ourselves in this
@@ -998,7 +1003,7 @@ optimization, as in \enquote{tail call optimization} vs.
 \enquote{Properly Implemented Tail Call
   Handling}~\cite{felleisen2014requestions}. Regardless, we hope this
 document narrows the gap between macro-free microKanrens and those
-using macro systems, and lead to more elegant, expressive and
+using macro systems, and leads to more elegant, expressive and
 efficient implementations regardless of functional host language.
 
 \begin{acks}
@@ -1010,6 +1015,188 @@ efficient implementations regardless of functional host language.
 \end{acks}
 
 \printbibliography{}
+
+\appendix
+
+\section{\rackinline{conda} derivation}\label{sec:conda-derivation}
+
+\begin{minted}[autogobble,stripall]{racket}
+(define (conda g . g*)
+  (cond
+    ((null? g*) g)
+    ((null? (cdr g*)) (conj g (car g*)))
+    (else
+     (ifte g (car g*) (apply conda (cdr g*))))))
+= { η-expansion }
+(define ((conda g . g*) s)
+  (cond
+    ((null? g*) (g s))
+    ((null? (cdr g*)) ((conj g (car g*)) s))
+    (else
+     ((ifte g (car g*) (apply conda (cdr g*)))
+      s))))
+⊂
+(define ((conda g . g*) s)
+  (A g g* s))
+
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    ((null? (cdr g*)) ((conj g (car g*)) s))
+    (else
+     ((ifte g (car g*) (apply conda (cdr g*)))
+      s))))
+\end{minted}
+
+\noindent We do not change \rackinline{conda}'s definition again until
+the version in \cref{mnt:conda-implementation}.
+
+\begin{minted}[autogobble,stripall]{racket}
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    ((null? (cdr g*)) ((conj g (car g*)) s))
+    (else
+     ((ifte g (car g*) (apply conda (cdr g*)))
+      s))))
+= {let bindings }
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*) ((conj g g1) s))
+         (else
+          ((ifte g g1 (apply conda g*))
+           s)))))))
+= { η-expansion }
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*) ((conj g g1) s))
+         (else
+          ((ifte g g1
+             (λ (s)
+               ((apply conda g*) s)))
+           s)))))))
+= { by definition of conda }
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*) ((conj g g1) s))
+         (else
+          ((ifte g g1
+             (λ (s)
+               ((apply conda g*) s)))
+           s)))))))
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*) ((conj g g1) s))
+         (else
+          ((ifte g g1
+             (λ (s)
+               (A (car g*) (cdr g*) s)))
+           s)))))))
+= { by definition of conj and C }
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*)
+          (append-map∞ g1 (g s)))
+         (else
+          ((ifte g g1
+             (λ (s)
+               (A (car g*) (cdr g*) s)))
+           s)))))))
+= { by definition of ifte and a β reduction }
+(define (A g g* s)
+  (cond
+    ((null? g*) (g s))
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*)
+          (append-map∞ g1 (g s)))
+         (else
+          (let loop ((s∞ (g s)))
+            (cond
+              ((null? s∞) (A (car g*) (cdr g*) s))
+              ((pair? s∞) (append-map∞ g1 s∞))
+              (else (λ () (loop (s∞))))))))))))
+
+\end{minted}
+
+At this point \rackinline{g} and \rackinline{s} in \rackinline{conda}
+are \emph{begging} to be passed as a stream \rackinline{s∞}; we oblige
+them. We can lift that local function \rackinline{loop} to a global
+definition as long as we pass all the necessary parameters. Since the
+only call to \rackinline{ifs∞te} is in \rackinline{A}, we know that
+\rackinline{ifs∞te}'s third parameter will always be a non-empty list.
+
+\begin{minted}[autogobble,stripall]{racket}
+(define (A g* s∞)
+  (cond
+    ((null? g*) s∞)
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*)
+          (append-map∞ g1 s∞))
+         (else
+          (let loop ((s∞ s∞))
+            (cond
+              ((null? s∞)
+               (A (cdr g*) ((car g*) s)))
+              ((pair? s∞)
+               (append-map∞ g1 s∞))
+              (else
+               (λ ()
+                 (loop (s∞))))))))))))
+⊂
+(define (A g* s∞)
+  (cond
+    ((null? g*) s∞)
+    (else
+     (let ((g1 (car g*)) (g* (cdr g*)))
+       (cond
+         ((null? g*)
+          (append-map∞ g1 s∞))
+         (else
+          (ifs∞te s∞ g1 g* s)))))))
+
+(define (ifs∞te s∞ g g+ s)
+  (cond
+    ((null? s∞)
+     (A (cdr g+) ((car g+) s)))
+    ((pair? s∞)
+     (append-map∞ g s∞))
+    (else
+     (λ ()
+       (ifs∞te (s∞ g g+ s))))
+\end{minted}
+
+If we also add a line in \rackinline{conda} to dispatch with the
+trivial case, we arrive at the definition in
+\cref{mnt:conda-implementation}. Most of
+\cref{mnt:conda-implementation} is a functional implementation of that
+cascade behavior. \rackinline{A} knows it has at least one goal; it's
+job is to determines if there are precisely one goal, precisely two
+goals, or more.
+
 
 \end{document}
 

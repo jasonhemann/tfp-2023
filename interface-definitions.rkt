@@ -49,12 +49,58 @@
     (conj gn0 gn1 ...)
     ...))
 
-(define-syntax conda
-  (syntax-rules ()
-    ((_ g) g)
-    ((_ g1 g2) (conj g1 g2))
-    ((_ g1 g2 g3 gs ...)
-     (ifte g1 g2 (conda g3 gs ...)))))
+
+(define ((conda g . g*) s)
+  (A g* (g s) s))
+
+(define (A g* s∞ s)
+  (cond
+    ((null? g*) s∞)
+    ((null? (cdr g*)) ($append-map (car g*) s∞))
+    (else (ifs∞te s∞ (car g*) (cdr g*) s))))
+
+(define (ifs∞te s∞ g g* s)
+  (cond
+    ((null? s∞) (A (cdr g*) ((car g*) s) s))
+    ((pair? s∞) ($append-map g s∞))
+    (else (λ () (ifs∞te (s∞) g g* s)))))
+
+(define (O s∞)
+  (cond
+    ((null? s∞) (list))
+    ((pair? s∞) (list (car s∞)))
+    (else (λ () (O (s∞))))))
+
+(define ((once g) s)
+  (O (g s)))
+
+
+;;
+;; (define (C g* s∞)
+;;   (cond
+;;     ((null? g*) s∞)
+;;     (else
+;;      (C (cdr g*)
+;;         ($append-map (car g*) s∞)))))
+
+;; (define ((conda g . g*) s)
+;;   (A g* (g s) s))
+
+;; (define (A g* s∞ s)
+;;   (cond
+;;     ((null? g*) s∞)
+;;     ((null? (cdr g*)) (C g* s∞))
+;;     (else (ifs∞te s∞ g* s))))
+
+;; ;; (A   Q A    Q A   )
+;; ;; [Listof Goal] [Streamof State] State -> [Streamof State]
+;; (define (ifs∞te s∞ g* s)
+;;   (cond
+;; 	((null? s∞)
+;;      (let ((rest-g* (cdr g*)))
+;;        (A (cdr rest-g*) ((car rest-g*) s) s)))
+;;  	((pair? s∞) ($append-map (car g*) s∞))
+;; 	(else (λ () (ifs∞te (s∞) g* s)))))
 
 ;; (define-syntax fresh
 ;;   (λ (stx)
