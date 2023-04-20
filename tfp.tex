@@ -1099,25 +1099,7 @@ efficient implementations regardless of functional host language.
 the version in \cref{mnt:conda-implementation}.
 
 \begin{minted}[autogobble,stripall]{racket}
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    ((null? (cdr g*)) ((conj g (car g*)) s))
-    (else
-     ((ifte g (car g*) (apply conda (cdr g*)))
-      s))))
-= {let bindings }
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) ((conj g g1) s))
-         (else
-          ((ifte g g1 (apply conda g*))
-           s)))))))
-= { η-expansion }
+= {let bindings and η-expansion }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
@@ -1130,32 +1112,7 @@ the version in \cref{mnt:conda-implementation}.
              (λ (s)
                ((apply conda g*) s)))
            s)))))))
-= { by definition of conda }
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) ((conj g g1) s))
-         (else
-          ((ifte g g1
-             (λ (s)
-               ((apply conda g*) s)))
-           s)))))))
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) ((conj g g1) s))
-         (else
-          ((ifte g g1
-             (λ (s)
-               (A (car g*) (cdr g*) s)))
-           s)))))))
-= { by definition of conj and C }
+= { by definition of conda conj and C }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
@@ -1189,9 +1146,9 @@ the version in \cref{mnt:conda-implementation}.
 
 At this point \rackinline{g} and \rackinline{s} in \rackinline{conda}
 are \emph{begging} to be passed as a stream \rackinline{s∞}; we oblige
-them. We can lift that local function \rackinline{loop} to a global
-definition as long as we pass all the necessary parameters. Since the
-only call to \rackinline{ifs∞te} is in \rackinline{A}, we know that
+them. We lift that local function \rackinline{loop} to a global
+definition, passing all the parameters it needs. Since the only call
+to \rackinline{ifs∞te} is in \rackinline{A}, we know that
 \rackinline{ifs∞te}'s third parameter will always be a non-empty list.
 
 \begin{minted}[autogobble,stripall]{racket}
@@ -1241,8 +1198,8 @@ trivial case, we arrive at the definition in
 \cref{mnt:conda-implementation}. Most of
 \cref{mnt:conda-implementation} is a functional implementation of that
 cascade behavior. \rackinline{A} knows it has at least one goal; it's
-job is to determines if there are precisely one goal, precisely two
-goals, or more.
+job is to determine if there is precisely one goal, precisely two
+goals, or more than two goals.
 
 
 \end{document}
