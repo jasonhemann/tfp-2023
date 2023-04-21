@@ -276,7 +276,7 @@ solely binary logical operators is too low level.
   (downtown hadar-city-hall haneviim
     masada golomb carmel-center))
   \end{minted}
-  \caption{A miniKanren version of the Carmelit subway relation and a query. Results reformatted for space and clarity.}
+  \caption{The Carmelit subway relation and a query. Results reformatted for clarity and space.}
   \label{mnt:carmelit}
 \end{listing}
 
@@ -376,10 +376,14 @@ explicitly recursive \rackinline{disj} function. Since
 \rackinline{disj} produces and consumes goals, we can η-expand that
 first functional definition by a curried parameter \rackinline{s}. We
 then split \rackinline{disj} into two mutually-recursive functions. We
-use \rackinline{⊂} to indicate that the newer \rackinline{disj}
-behaves the same as the old one, though it now calls a help function
-\rackinline{D}.\@ \rackinline{D} will only ever be called from
-\rackinline{disj}.
+use the symbol \rackinline{⊂} here to indicate that the newer
+\rackinline{disj} produces the same values as the old one, although it
+now does so by calling a new globally-defined function
+\rackinline{D}.\@ This new help function will only ever be called from
+\rackinline{disj} so does not \emph{need} to be global; we do so for
+space and clarity. In this paper, every such help function we
+introduce with \rackinline{⊂} could have instead been local and the
+relationship actually an equality.
 
 \begin{minted}[autogobble,stripall]{racket}
 (define (disj g . g*)
@@ -407,13 +411,6 @@ and perform a trivial β-reduction. The explicit \rackinline{s}
 argument suggests removing the call to \rackinline{apply} and making
 \rackinline{D} self-recursive. The definition of \rackinline{disj}
 remains unchanged from before.
-
-\begin{minted}[autogobble,stripall]{racket}
-(define (D g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else ((disj₂ g (apply disj g*)) s))))
-\end{minted}
 
 \begin{minted}[autogobble,stripall]{racket}
 = { by definition of disj₂ }
@@ -505,34 +502,34 @@ and \rackinline{conj₂}.
 \end{minted}
 
 This definition of \rackinline{C} sequences the invocations of goal
-with state in the order they appear. Calls to goals stack up: the
-first goal in is the first goal executed. In each recursive call, we
-accumulate by mapping the next goal in the list using
+and state in the order they appear. \rackinline{append-map∞} acts like
+a non-deterministic \rackinline{compose} operator. In each recursive
+call, we accumulate by mapping the next goal in the list using
 \rackinline{append-map∞}'s special delaying implementation of
 Kanren-language streams.
 
 \begin{minted}[autogobble,stripall]{racket}
-(C g (list p q) s)
+(C g (list g₁ g₂) s)
 =
 (C (λ (s)
-     (append-map∞ p
+     (append-map∞ g₁
        (g s)))
-   (list q)
+   (list g₂)
    s)
 =
 (C (λ (s)
-     (append-map∞ q
+     (append-map∞ g₂
        ((λ (s)
-          (append-map∞ p
+          (append-map∞ g₁
             (g s)))
         s)))
    '()
    s)
 =
 ((λ (s)
-   (append-map∞ q
+   (append-map∞ g₂
      ((λ (s)
-        (append-map∞ p
+        (append-map∞ g₁
           (g s)))
       s)))
  s)
@@ -1056,8 +1053,10 @@ efficient implementations regardless of functional host language.
 \begin{acks}
 
   Thanks to Michael Ballantyne, Greg Rosenblatt, Ken Shan, and Jeremy
-  Siek for their helpful discussions and ideas. We would also like to
-  thank our anonymous reviewers for their insightful contributions.
+  Siek for their helpful discussions and ideas. Thanks to Yafei Yang
+  and Darshal Shetty for their implementation suggestions. We would
+  also like to thank our anonymous reviewers for their insightful
+  contributions.
 
 \end{acks}
 
@@ -1085,7 +1084,6 @@ efficient implementations regardless of functional host language.
 ⊂
 (define ((conda g . g*) s)
   (A g g* s))
-
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
@@ -1096,7 +1094,7 @@ efficient implementations regardless of functional host language.
 \end{minted}
 
 \noindent We do not change \rackinline{conda}'s definition again until
-the version in \cref{mnt:conda-implementation}.
+the final version in \cref{mnt:conda-implementation}.
 
 \begin{minted}[autogobble,stripall]{racket}
 = {let bindings and η-expansion }
@@ -1112,15 +1110,14 @@ the version in \cref{mnt:conda-implementation}.
              (λ (s)
                ((apply conda g*) s)))
            s)))))))
-= { by definition of conda conj and C }
+= { by definition of conda, conj, and C }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (let ((g1 (car g*)) (g* (cdr g*)))
        (cond
-         ((null? g*)
-          (append-map∞ g1 (g s)))
+         ((null? g*) (append-map∞ g1 (g s)))
          (else
           ((ifte g g1
              (λ (s)
@@ -1133,8 +1130,7 @@ the version in \cref{mnt:conda-implementation}.
     (else
      (let ((g1 (car g*)) (g* (cdr g*)))
        (cond
-         ((null? g*)
-          (append-map∞ g1 (g s)))
+         ((null? g*) (append-map∞ g1 (g s)))
          (else
           (let loop ((s∞ (g s)))
             (cond
@@ -1158,18 +1154,13 @@ to \rackinline{ifs∞te} is in \rackinline{A}, we know that
     (else
      (let ((g1 (car g*)) (g* (cdr g*)))
        (cond
-         ((null? g*)
-          (append-map∞ g1 s∞))
+         ((null? g*) (append-map∞ g1 s∞))
          (else
           (let loop ((s∞ s∞))
             (cond
-              ((null? s∞)
-               (A (cdr g*) ((car g*) s)))
-              ((pair? s∞)
-               (append-map∞ g1 s∞))
-              (else
-               (λ ()
-                 (loop (s∞))))))))))))
+              ((null? s∞) (A (cdr g*) ((car g*) s)))
+              ((pair? s∞) (append-map∞ g1 s∞))
+              (else (λ () (loop (s∞))))))))))))
 ⊂
 (define (A g* s∞)
   (cond
@@ -1177,20 +1168,14 @@ to \rackinline{ifs∞te} is in \rackinline{A}, we know that
     (else
      (let ((g1 (car g*)) (g* (cdr g*)))
        (cond
-         ((null? g*)
-          (append-map∞ g1 s∞))
-         (else
-          (ifs∞te s∞ g1 g* s)))))))
+         ((null? g*) (append-map∞ g1 s∞))
+         (else (ifs∞te s∞ g1 g* s)))))))
 
 (define (ifs∞te s∞ g g+ s)
   (cond
-    ((null? s∞)
-     (A (cdr g+) ((car g+) s)))
-    ((pair? s∞)
-     (append-map∞ g s∞))
-    (else
-     (λ ()
-       (ifs∞te (s∞ g g+ s))))
+    ((null? s∞) (A (cdr g+) ((car g+) s)))
+    ((pair? s∞) (append-map∞ g s∞))
+    (else (λ () (ifs∞te (s∞) g g+ s)))))
 \end{minted}
 
 If we also add a line in \rackinline{conda} to dispatch with the
