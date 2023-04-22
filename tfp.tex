@@ -385,12 +385,12 @@ space and clarity. In this paper, every such help function we
 introduce with \rackinline{⊂} could have instead been local and the
 relationship actually an equality.
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (disj g . g*)
   (cond
     ((null? g*) g)
     (else (disj₂ g (apply disj g*)))))
-= { η-expansion }
+= { μ \text{η-expansion} μ }
 (define ((disj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -412,8 +412,8 @@ argument suggests removing the call to \rackinline{apply} and making
 \rackinline{D} self-recursive. The definition of \rackinline{disj}
 remains unchanged from before.
 
-\begin{minted}[autogobble,stripall]{racket}
-= { by definition of disj₂ }
+\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
+= { µ \text{by definition of disj₂} µ }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
@@ -421,13 +421,13 @@ remains unchanged from before.
      ((λ (s)
         (append∞ (g s) ((apply disj g*) s)))
       s))))
-= { β-reduction }
+= { µ \text{β-reduction} µ }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (append∞ (g s) ((apply disj g*) s)))))
-= { by definition of disj }
+= { µ \text{by definition of disj} µ }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
@@ -446,14 +446,14 @@ We can derive the definition of \rackinline{conj} from
 the variadic function based on the macro in \cref{mnt:disj2-conj2}, we
 first η-expand and split the definition.
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
 (define (conj g . g*)
   (cond
     ((null? g*) g)
     (else
      (apply conj
        (cons (conj₂ g (car g*)) (cdr g*))))))
-= { η-expansion }
+= { µ \text{η-expansion} µ }
 (define ((conj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -476,7 +476,7 @@ first η-expand and split the definition.
 \noindent We next substitute for the definitions of \rackinline{conj}
 and \rackinline{conj₂}.
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -484,13 +484,13 @@ and \rackinline{conj₂}.
      ((apply conj
         (cons (conj₂ g (car g*)) (cdr g*)))
       s))))
-= { by the definition of conj }
+= { µ \text{by the definition of conj} µ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (C (conj₂ g (car g*)) (cdr g*) s))))
-= { by the definition of conj₂ }
+= { µ \text{by the definition of conj₂} µ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -504,11 +504,11 @@ and \rackinline{conj₂}.
 This definition of \rackinline{C} sequences the invocations of goal
 and state in the order they appear. \rackinline{append-map∞} acts like
 a non-deterministic \rackinline{compose} operator. In each recursive
-call, we accumulate by mapping the next goal in the list using
-\rackinline{append-map∞}'s special delaying implementation of
-Kanren-language streams.
+call, we accumulate by mapping, using \rackinline{append-map∞}'s
+special delaying implementation of Kanren-language streams, the next
+goal in the list.
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (C g (list g₁ g₂) s)
 =
 (C (λ (s)
@@ -590,7 +590,7 @@ the goals. This left-fold implementation of conjunctions therefore
 left-associates the conjuncts. This is not an accident.
 
 %
-Folklore suggests left associating conjunctions tends to improve the
+Folklore suggests left associating conjunctions tends to improve
 performance of miniKanren's interleaving search. The authors know of
 no thorough algorithmic proof of such claims, but see for instance
 discussions and implementation in
@@ -619,12 +619,12 @@ with the following attempted derivation from a right-fold
 implementation. We η-expand and unfold to a recursive help
 function like before.
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (conj g . g*)
   (cond
     ((null? g*) g)
     (else (conj₂ g (apply conj g*)))))
-= { η-expansion }
+= { µ \text{η-expansion} µ }
 (define ((conj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -645,12 +645,12 @@ In \rackinline{C}, we can substitute in the definition of
 \rackinline{conj} and eliminate the \rackinline{apply}. There,
 however, we get stuck.
 
-\begin{minted}[]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
     (else ((conj₂ g (apply conj g*)) s))))
-=  { by definition of conj₂ and β-reduction }
+=  { µ \text{by definition of conj₂ and β-reduction} µ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -658,7 +658,7 @@ however, we get stuck.
       (append-map∞
         (apply conj g*)
         (g s)))))
-= { η-expand to use the definition of conj }
+= { µ \text{η-expand to use the definition of conj} µ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -672,15 +672,15 @@ however, we get stuck.
 At this point in the left-fold derivation, these calls are
 accumulating in a stack-like discipline, so we can simplify and pass
 \rackinline{g} and \rackinline{s} together as a stream. The equivalent
-right-fold implementation, however, is written in a kind of
-continuation-passing style for non-deterministic computations. Every
+right-fold implementation, however, is in a kind of
+continuation-passing style for non-deterministic computations. Each
 goal in the list seems to require a closure for every recursive call.
 Building these superfluous closures is expensive. Similar behavior
 shows up in the right-fold variant of \rackinline{disj}. Basic
 programming horse sense suggests the more elegant variants from
 \cref{mnt:disj-reimplementation}.
 
-\begin{minted}[]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (C g (list g₁ g₂) s)
 =
 (append-map∞
@@ -871,7 +871,7 @@ variable using a vector, and identifying vectors by their unique
 memory location. This latter approach models logic variables as a
 single global pool rather than reused separately across each disjunct,
 and so requires more logic variables overall. The microKanren approach
-uses the natural numbers as an indexed set of variables, which
+uses natural numbers as an indexed set of variables, which
 necessitates removing numbers from the user's term language.
 
 \subsection{\rackinline{fresh}}
@@ -931,7 +931,7 @@ introduce several logic variables simultaneously.
 
 \Cref{mnt:call-fresh-and-call-initial-state} also shows how we have
 implemented a \rackinline{run}-like behavior without using macros.
-Using the referentially transparent implementation of logic variables,
+Using a referentially transparent implementation of logic variables,
 we can accomplish the job of \rackinline{run} and \rackinline{run*} by
 a \rackinline{call/initial-state}-like function. The query is itself
 expressed as a goal that introduces the first logic variable
@@ -1019,7 +1019,7 @@ earlier \rackinline{condu}.
 Existing techniques for
 implementing \rackinline{defrel}, \rackinline{fresh}
 and \rackinline{run} (and \rackinline{run*}) without macros have
-serious drawbacks. These include exposing the implementation of
+serious drawbacks. They include exposing the implementation of
 streams and delays, and the inefficiency and clumsiness of introducing
 variables one at a time, or the need to reason about global state. With
 a few more runtime features from the host language, an implementer can
@@ -1053,10 +1053,10 @@ efficient implementations regardless of functional host language.
 \begin{acks}
 
   Thanks to Michael Ballantyne, Greg Rosenblatt, Ken Shan, and Jeremy
-  Siek for their helpful discussions and ideas. Thanks to Yafei Yang
-  and Darshal Shetty for their implementation suggestions. We would
-  also like to thank our anonymous reviewers for their insightful
-  contributions.
+  Siek for their helpful discussions and ideas. Our thanks to Yafei
+  Yang and Darshal Shetty for their implementation suggestions. We
+  would also like to thank our anonymous reviewers for their
+  insightful contributions.
 
 \end{acks}
 
@@ -1066,14 +1066,14 @@ efficient implementations regardless of functional host language.
 
 \section{\rackinline{conda} derivation}\label{sec:conda-derivation}
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (conda g . g*)
   (cond
     ((null? g*) g)
     ((null? (cdr g*)) (conj g (car g*)))
     (else
      (ifte g (car g*) (apply conda (cdr g*))))))
-= { η-expansion }
+= { μ \text{η-expansion} μ }
 (define ((conda g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -1091,13 +1091,7 @@ efficient implementations regardless of functional host language.
     (else
      ((ifte g (car g*) (apply conda (cdr g*)))
       s))))
-\end{minted}
-
-\noindent We do not change \rackinline{conda}'s definition again until
-the final version in \cref{mnt:conda-implementation}.
-
-\begin{minted}[autogobble,stripall]{racket}
-= {let bindings and η-expansion }
+= { μ\text{let bindings and η-expansion}μ }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
@@ -1110,7 +1104,7 @@ the final version in \cref{mnt:conda-implementation}.
              (λ (s)
                ((apply conda g*) s)))
            s)))))))
-= { by definition of conda, conj, and C }
+= { μ\text{by definition of conda, conj, and C}μ }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
@@ -1123,7 +1117,7 @@ the final version in \cref{mnt:conda-implementation}.
              (λ (s)
                (A (car g*) (cdr g*) s)))
            s)))))))
-= { by definition of ifte and a β reduction }
+= { μ \text{by definition of ifte and a β reduction} μ }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
@@ -1137,7 +1131,6 @@ the final version in \cref{mnt:conda-implementation}.
               ((null? s∞) (A (car g*) (cdr g*) s))
               ((pair? s∞) (append-map∞ g1 s∞))
               (else (λ () (loop (s∞))))))))))))
-
 \end{minted}
 
 At this point \rackinline{g} and \rackinline{s} in \rackinline{conda}
@@ -1147,7 +1140,7 @@ definition, passing all the parameters it needs. Since the only call
 to \rackinline{ifs∞te} is in \rackinline{A}, we know that
 \rackinline{ifs∞te}'s third parameter will always be a non-empty list.
 
-\begin{minted}[autogobble,stripall]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (A g* s∞)
   (cond
     ((null? g*) s∞)
