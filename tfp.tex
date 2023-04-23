@@ -83,8 +83,8 @@
 \begin{abstract}
 
   We describe changes to the microKanren implementation that make it
-  more practical to use in a host language without macros. With the
-  help of some modest runtime features common to most languages, we
+  more practical to use in a host language without macros. With
+  some modest runtime features common to most languages, we
   show how an implementer lacking macros can come closer to the
   expressive power that macros usually provide---with varying degrees
   of success. The result is a still functional microKanren that
@@ -390,7 +390,7 @@ relationship actually an equality.
   (cond
     ((null? g*) g)
     (else (disj₂ g (apply disj g*)))))
-= { μ \text{η-expansion} μ }
+= { μ\text{η-expansion}μ }
 (define ((disj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -412,8 +412,8 @@ argument suggests removing the call to \rackinline{apply} and making
 \rackinline{D} self-recursive. The definition of \rackinline{disj}
 remains unchanged from before.
 
-\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
-= { µ \text{by definition of disj₂} µ }
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
+= { μ\text{by definition of disj₂}μ }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
@@ -421,13 +421,13 @@ remains unchanged from before.
      ((λ (s)
         (append∞ (g s) ((apply disj g*) s)))
       s))))
-= { µ \text{β-reduction} µ }
+= { μ\text{β-reduction}μ }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (append∞ (g s) ((apply disj g*) s)))))
-= { µ \text{by definition of disj} µ }
+= { μ\text{by definition of disj}μ }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
@@ -446,14 +446,14 @@ We can derive the definition of \rackinline{conj} from
 the variadic function based on the macro in \cref{mnt:disj2-conj2}, we
 first η-expand and split the definition.
 
-\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (conj g . g*)
   (cond
     ((null? g*) g)
     (else
      (apply conj
        (cons (conj₂ g (car g*)) (cdr g*))))))
-= { µ \text{η-expansion} µ }
+= { μ\text{η-expansion}μ }
 (define ((conj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -476,7 +476,7 @@ first η-expand and split the definition.
 \noindent We next substitute for the definitions of \rackinline{conj}
 and \rackinline{conj₂}.
 
-\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -484,13 +484,13 @@ and \rackinline{conj₂}.
      ((apply conj
         (cons (conj₂ g (car g*)) (cdr g*)))
       s))))
-= { µ \text{by the definition of conj} µ }
+= { μ\text{by the definition of conj}μ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (C (conj₂ g (car g*)) (cdr g*) s))))
-= { µ \text{by the definition of conj₂} µ }
+= { μ\text{by the definition of conj₂}μ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -624,7 +624,7 @@ function like before.
   (cond
     ((null? g*) g)
     (else (conj₂ g (apply conj g*)))))
-= { µ \text{η-expansion} µ }
+= { μ\text{η-expansion}μ }
 (define ((conj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -645,12 +645,12 @@ In \rackinline{C}, we can substitute in the definition of
 \rackinline{conj} and eliminate the \rackinline{apply}. There,
 however, we get stuck.
 
-\begin{minted}[autogobble,stripall,escapeinside=µµ]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
     (else ((conj₂ g (apply conj g*)) s))))
-=  { µ \text{by definition of conj₂ and β-reduction} µ }
+=  { μ\text{by definition of conj₂ and β-reduction}μ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -658,7 +658,7 @@ however, we get stuck.
       (append-map∞
         (apply conj g*)
         (g s)))))
-= { µ \text{η-expand to use the definition of conj} µ }
+= { μ\text{η-expand to use the definition of conj}μ }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -675,10 +675,11 @@ accumulating in a stack-like discipline, so we can simplify and pass
 right-fold implementation, however, is in a kind of
 continuation-passing style for non-deterministic computations. Each
 goal in the list seems to require a closure for every recursive call.
-Building these superfluous closures is expensive. Similar behavior
-shows up in the right-fold variant of \rackinline{disj}. Basic
-programming horse sense suggests the more elegant variants from
-\cref{mnt:disj-reimplementation}.
+Building these closures is expensive. Similar behavior shows up in the
+right-fold variant of \rackinline{disj}. Basic programming horse sense
+suggests the more elegant variants from
+\cref{mnt:disj-reimplementation}, and could partly explain the
+performance gap.
 
 \begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
 (C g (list g₁ g₂) s)
@@ -998,7 +999,7 @@ language, that can be a subtle mistake to debug.
 
 This note shows how to provide a somewhat more concise core language
 that significantly reduces the need for macros, and provides some
-alternatives for working without macros that may be more practical
+alternatives for those working without macros that may be more practical
 than those of~\citet{hemann2013muKanren}.
 
 Forcing ourselves to define \rackinline{disj} and \rackinline{conj}
@@ -1073,7 +1074,7 @@ efficient implementations regardless of functional host language.
     ((null? (cdr g*)) (conj g (car g*)))
     (else
      (ifte g (car g*) (apply conda (cdr g*))))))
-= { μ \text{η-expansion} μ }
+= { μ\text{η-expansion}μ }
 (define ((conda g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -1117,7 +1118,7 @@ efficient implementations regardless of functional host language.
              (λ (s)
                (A (car g*) (cdr g*) s)))
            s)))))))
-= { μ \text{by definition of ifte and a β reduction} μ }
+= { μ\text{by definition of ifte and a β reduction}μ }
 (define (A g g* s)
   (cond
     ((null? g*) (g s))
