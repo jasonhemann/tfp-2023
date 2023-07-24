@@ -73,9 +73,17 @@
 
 \author{Jason Hemann}
 \email{jason.hemann@shu.edu}
+\affiliation{%
+  \institution{Seton Hall University}
+  \country{USA}
+}
 \orcid{0000-0002-5405-2936}
 \author{Daniel P. Friedman}
 \email{dfried@indiana.edu}
+\affiliation{%
+  \institution{Indiana University}
+  \country{USA}
+}
 \orcid{0000-0001-9992-1675}
 
 \renewcommand{\shortauthors}{Hemann and Friedman}
@@ -122,18 +130,17 @@
 \section{Introduction}
 
 Initially we designed microKanren~\cite{hemann2013muKanren} as a
-compact relational programming language kernel to undergird a
-miniKanren implementation. Macros are used to implement the
-surrounding higher-level miniKanren operators and surface syntax.\@
-microKanren is often used as a tool for understanding the guts of a
-relational programming language through studying its implementation.
-By re-implementing miniKanren as separate surface syntax macros over a
-macro-less and side-effect free microKanren kernel, we hoped to
-simultaneously aid implementers when studying the source code, and
-also to make the language easier to port to other hosts that support
-programming with functions. To support both of those efforts, we also
-chose to program in a deliberately small and workaday set of Scheme
-primitives.
+compact relational language kernel to undergird a miniKanren
+implementation. Macros implement the surrounding higher-level
+miniKanren operators and surface syntax.\@ microKanren is often used
+as a tool for understanding the guts of a relational language through
+studying its implementation. By re-implementing miniKanren as separate
+surface syntax over a macro-less and side-effect free
+microKanren kernel, we hoped to simultaneously aid implementers when
+studying the source code, and also to make the language easier to port
+to other hosts that support programming with functions. To support
+both of those efforts, we also chose to program in a deliberately
+small and workaday set of Scheme primitives.
 
 The sum of those implementation restrictions, however, seemed to force
 some awkward choices including: binary logical operators, one at a
@@ -166,12 +173,14 @@ This resulted in some higher-level (variadic rather than just binary)
 operators, a more succinct kernel language, and enabled some
 performance improvement. Around half of the changes are applicable to
 any microKanren implementation, and the more concise goal combinators
-of~\cref{sec:conde} may also be of interest to implementers who embed
+of \cref{sec:conde} may also be of interest to implementers who embed
 goal-oriented languages like Icon~\cite{griswold1983icon}. The other
 half are necessarily awkward yet practical strategies for those
 platforms lacking macro support. The source code for both our
 re-implementation and our experimental results is available
-at~\url{https://github.com/jasonhemann/tfp-2023/}.
+at~\url{https://github.com/jasonhemann/tfp-2023/}. Our preferred
+definitions are in \cref{mnt:disj-reimplementation} and
+\cref{mnt:conda-implementation}.
 
 In \cref{sec:all-aboard}, we illustrate by example what seemed to
 force surface syntax macros. In \cref{sec:conde}, we implement
