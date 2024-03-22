@@ -1,4 +1,4 @@
-\documentclass[sigplan,balance=true,pbalance=true,natbib=false]{acmart}
+\documentclass[runningheads,natbib=false]{llncs}
 %% ∞
 %% ⊂
 %% …
@@ -7,7 +7,7 @@
 %% ₂
 %% ₃
 %% ₁₂₃₄₅₆
-\usepackage{fontspec,newunicodechar}
+\usepackage{fontspec,newunicodechar,textgreek}
 \usepackage{hyphenat} %% electromagnetic\hyp{}endioscopy
 \usepackage[shortcuts]{extdash}
 \usepackage{microtype} %% provides tighter text formatting
@@ -16,7 +16,7 @@
 \usepackage{polyglossia} %% for xelatex use polyglossia, needed for csquotes
 \setdefaultlanguage[variant=american]{english}
 \usepackage{fancybox}
-
+\usepackage{amsmath}
 \PassOptionsToPackage{cache=false,newfloat=true}{minted}
 \PassOptionsToPackage{unicode}{hyperref}
 
@@ -38,6 +38,15 @@
 
 \overfullrule=0pt
 
+% \newunicodechar{η}{\texteta{}}
+% \newunicodechar{α}{\textalpha}
+% \newunicodechar{β}{\textbeta}
+% \newunicodechar{∞}{\infty}
+% \newunicodechar{₀}{$_0$}
+% \newunicodechar{₁}{$_1$}
+% \newunicodechar{₂}{$_2$}
+% \newunicodechar{₃}{$_3$}
+
 \usepackage{nag} %% should complain about old and outdated commands
 \usepackage{minted}
 \usemintedstyle{bw}
@@ -50,43 +59,31 @@
 \setmonofont{DejaVuSansMono}[Scale=MatchLowercase]
 \tracinglostchars=2
 \usepackage[defaultlines=3,all]{nowidow} %% Eliminates widow and orphans
-\setlength {\marginparwidth }{2cm}
+\setlength{\marginparwidth}{2cm}
 \usepackage{todonotes}
 
 \newmintinline[rackinline]{racket}{}
 \newmintinline{prolog}{}
 
-\setcopyright{acmcopyright}
-\copyrightyear{2023}
-\acmYear{2023}
-\acmDOI{XXXXXXX.XXXXXXX}
-
-\acmConference[TFP '23]{Symposium on Trends in Functional
-  Programming}{January 13-15, 2023}{Boston, Massachusetts}
-
-\acmPrice{15.00}
-\acmISBN{978-1-4503-XXXX-X/18/06}
-
 \begin{document}
+
+\author{Jason Hemann\inst{1}\orcidID{0000-0002-5405-2936} \and
+Daniel P. Friedman\inst{2}\orcidID{0000-0001-9992-1675}}
 
 \title{Nearly Macro-free microKanren}
 
-\author{Jason Hemann}
-\email{jason.hemann@shu.edu}
-\affiliation{%
-  \institution{Seton Hall University}
-  \country{USA}
-}
-\orcid{0000-0002-5405-2936}
-\author{Daniel P. Friedman}
-\email{dfried@indiana.edu}
-\affiliation{%
-  \institution{Indiana University}
-  \country{USA}
-}
-\orcid{0000-0001-9992-1675}
+%
+\authorrunning{Hemann \& Friedman}
+% First names are abbreviated in the running head.
+% If there are more than two authors, 'et al.' is used.
+%
+\institute{Seton Hall University, South Orange, NJ 07079, USA
+\email{jason.hemann@shu.edu} \and
+Indiana University, Bloomington, IN 47405, USA \\
+\email{dfried@indiana.edu}}
+%
 
-\renewcommand{\shortauthors}{Hemann and Friedman}
+\maketitle
 
 \begin{abstract}
 
@@ -103,29 +100,7 @@
 
 \end{abstract}
 
-\begin{CCSXML}
-<ccs2012>
-   <concept>
-       <concept_id>10011007.10011006.10011008.10011009.10011015</concept_id>
-       <concept_desc>Software and its engineering~Constraint and logic languages</concept_desc>
-       <concept_significance>500</concept_significance>
-   </concept>
-   <concept>
-       <concept_id>10003752.10003790.10003795</concept_id>
-       <concept_desc>Theory of computation~Constraint and logic programming</concept_desc>
-       <concept_significance>300</concept_significance>
-   </concept>
- </ccs2012>
-\end{CCSXML}
-
-\ccsdesc[500]{Software and its engineering~Constraint and logic languages}
-
-%%
- %% Keywords. The author(s) should pick words that accurately describe
-%% the work being presented. Separate the keywords with commas.
 \keywords{logic programming, miniKanren, DSLs, embedding, macros}
-
-\maketitle
 
 \section{Introduction}
 
@@ -261,33 +236,33 @@ the superficial syntax macros practically mandatory, and impedes host
 languages without a macro system. For a logic programming language,
 solely binary logical operators is too low level.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(defrel (carmelit-subway a b c d e f)
-  (conde
-    ((== a 'carmel-center)
-     (== b 'golomb)
-     (== c 'masada)
-     (== d 'haneviim)
-     (== e 'hadar-city-hall)
-     (== f 'downtown))
-    ((== a 'downtown)
-     (== b 'hadar-city-hall)
-     (== c 'haneviim)
-     (== d 'masada)
-     (== e 'golomb)
-     (== f 'carmel-center))))
+% \begin{listing}
+%   \begin{minted}[autogobble,stripall]{racket}
+% (defrel (carmelit-subway a b c d e f)
+%   (conde
+%     ((== a 'carmel-center)
+%      (== b 'golomb)
+%      (== c 'masada)
+%      (== d 'haneviim)
+%      (== e 'hadar-city-hall)
+%      (== f 'downtown))
+%     ((== a 'downtown)
+%      (== b 'hadar-city-hall)
+%      (== c 'haneviim)
+%      (== d 'masada)
+%      (== e 'golomb)
+%      (== f 'carmel-center))))
 
-> (run 3 (s₀ s₁ s₂ s₃ s₄ s₅)
-    (carmelit-subway s₀ s₁ s₂ s₃ s₄ s₅))
-'((carmel-center golomb masada
-   haneviim hadar-city-hall downtown)
-  (downtown hadar-city-hall haneviim
-    masada golomb carmel-center))
-  \end{minted}
-  \caption{The Carmelit subway relation and a query. Results reformatted for clarity and space.}
-  \label{mnt:carmelit}
-\end{listing}
+% > (run 3 (s₀ s₁ s₂ s₃ s₄ s₅)
+%     (carmelit-subway s₀ s₁ s₂ s₃ s₄ s₅))
+% '((carmel-center golomb masada
+%    haneviim hadar-city-hall downtown)
+%   (downtown hadar-city-hall haneviim
+%     masada golomb carmel-center))
+%   \end{minted}
+%   \caption{The Carmelit subway relation and a query. Results reformatted for clarity and space.}
+%   \label{mnt:carmelit}
+% \end{listing}
 
 Moreover, the microKanren language doesn't offer the programmer
 sufficient guidance in using that fine-grained control. With $n$
@@ -338,28 +313,28 @@ combines together the results of mapping into a single stream. That
 stream represents the conjunction of the two goals, again with special
 attention to interleaving and starvation.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(define ((disj₂ g₁ g₂) s)
-  (append∞ (g₁ s) (g₂ s)))
+% \begin{listing}
+%   \begin{minted}[autogobble,stripall]{racket}
+% (define ((disj₂ g₁ g₂) s)
+%   (append∞ (g₁ s) (g₂ s)))
 
-(define ((conj₂ g₁ g₂) s)
-  (append-map∞ g₂ (g₁ s)))
+% (define ((conj₂ g₁ g₂) s)
+%   (append-map∞ g₂ (g₁ s)))
 
-(define-syntax disj
-  (syntax-rules ()
-    ((disj g) g)
-    ((disj g₁ g₂ g* ...)
-     (disj₂ g₁ (disj g₂ g* ...)))))
+% (define-syntax disj
+%   (syntax-rules ()
+%     ((disj g) g)
+%     ((disj g₁ g₂ g* ...)
+%      (disj₂ g₁ (disj g₂ g* ...)))))
 
-(define-syntax conj
-  (syntax-rules ()
-    ((conj g) g)
-    ((conj g₁ g₂ g* ...)
-     (conj (conj₂ g₁ g₂) g* ...))))
-  \end{minted}
-  \caption{microKanren \rackinline{disj₂}, \rackinline{conj₂}, and macros that use them}\label{mnt:disj2-conj2}
-\end{listing}
+% (define-syntax conj
+%   (syntax-rules ()
+%     ((conj g) g)
+%     ((conj g₁ g₂ g* ...)
+%      (conj (conj₂ g₁ g₂) g* ...))))
+%   \end{minted}
+%   \caption{microKanren \rackinline{disj₂}, \rackinline{conj₂}, and macros that use them}\label{mnt:disj2-conj2}
+% \end{listing}
 
 We want to implement disjunction and conjunction as functions taking
 arbitrary quantities of goals. These implementations should subsume
@@ -382,7 +357,7 @@ this is not part of the microKanren language, we would like to
 dispense with the macro and implement this behavior functionally. At
 the cost of an \rackinline{apply}, we can build the corresponding
 explicitly recursive \rackinline{disj} function. Since
-\rackinline{disj} produces and consumes goals, we can η-expand that
+\rackinline{disj} produces and consumes goals, we can \texteta{}-expand that
 first functional definition by a curried parameter \rackinline{s}. We
 then split \rackinline{disj} into two mutually-recursive functions. We
 use the symbol \rackinline{⊂} here to indicate that the newer
@@ -394,12 +369,12 @@ space and clarity. In this paper, every such help function we
 introduce with \rackinline{⊂} could have instead been local and the
 relationship actually an equality.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
 (define (disj g . g*)
   (cond
     ((null? g*) g)
     (else (disj₂ g (apply disj g*)))))
-= { μ\text{η-expansion}μ }
+= { !\text{eta-expansion}! }
 (define ((disj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -421,8 +396,8 @@ argument suggests removing the call to \rackinline{apply} and making
 \rackinline{D} self-recursive. The definition of \rackinline{disj}
 remains unchanged from before.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-= { μ\text{by definition of disj₂}μ }
+\begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
+= { !\text{by definition of disj₂}! }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
@@ -430,13 +405,13 @@ remains unchanged from before.
      ((λ (s)
         (append∞ (g s) ((apply disj g*) s)))
       s))))
-= { μ\text{β-reduction}μ }
+= { !\text{β-reduction}! }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (append∞ (g s) ((apply disj g*) s)))))
-= { μ\text{by definition of disj}μ }
+= { !\text{by definition of disj}! }
 (define (D g g* s)
   (cond
     ((null? g*) (g s))
@@ -453,16 +428,16 @@ in~\cref{mnt:disj-reimplementation}.
 We can derive the definition of \rackinline{conj} from
 \cref{mnt:disj-reimplementation} via a similar process. Starting with
 the variadic function based on the macro in \cref{mnt:disj2-conj2}, we
-first η-expand and split the definition.
+first \texteta{}-expand and split the definition.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
 (define (conj g . g*)
   (cond
     ((null? g*) g)
     (else
      (apply conj
        (cons (conj₂ g (car g*)) (cdr g*))))))
-= { μ\text{η-expansion}μ }
+= { !\text{eta-expansion}! }
 (define ((conj g . g*) s)
   (cond
     ((null? g*) (g s))
@@ -485,7 +460,7 @@ first η-expand and split the definition.
 \noindent We next substitute for the definitions of \rackinline{conj}
 and \rackinline{conj₂}.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
+\begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -493,13 +468,13 @@ and \rackinline{conj₂}.
      ((apply conj
         (cons (conj₂ g (car g*)) (cdr g*)))
       s))))
-= { μ\text{by the definition of conj}μ }
+= { !\text{by the definition of conj}! }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
     (else
      (C (conj₂ g (car g*)) (cdr g*) s))))
-= { μ\text{by the definition of conj₂}μ }
+= { !\text{by the definition of conj₂}! }
 (define (C g g* s)
   (cond
     ((null? g*) (g s))
@@ -517,32 +492,32 @@ call, we accumulate by mapping, using \rackinline{append-map∞}'s
 special delaying implementation of Kanren-language streams, the next
 goal in the list.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-(C g (list g₁ g₂) s)
-=
-(C (λ (s)
-     (append-map∞ g₁
-       (g s)))
-   (list g₂)
-   s)
-=
-(C (λ (s)
-     (append-map∞ g₂
-       ((λ (s)
-          (append-map∞ g₁
-            (g s)))
-        s)))
-   '()
-   s)
-=
-((λ (s)
-   (append-map∞ g₂
-     ((λ (s)
-        (append-map∞ g₁
-          (g s)))
-      s)))
- s)
-\end{minted}
+% \begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
+% (C g (list g₁ g₂) s)
+% =
+% (C (λ (s)
+%      (append-map∞ g₁
+%        (g s)))
+%    (list g₂)
+%    s)
+% =
+% (C (λ (s)
+%      (append-map∞ g₂
+%        ((λ (s)
+%           (append-map∞ g₁
+%             (g s)))
+%         s)))
+%    '()
+%    s)
+% =
+% ((λ (s)
+%    (append-map∞ g₂
+%      ((λ (s)
+%         (append-map∞ g₁
+%           (g s)))
+%       s)))
+%  s)
+% \end{minted}
 
 The state does not change in the recursion: \rackinline{C} only needs
 \rackinline{s} to \emph{build} the stream. Therefore we can assemble
@@ -553,34 +528,34 @@ and only external call and the recursive call. Adding the trivial base
 case to \rackinline{conj}, yields the version shown in
 \cref{mnt:disj-reimplementation}.
 
-\begin{listing}
-\begin{minted}[autogobble,stripall,frame=single]{racket}
-  (define ((disj . g*) s)
-    (cond
-      ((null? g*) '())
-      (else (D ((car g*) s) (cdr g*) s))))
+% \begin{listing}
+% \begin{minted}[autogobble,stripall,frame=single]{racket}
+%   (define ((disj . g*) s)
+%     (cond
+%       ((null? g*) '())
+%       (else (D ((car g*) s) (cdr g*) s))))
 
-  (define (D s∞ g* s)
-    (cond
-      ((null? g*) s∞)
-      (else
-       (append∞ s∞
-         (D ((car g*) s) (cdr g*) s)))))
+%   (define (D s∞ g* s)
+%     (cond
+%       ((null? g*) s∞)
+%       (else
+%        (append∞ s∞
+%          (D ((car g*) s) (cdr g*) s)))))
 
-  (define ((conj . g*) s)
-    (cond
-      ((null? g*) (cons s '()))
-      (else (C (cdr g*) ((car g*) s)))))
+%   (define ((conj . g*) s)
+%     (cond
+%       ((null? g*) (cons s '()))
+%       (else (C (cdr g*) ((car g*) s)))))
 
-  (define (C g* s∞)
-    (cond
-      ((null? g*) s∞)
-      (else
-       (C (cdr g*)
-          (append-map∞ (car g*) s∞)))))
-\end{minted}
-  \caption{Final re-definitions of \rackinline{disj} and \rackinline{conj}}\label{mnt:disj-reimplementation}
-\end{listing}
+%   (define (C g* s∞)
+%     (cond
+%       ((null? g*) s∞)
+%       (else
+%        (C (cdr g*)
+%           (append-map∞ (car g*) s∞)))))
+% \end{minted}
+%   \caption{Final re-definitions of \rackinline{disj} and \rackinline{conj}}\label{mnt:disj-reimplementation}
+% \end{listing}
 
 Both of these new versions are shallow wrappers over simple folds. The
 first steps are to dispense with the trivial case, and then to call a
@@ -625,58 +600,58 @@ comparing the implementations of functions.
 
 Compare the preceding derivation from a left-fold over conjunctions
 with the following attempted derivation from a right-fold
-implementation. We η-expand and unfold to a recursive help
+implementation. We \texteta{}-expand and unfold to a recursive help
 function like before.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-(define (conj g . g*)
-  (cond
-    ((null? g*) g)
-    (else (conj₂ g (apply conj g*)))))
-= { μ\text{η-expansion}μ }
-(define ((conj g . g*) s)
-  (cond
-    ((null? g*) (g s))
-    (else ((conj₂ g (apply conj g*)) s))))
-⊂
-(define ((conj g . g*) s)
-  (C g g* s))
+% \begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
+% (define (conj g . g*)
+%   (cond
+%     ((null? g*) g)
+%     (else (conj₂ g (apply conj g*)))))
+% = { !\text{eta-expansion}! }
+% (define ((conj g . g*) s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else ((conj₂ g (apply conj g*)) s))))
+% ⊂
+% (define ((conj g . g*) s)
+%   (C g g* s))
 
-(define (C g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else ((conj₂ g (apply conj g*)) s))))
-\end{minted}
+% (define (C g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else ((conj₂ g (apply conj g*)) s))))
+% \end{minted}
 
 In \rackinline{C}, we can substitute in the definition of
-\rackinline{conj₂} and β-reduce. We once again η-expand the call to
+\rackinline{conj₂} and β-reduce. We once again \texteta{}-expand the call to
 \rackinline{(apply conj g*)} to substitute with the definition of
 \rackinline{conj} and eliminate the \rackinline{apply}. There,
 however, we get stuck.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-(define (C g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else ((conj₂ g (apply conj g*)) s))))
-=  { μ\text{by definition of conj₂ and β-reduction}μ }
-(define (C g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-      (append-map∞
-        (apply conj g*)
-        (g s)))))
-= { μ\text{η-expand to use the definition of conj}μ }
-(define (C g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-      (append-map∞
-        (λ (s)
-          (C (car g*) (cdr g*) s))
-        (g s)))))
-\end{minted}
+% \begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
+% (define (C g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else ((conj₂ g (apply conj g*)) s))))
+% =  { !\text{by definition of conj₂ and β-reduction}! }
+% (define (C g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else
+%       (append-map∞
+%         (apply conj g*)
+%         (g s)))))
+% = { !\text{η-expand to use the definition of conj}! }
+% (define (C g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else
+%       (append-map∞
+%         (λ (s)
+%           (C (car g*) (cdr g*) s))
+%         (g s)))))
+% \end{minted}
 
 At this point in the left-fold derivation, these calls are
 accumulating in a stack-like discipline, so we can simplify and pass
@@ -690,30 +665,30 @@ suggests the more elegant variants from
 \cref{mnt:disj-reimplementation}, and could partly explain the
 performance gap.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-(C g (list g₁ g₂) s)
-=
-(append-map∞
-  (λ (s)
-    (C g₁ (list g₂) s))
-  (g s))
-=
-(append-map∞
-  (λ (s)
-    (append-map∞
-      (λ (s)
-        (C g₂ '() s))
-      (g₁ s)))
-  (g s))
-=
-(append-map∞
-  (λ (s)
-    (append-map∞
-      (λ (s)
-        (g₂ s))
-      (g₁ s)))
-  (g s))
-\end{minted}
+% \begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
+% (C g (list g₁ g₂) s)
+% =
+% (append-map∞
+%   (λ (s)
+%     (C g₁ (list g₂) s))
+%   (g s))
+% =
+% (append-map∞
+%   (λ (s)
+%     (append-map∞
+%       (λ (s)
+%         (C g₂ '() s))
+%       (g₁ s)))
+%   (g s))
+% =
+% (append-map∞
+%   (λ (s)
+%     (append-map∞
+%       (λ (s)
+%         (g₂ s))
+%       (g₁ s)))
+%   (g s))
+% \end{minted}
 
 The new \rackinline{disj} and \rackinline{conj} functions are, we
 believe, sufficiently high-level for programmers in implementations
@@ -728,25 +703,25 @@ implement \rackinline{carmelit-subway} as an example, and it reads
 much better than the 11 binary logical operators the programmer would
 have needed in the earlier version.
 
-\begin{listing}[h]
-  \begin{minted}[autogobble,stripall]{racket}
-(defrel (carmelit-subway a b c d e f)
-  (disj
-    (conj (== a 'carmel-center)
-          (== b 'golomb)
-          (== c 'masada)
-          (== d 'haneviim)
-          (== e 'hadar-city-hall)
-          (== f 'downtown))
-    (conj (== a 'downtown)
-          (== b 'hadar-city-hall)
-          (== c 'haneviim)
-          (== d 'masada)
-          (== e 'golomb)
-          (== f 'carmel-center))))
-  \end{minted}
-  \caption{A new Carmelit subway without \rackinline{conde}}\label{mnt:new-carmelit}
-\end{listing}
+% \begin{listing}[h]
+%   \begin{minted}[autogobble,stripall]{racket}
+% (defrel (carmelit-subway a b c d e f)
+%   (disj
+%     (conj (== a 'carmel-center)
+%           (== b 'golomb)
+%           (== c 'masada)
+%           (== d 'haneviim)
+%           (== e 'hadar-city-hall)
+%           (== f 'downtown))
+%     (conj (== a 'downtown)
+%           (== b 'hadar-city-hall)
+%           (== c 'haneviim)
+%           (== d 'masada)
+%           (== e 'golomb)
+%           (== f 'carmel-center))))
+%   \end{minted}
+%   \caption{A new Carmelit subway without \rackinline{conde}}\label{mnt:new-carmelit}
+% \end{listing}
 
 \section{Tidying up the impure operators}\label{sec:impure}
 
@@ -762,24 +737,24 @@ sequence of goals. They consume those goals in \enquote{if-then}
 pairs, perhaps followed by a final \enquote{else}; we have no choice
 if we want to proceed without using a macro.
 
-\begin{listing}
-\begin{minted}[autogobble,stripall]{racket}
-(define-syntax conda
-  (syntax-rules ()
-    ((conda g) g)
-    ((conda g₁ g₂) (conj g₁ g₂))
-    ((conda g₁ g₂ g₃ g* ...)
-     (ifte g₁ g₂ (conda g₃ g* ...)))))
+% \begin{listing}
+% \begin{minted}[autogobble,stripall]{racket}
+% (define-syntax conda
+%   (syntax-rules ()
+%     ((conda g) g)
+%     ((conda g₁ g₂) (conj g₁ g₂))
+%     ((conda g₁ g₂ g₃ g* ...)
+%      (ifte g₁ g₂ (conda g₃ g* ...)))))
 
-(define (conda g . g*)
-  (cond
-    ((null? g*) g)
-    ((null? (cdr g*)) (conj g (car g*)))
-    (else
-     (ifte g (car g*) (apply conda (cdr g*))))))
-\end{minted}
-  \caption{A re-implemented \rackinline{conda} macro and its functional equivalent}\label{mnt:conda-macro}
-\end{listing}
+% (define (conda g . g*)
+%   (cond
+%     ((null? g*) g)
+%     ((null? (cdr g*)) (conj g (car g*)))
+%     (else
+%      (ifte g (car g*) (apply conda (cdr g*))))))
+% \end{minted}
+%   \caption{A re-implemented \rackinline{conda} macro and its functional equivalent}\label{mnt:conda-macro}
+% \end{listing}
 
 We defer the derivation of our new \rackinline{conda} solution to
 \cref{sec:conda-derivation}. Rather than building a largely redundant
@@ -789,36 +764,36 @@ implementation of \rackinline{condu}, we expose the higher-order goal
 goal. We do however take this opportunity to also lift the inner
 function \rackinline{loop} to a top-level definition.
 
-\begin{listing}[h]
-  \begin{minted}[autogobble,stripall,frame=single]{racket}
-(define ((conda . g*) s)
-  (cond
-    ((null? g*) '())
-    (else (A (cdr g*) ((car g*) s) s))))
+% \begin{listing}[h]
+%   \begin{minted}[autogobble,stripall,frame=single]{racket}
+% (define ((conda . g*) s)
+%   (cond
+%     ((null? g*) '())
+%     (else (A (cdr g*) ((car g*) s) s))))
 
-(define (A g* s∞ s)
-  (cond
-    ((null? g*) s∞)
-    ((null? (cdr g*)) (append-map∞ (car g*) s∞))
-    (else (ifs∞te s∞ (car g*) (cdr g*) s))))
+% (define (A g* s∞ s)
+%   (cond
+%     ((null? g*) s∞)
+%     ((null? (cdr g*)) (append-map∞ (car g*) s∞))
+%     (else (ifs∞te s∞ (car g*) (cdr g*) s))))
 
-(define (ifs∞te s∞ g g+ s)
-  (cond
-    ((null? s∞) (A (cdr g+) ((car g+) s) s))
-    ((pair? s∞) (append-map∞ g s∞))
-    (else (λ () (ifs∞te (s∞) g g+ s)))))
+% (define (ifs∞te s∞ g g+ s)
+%   (cond
+%     ((null? s∞) (A (cdr g+) ((car g+) s) s))
+%     ((pair? s∞) (append-map∞ g s∞))
+%     (else (λ () (ifs∞te (s∞) g g+ s)))))
 
-(define ((once g) s)
-  (O (g s)))
+% (define ((once g) s)
+%   (O (g s)))
 
-(define (O s∞)
-  (cond
-    ((null? s∞) '())
-    ((pair? s∞) (cons (car s∞) '()))
-    (else (λ () (O (s∞))))))
-  \end{minted}
-  \caption{A functional \rackinline{conda}, \rackinline{ifte}, and \rackinline{once}}\label{mnt:conda-implementation}
-\end{listing}
+% (define (O s∞)
+%   (cond
+%     ((null? s∞) '())
+%     ((pair? s∞) (cons (car s∞) '()))
+%     (else (λ () (O (s∞))))))
+%   \end{minted}
+%   \caption{A functional \rackinline{conda}, \rackinline{ifte}, and \rackinline{once}}\label{mnt:conda-implementation}
+% \end{listing}
 
 \section{Removing more macros}\label{sec:functional}
 
@@ -830,26 +805,26 @@ executing queries, and introducing delay and interleave. The versions
 in \cref{mnt:call-fresh-and-call-initial-state} are slightly adjusted
 to be consistent with this presentation.
 
-\begin{listing}
-  \begin{minted}[autogobble,stripall]{racket}
-(define ((call/fresh f) s)
-  (let ((v (state->newvar s)))
-    ((f v) (incr-var-ct s))))
+% \begin{listing}
+%   \begin{minted}[autogobble,stripall]{racket}
+% (define ((call/fresh f) s)
+%   (let ((v (state->newvar s)))
+%     ((f v) (incr-var-ct s))))
 
-(define (call/initial-state n g)
-  (reify/1st
-    (take∞ n (pull (g initial-state)))))
+% (define (call/initial-state n g)
+%   (reify/1st
+%     (take∞ n (pull (g initial-state)))))
 
-(define (((Zzz g) s))
-  (g s))
+% (define (((Zzz g) s))
+%   (g s))
 
-> (call/initial-state 3
-    (call/fresh
-      (λ (x)
-        (== x 'cat))))
-  \end{minted}
-  \caption{Definition and use of functional microKanren equivalents of \emph{TRS2e} kernel macros}\label{mnt:call-fresh-and-call-initial-state}
-\end{listing}
+% > (call/initial-state 3
+%     (call/fresh
+%       (λ (x)
+%         (== x 'cat))))
+%   \end{minted}
+%   \caption{Definition and use of functional microKanren equivalents of \emph{TRS2e} kernel macros}\label{mnt:call-fresh-and-call-initial-state}
+% \end{listing}
 
 Each of these has drawbacks that compelled the \emph{TRS2e} authors to
 instead use macro-based alternatives in the kernel layer. In this
@@ -959,22 +934,22 @@ the first example in \cref{mnt:run-query}, or create a special
 variable introduction mechanism for the first variable, scoped over
 both the query and the answer projection, as in the second example.
 
-\begin{listing}[h]
-  \begin{minted}[autogobble,stripall]{racket}
-(call/initial-state 1
-  (let ((q (var 'q)))
-    (conj
-      (let ((x (var 'x)))
-        (== q x))
-      (reify q))))
+% \begin{listing}[h]
+%   \begin{minted}[autogobble,stripall]{racket}
+% (call/initial-state 1
+%   (let ((q (var 'q)))
+%     (conj
+%       (let ((x (var 'x)))
+%         (== q x))
+%       (reify q))))
 
-(define (call/initial-state n f)
-  (let ((q (var 'q)))
-    (map (reify q)
-         (take∞ n ((f q) initial-state)))))
-  \end{minted}
-  \caption{Several approaches to reifying variables in \rackinline{call/initial-state}. Here \rackinline{initial-state} is a representation of an initially empty set of equations}\label{mnt:run-query}
-\end{listing}
+% (define (call/initial-state n f)
+%   (let ((q (var 'q)))
+%     (map (reify q)
+%          (take∞ n ((f q) initial-state)))))
+%   \end{minted}
+%   \caption{Several approaches to reifying variables in \rackinline{call/initial-state}. Here \rackinline{initial-state} is a representation of an initially empty set of equations}\label{mnt:run-query}
+% \end{listing}
 
 
 
@@ -1060,15 +1035,14 @@ document narrows the gap between macro-free microKanrens and those
 using macro systems, and leads to more elegant, expressive and
 efficient implementations regardless of functional host language.
 
-\begin{acks}
 
-  Thanks to Michael Ballantyne, Greg Rosenblatt, Ken Shan, and Jeremy
-  Siek for their helpful discussions and ideas. Our thanks to Yafei
-  Yang and Darshal Shetty for their implementation suggestions. We
-  would also like to thank our anonymous reviewers for their
-  insightful contributions.
+\subsubsection{Acknowledgements}
 
-\end{acks}
+Thanks to Michael Ballantyne, Greg Rosenblatt, Ken Shan, and Jeremy
+Siek for their helpful discussions and ideas. Our thanks to Yafei
+Yang and Darshal Shetty for their implementation suggestions. We
+would also like to thank our anonymous reviewers for their
+insightful contributions.
 
 \printbibliography{}
 
@@ -1076,72 +1050,72 @@ efficient implementations regardless of functional host language.
 
 \section{\rackinline{conda} derivation}\label{sec:conda-derivation}
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-(define (conda g . g*)
-  (cond
-    ((null? g*) g)
-    ((null? (cdr g*)) (conj g (car g*)))
-    (else
-     (ifte g (car g*) (apply conda (cdr g*))))))
-= { μ\text{η-expansion}μ }
-(define ((conda g . g*) s)
-  (cond
-    ((null? g*) (g s))
-    ((null? (cdr g*)) ((conj g (car g*)) s))
-    (else
-     ((ifte g (car g*) (apply conda (cdr g*)))
-      s))))
-⊂
-(define ((conda g . g*) s)
-  (A g g* s))
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    ((null? (cdr g*)) ((conj g (car g*)) s))
-    (else
-     ((ifte g (car g*) (apply conda (cdr g*)))
-      s))))
-= { μ\text{let bindings and η-expansion}μ }
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) ((conj g g1) s))
-         (else
-          ((ifte g g1
-             (λ (s)
-               ((apply conda g*) s)))
-           s)))))))
-= { μ\text{by definition of conda, conj, and C}μ }
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) (append-map∞ g1 (g s)))
-         (else
-          ((ifte g g1
-             (λ (s)
-               (A (car g*) (cdr g*) s)))
-           s)))))))
-= { μ\text{by definition of ifte and a β reduction}μ }
-(define (A g g* s)
-  (cond
-    ((null? g*) (g s))
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) (append-map∞ g1 (g s)))
-         (else
-          (let loop ((s∞ (g s)))
-            (cond
-              ((null? s∞) (A (car g*) (cdr g*) s))
-              ((pair? s∞) (append-map∞ g1 s∞))
-              (else (λ () (loop (s∞))))))))))))
-\end{minted}
+% \begin{minted}[autogobble,stripall,escapeinside=!!]{racket}
+% (define (conda g . g*)
+%   (cond
+%     ((null? g*) g)
+%     ((null? (cdr g*)) (conj g (car g*)))
+%     (else
+%      (ifte g (car g*) (apply conda (cdr g*))))))
+% = { !\text{eta-expansion}! }
+% (define ((conda g . g*) s)
+%   (cond
+%     ((null? g*) (g s))
+%     ((null? (cdr g*)) ((conj g (car g*)) s))
+%     (else
+%      ((ifte g (car g*) (apply conda (cdr g*)))
+%       s))))
+% ⊂
+% (define ((conda g . g*) s)
+%   (A g g* s))
+% (define (A g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     ((null? (cdr g*)) ((conj g (car g*)) s))
+%     (else
+%      ((ifte g (car g*) (apply conda (cdr g*)))
+%       s))))
+% = { !\text{let bindings and eta-expansion}! }
+% (define (A g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else
+%      (let ((g1 (car g*)) (g* (cdr g*)))
+%        (cond
+%          ((null? g*) ((conj g g1) s))
+%          (else
+%           ((ifte g g1
+%              (λ (s)
+%                ((apply conda g*) s)))
+%            s)))))))
+% = { !\text{by definition of conda, conj, and C}! }
+% (define (A g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else
+%      (let ((g1 (car g*)) (g* (cdr g*)))
+%        (cond
+%          ((null? g*) (append-map∞ g1 (g s)))
+%          (else
+%           ((ifte g g1
+%              (λ (s)
+%                (A (car g*) (cdr g*) s)))
+%            s)))))))
+% = { !\text{by definition of ifte and a β reduction}! }
+% (define (A g g* s)
+%   (cond
+%     ((null? g*) (g s))
+%     (else
+%      (let ((g1 (car g*)) (g* (cdr g*)))
+%        (cond
+%          ((null? g*) (append-map∞ g1 (g s)))
+%          (else
+%           (let loop ((s∞ (g s)))
+%             (cond
+%               ((null? s∞) (A (car g*) (cdr g*) s))
+%               ((pair? s∞) (append-map∞ g1 s∞))
+%               (else (λ () (loop (s∞))))))))))))
+% \end{minted}
 
 At this point \rackinline{g} and \rackinline{s} in \rackinline{conda}
 are \emph{begging} to be passed as a stream \rackinline{s∞}; we oblige
@@ -1150,36 +1124,36 @@ definition, passing all the parameters it needs. Since the only call
 to \rackinline{ifs∞te} is in \rackinline{A}, we know that
 \rackinline{ifs∞te}'s third parameter will always be a non-empty list.
 
-\begin{minted}[autogobble,stripall,escapeinside=μμ]{racket}
-(define (A g* s∞)
-  (cond
-    ((null? g*) s∞)
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) (append-map∞ g1 s∞))
-         (else
-          (let loop ((s∞ s∞))
-            (cond
-              ((null? s∞) (A (cdr g*) ((car g*) s)))
-              ((pair? s∞) (append-map∞ g1 s∞))
-              (else (λ () (loop (s∞))))))))))))
-⊂
-(define (A g* s∞)
-  (cond
-    ((null? g*) s∞)
-    (else
-     (let ((g1 (car g*)) (g* (cdr g*)))
-       (cond
-         ((null? g*) (append-map∞ g1 s∞))
-         (else (ifs∞te s∞ g1 g* s)))))))
+% \begin{minted}[autogobble,stripall,escapeinside=!!y]{racket}
+% (define (A g* s∞)
+%   (cond
+%     ((null? g*) s∞)
+%     (else
+%      (let ((g1 (car g*)) (g* (cdr g*)))
+%        (cond
+%          ((null? g*) (append-map∞ g1 s∞))
+%          (else
+%           (let loop ((s∞ s∞))
+%             (cond
+%               ((null? s∞) (A (cdr g*) ((car g*) s)))
+%               ((pair? s∞) (append-map∞ g1 s∞))
+%               (else (λ () (loop (s∞))))))))))))
+% ⊂
+% (define (A g* s∞)
+%   (cond
+%     ((null? g*) s∞)
+%     (else
+%      (let ((g1 (car g*)) (g* (cdr g*)))
+%        (cond
+%          ((null? g*) (append-map∞ g1 s∞))
+%          (else (ifs∞te s∞ g1 g* s)))))))
 
-(define (ifs∞te s∞ g g+ s)
-  (cond
-    ((null? s∞) (A (cdr g+) ((car g+) s)))
-    ((pair? s∞) (append-map∞ g s∞))
-    (else (λ () (ifs∞te (s∞) g g+ s)))))
-\end{minted}
+% (define (ifs∞te s∞ g g+ s)
+%   (cond
+%     ((null? s∞) (A (cdr g+) ((car g+) s)))
+%     ((pair? s∞) (append-map∞ g s∞))
+%     (else (λ () (ifs∞te (s∞) g g+ s)))))
+% \end{minted}
 
 If we also add a line in \rackinline{conda} to dispatch with the
 trivial case, we arrive at the definition in
