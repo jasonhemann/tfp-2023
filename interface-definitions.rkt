@@ -20,7 +20,7 @@
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-right-assoc))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-left-assoc))
 ;; THE BAD ONE
-(require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
+;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-1+-right-assoc))
 ;;
 ;; execute goals from rightmost argument to leftmost argument
 ;; (require (submod "./logical-combinator-function-definitions.rkt" macros-1+-left-assoc-flip))
@@ -30,7 +30,7 @@
 ;;
 ;; mixed
 ;; THE GOOD ONE
-;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
+(require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right))
 ;; (require (submod "./logical-combinator-function-definitions.rkt" varargs-conj-left-disj-right-flip))
 
 (define-syntax-rule (run* (q) g0 g ...)

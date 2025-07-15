@@ -15,9 +15,11 @@ We structure the re-implementations through several files.
 | [Interface macros, to facilitate comparisons w/miniKanren programs](./interface-definitions.rkt)          |
 | [Demonstrate potential cost of null? checks in base case](./profiling-logical-combinator-definitions.rkt) |
 
+The interface macros files tests all combinations of associating binary conjunction and disjunctions. 
 
+I have experimented with all the orders, be sure to check the settings.
 
-These files are tested against Racket 8.7.
+These files are tested against Racket 8.17
 
 
 ## Paper
